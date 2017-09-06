@@ -443,6 +443,10 @@ if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 del "%DOWNLOADER%"
 :: deleting package cache
 del "%CYGWIN_ROOT%-pkg-cache"
+del "%INSTALL_ROOT%cygwin-pkg-cache"
+:: renaming licence and readme file
+rename "%INSTALL_ROOT%LICENSE" "%INSTALL_ROOT%LICENSE.txt"
+rename "%INSTALL_ROOT%README.md" "%INSTALL_ROOT%README.txt"
 
 echo.
 echo ###########################################################
