@@ -321,7 +321,7 @@ echo Creating [%Init_sh%]...
 
 
 :: creating cygwin-portable.cmd that will keep the installation portable from Windows side
-set Start_cmd=%INSTALL_ROOT%cygwin-portable.cmd
+set Start_cmd=%INSTALL_ROOT%ConCygSys.cmd
 echo Creating [%Start_cmd%]...
 (
     echo @echo off
@@ -441,6 +441,10 @@ if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 
 :: deleting VB script that can download files
 del "%DOWNLOADER%"
+:: deleting installer
+del "%INSTALL_ROOT%"ConCygSys-installer.cmd
+:: deleting package cache
+del ""%CYGWIN_ROOT%-pkg-cache""
 
 
 echo.
