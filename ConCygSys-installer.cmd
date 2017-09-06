@@ -441,11 +441,8 @@ if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 
 :: deleting VB script that can download files
 del "%DOWNLOADER%"
-:: deleting installer
-del "%INSTALL_ROOT%"ConCygSys-installer.cmd
 :: deleting package cache
-del ""%CYGWIN_ROOT%-pkg-cache""
-
+del "%CYGWIN_ROOT%-pkg-cache"
 
 echo.
 echo ###########################################################
@@ -455,6 +452,8 @@ echo.
 echo Use [%Start_cmd%] to launch Cygwin Portable.
 echo.
 pause
+:: deleting installer
+del "%INSTALL_ROOT%ConCygSys-installer.cmd"
 goto :eof
 
 :fail
