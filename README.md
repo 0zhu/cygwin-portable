@@ -1,11 +1,13 @@
 # ConCygSys
-ConEmu / CygWin Portable for SysAdmins
+![ConCygSys](https://github.com/zhubanRuban/cygwin-extras/raw/master/img/concygsys.png)
+
+**ConEmu / CygWin Portable for SysAdmins**
 
 -------------------
 
-This is an independent fork of amazing [cygwin-portable-installer](https://github.com/vegardit/cygwin-portable-installer) project developed by [Sebastian Thomschke](https://github.com/sebthom)
+This is an independent fork of amazing [cygwin-portable-installer](https://github.com/vegardit/cygwin-portable-installer) project
 
-**Modded specially for sysadmin purposes**
+**Modded specially for sysadmin purposes. Your Linux shell On Windows**
 
 This will install portable [CygWin](https://www.cygwin.com/) environment and connect to portable [ConEmu](https://conemu.github.io/) console emulator, so you will have all required tools for server management in one folder which can be moved between PCs and/or run from USB stick
 
