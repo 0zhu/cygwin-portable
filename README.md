@@ -15,11 +15,13 @@ This will install portable [CygWin](https://www.cygwin.com/) environment and con
 
 ## Installation
 
-- download the contents via `Clone or download` >> `Download ZIP` or from [this link](https://github.com/zhubanRuban/ConCygSys/archive/master.zip)
-- extract the folder inside the archive to the directory of your choice
-- open the extracted folder
-- launch `ConCygSys-installer.cmd`
-- once the installation is finished, launch `ConCygSys.cmd` to run the Console
+- create a folder on your PC where you want to store ConCygSys, let it be `D:\concygsys\`
+- download installer from [this link](https://github.com/zhubanRuban/ConCygSys/archive/master.zip) (right click > save link as) to `D:\concygsys\`
+- launch `ConCygSys-installer.cmd` you downloaded to `D:\concygsys\`
+- once the installation is finished, launch the desired shell:
+  `ConCygSys.cmd` to run CygWin via ConEmu (if chosen to install) - recommended and the most convenient option
+  `ConCygSys-bash.cmd` to run CygWin in standard Windows console
+  `ConCygSys-bash.cmd` to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator (if chosen to install)
 - have fun
 
 ## Customization
