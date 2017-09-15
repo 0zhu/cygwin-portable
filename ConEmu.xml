@@ -32,7 +32,7 @@
 			<value name="TabFontHeight" type="long" data="12"/>
 			<value name="TabsLocation" type="hex" data="01"/>
 			<value name="TabFontFace" type="string" data="Arial Black"/>
-			<value name="TabConsole" type="string" data="%m---m%s%m---m"/>
+			<value name="TabConsole" type="string" data="%m⬛m%s"/>
 			<value name="TabModifiedSuffix" type="string" data="*"/>
 			<value name="TabDblClick" type="ulong" data="3"/>
 			<value name="AlphaValue" type="hex" data="dd"/>
@@ -59,7 +59,11 @@
 					<value name="Flags" type="dword" data="00000005"/>
 					<value name="Hotkey" type="dword" data="0000a254"/>
 					<value name="GuiArgs" type="string" data=""/>
-					<value name="Cmd1" type="string" data="%ConEmuDir%\..\cygwin\bin\conemu-cyg-64.exe -new_console:m:/cygdrive -new_console:p1:C:&quot;%ConEmuDir%\..\cygwin\Cygwin.ico&quot;:d:&quot;%ConEmuDir%\..\cygwin\home\root&quot;"/>
+					<!--
+					Removed path to icon to get more space for tabs
+					Terminal changed to CygWin instead of xterm-256color to prevent issues in screen session over SSH
+					-->
+					<value name="Cmd1" type="string" data="%ConEmuDir%\..\cygwin\bin\conemu-cyg-64.exe -new_console:m:/cygdrive -new_console:p1:d:&quot;%ConEmuDir%\..\cygwin\home\root&quot; -t cygwin"/>
 					<value name="Active" type="long" data="0"/>
 					<value name="Count" type="long" data="1"/>
 				</key>
