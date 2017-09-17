@@ -389,7 +389,7 @@ call %Start_cmd_bash% whoami
 del "%Start_cmd_begin%"
 
 
-:: downloading and installing custom ConEmu config from https://github.com/zhubanRuban/cygwin-extras
+:: downloading and installing custom ConEmu config
 set conemu_config=%INSTALL_ROOT%conemu\ConEmu.xml
 set conemu_custom_config=%INSTALL_ROOT%conemu_custom_config
 if "%INSTALL_CONEMU%" == "yes" (
