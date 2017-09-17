@@ -375,7 +375,13 @@ if "%INSTALL_CONEMU%" == "yes" (
 
 :: generating bash launcher
 type "%Start_cmd_begin%" > "%Start_cmd_bash%"
-(echo bash --login -i) >>"%Start_cmd_bash%" || goto :fail
+(
+	echo if "%%1" == "" (
+	echo 	echo bash --login -i
+	echo ^) else (
+	echo 	echo bash --login -c %%*
+	echo ^)
+) >>"%Start_cmd_bash%" || goto :fail
 
 :: generating mintty launcher
 if "%INSTALL_MINTTY%" == "yes" (
