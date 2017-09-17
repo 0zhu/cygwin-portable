@@ -15,14 +15,15 @@ This will install portable [CygWin](https://www.cygwin.com/) environment and con
 
 ## Installation
 
-- create a folder on your PC where you want to store ConCygSys, let it be `D:\concygsys\`
-- download installer from [this link](https://github.com/zhubanRuban/ConCygSys/archive/master.zip) (right click > save link as) to `D:\concygsys\`
-- launch `ConCygSys-installer.cmd` you downloaded to `D:\concygsys\`
-- once the installation is finished, launch the desired shell:
-  `ConCygSys.cmd` to run CygWin via ConEmu (if chosen to install) - recommended and the most convenient option
-  `ConCygSys-bash.cmd` to run CygWin in standard Windows console
-  `ConCygSys-bash.cmd` to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator (if chosen to install)
-- have fun
+- Create a folder on your PC where you want to store ConCygSys, let it be `D:\concygsys\`
+- Download installer from [this link](https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/ConCygSys-installer.cmd) (right click > save link as) to `D:\concygsys\`
+- Launch `ConCygSys-installer.cmd` you downloaded to `D:\concygsys\`
+- Once the installation is finished, launch the desired shell:
+  - `ConCygSys.cmd` to run CygWin via ConEmu (if installed) - awesome multitab quake-style console - **recommended**
+  - `ConCygSys-bash.cmd` to run CygWin in standard Windows console - **_helpful for CygWin behaviour troubleshooting_**
+  - `ConCygSys-bash.cmd` to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator (if installed) - fully xterm-compatible, but without multitab and quake-style support - **_launch to access a server producing artefacts in ConEmu_**
+- **have fun**
+![source: https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg](https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg)
 
 ## Customization
 
@@ -31,14 +32,17 @@ If you open `ConCygSys-installer.cmd` with [Notepad++](https://notepad-plus-plus
 **Available options:**
 
 - `CYGWIN_USERNAME` - the desired username (defaults to root)
-- `CYGWIN_MIRROR` - the source you would like to download CygWin from - [full list of available mirrors](https://cygwin.com/mirrors.html)
-- `CYGWIN_PACKAGES` - packages to install - [full list of availbale packages](https://cygwin.com/packages/package_list.html)
-- `INSTALL_APT_CYG` - install [apt-cyg package manager](https://github.com/transcode-open/apt-cyg) alows to install/remove [packages](https://cygwin.com/packages/package_list.html) from command line
+- `CYGWIN_MIRROR` - a [mirror](https://cygwin.com/mirrors.html) you would like to download CygWin from
+- `CYGWIN_PACKAGES` - [packages to install](https://cygwin.com/packages/package_list.html)
+- `LOCALE` - [the language of your command prompt](https://docs.oracle.com/cd/E23824_01/html/E26033/glset.html)
+- `INSTALL_APT_CYG` - install [apt-cyg package manager](https://github.com/transcode-open/apt-cyg)
 - `INSTALL_BASH_FUNK` - install [bash-funk - adaptive Bash prompt](https://github.com/vegardit/bash-funk)
 - `INSTALL_PSSH` - install [Parallel SSH tool on bash](https://github.com/zhubanRuban/cygwin-extras#pssh-parallelssh)
 - `INSTALL_PSCP` - install [Parallel SCP tool on bash](https://github.com/zhubanRuban/cygwin-extras#pscp-parallelscp)
 - `INSTALL_SSH_AGENT_TWEAK` - install [SSH agent enhancements](https://github.com/zhubanRuban/cygwin-extras#re-use-ssh-agent)
 - `INSTALL_BASHRC_CUSTOMS` - install [Bash prompt enhancements](https://github.com/zhubanRuban/cygwin-extras#custom-bashrc) (disables bash-funk)
+- `INSTALL_CONEMU` - install [ConEmu](https://conemu.github.io/) console
+- `INSTALL_MINTTY` - install [MinTTY](https://mintty.github.io/) terminal emulator
 
 ## Important Note
 
