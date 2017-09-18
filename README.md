@@ -21,7 +21,7 @@ This will install portable [CygWin](https://www.cygwin.com/) environment and con
 - Once the installation is finished, launch the desired shell:
   - `ConCygSys.cmd` to run CygWin via ConEmu (if installed) - awesome multitab quake-style console - **recommended**
   - `ConCygSys-bash.cmd` to run CygWin in standard Windows console - **_helpful for CygWin behaviour troubleshooting_**
-  - `ConCygSys-bash.cmd` to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator (if installed) - fully xterm-compatible, but without multitab and quake-style support - **_launch to access a server producing artefacts in ConEmu_**
+  - `ConCygSys-mintty.cmd` to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator (if installed) - fully xterm-compatible, but without multitab and quake-style support - **_launch to access a server producing artefacts in ConEmu_**
 - **have fun**
 ![source: https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg](https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg)
 
