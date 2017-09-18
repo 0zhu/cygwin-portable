@@ -377,9 +377,9 @@ if "%INSTALL_CONEMU%" == "yes" (
 type "%Start_cmd_begin%" > "%Start_cmd_bash%"
 (
 	echo if "%%1" == "" (
-	echo 	echo bash --login -i
+	echo 	bash --login -i
 	echo ^) else (
-	echo 	echo bash --login -c %%*
+	echo 	bash --login -c %%*
 	echo ^)
 ) >>"%Start_cmd_bash%" || goto :fail
 
