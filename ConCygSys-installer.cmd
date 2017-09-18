@@ -486,7 +486,7 @@ echo ###########################################################
 echo # Installing [Cygwin Portable] succeeded.
 echo ###########################################################
 echo.
-echo Use [%Start_cmd%] to launch Cygwin Portable.
+echo Use launchers in [%INSTALL_ROOT%] to run Cygwin Portable.
 echo.
 pause
 :: deleting installer
