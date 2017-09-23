@@ -24,6 +24,9 @@
 :: choose a user name under Cygwin
 set CYGWIN_USERNAME=root
 
+:: override processor architecture: setup-x86.exe for 32bit and setup-x86_64.exe for 64bit system, leave empty for autodetect
+set CYGWIN_SETUP=
+
 :: change the URL to the closest mirror https://cygwin.com/mirrors.html
 set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 
@@ -92,17 +95,18 @@ echo.
 :: %~dp0 means current directory
 set INSTALL_ROOT=%~dp0
 
-:: create cygwin folder
+echo Creating cygwin folder...
 set CYGWIN_ROOT=%INSTALL_ROOT%cygwin
 if not exist "%CYGWIN_ROOT%" (
 	md "%CYGWIN_ROOT%"
 )
+echo %CYGWIN_ROOT%
 
 :: There is no true-commandline download tool in Windows
-:: create VB script that can download files
+:: creating VB script that can download files...
 :: not using PowerShell which may be blocked by group policies
 set DOWNLOADER=%INSTALL_ROOT%downloader.vbs
-echo Creating [%DOWNLOADER%] script...
+echo Creating [%DOWNLOADER%] script that can download files...
 if "%PROXY_HOST%" == "" (
 	set DOWNLOADER_PROXY=.
 ) else (
@@ -130,19 +134,23 @@ if "%PROXY_HOST%" == "" (
 	echo.
 ) >"%DOWNLOADER%" || goto :fail
 
-:: choosing correct version of cygwin installer depending on system
-if "%PROCESSOR_ARCHITEW6432%" == "AMD64" (
-	set CYGWIN_SETUP=setup-x86_64.exe
-) else (
-	if "%PROCESSOR_ARCHITECTURE%" == "x86" (
-		set CYGWIN_SETUP=setup-x86.exe
-	) else (
+echo Choosing correct version of cygwin installer depending on system...
+if "%CYGWIN_SETUP%" == "" (
+echo CYGWIN_SETUP setting is empty, autodetecting...
+	if "%PROCESSOR_ARCHITEW6432%" == "AMD64" (
 		set CYGWIN_SETUP=setup-x86_64.exe
+	) else (
+		if "%PROCESSOR_ARCHITECTURE%" == "x86" (
+			set CYGWIN_SETUP=setup-x86.exe
+		) else (
+			set CYGWIN_SETUP=setup-x86_64.exe
+		)
 	)
 )
 if exist "%CYGWIN_ROOT%\%CYGWIN_SETUP%" (
 	del "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
 )
+echo Chosen installer: %CYGWIN_SETUP%
 
 :: downloading cygwin installer
 cscript //Nologo %DOWNLOADER% http://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
@@ -155,8 +163,13 @@ if "%PROXY_HOST%" == "" (
 )
 
 :: if conemu install is selected we need to be able to extract 7z archives
+if "%INSTALL_CONEMU%" == "yes" (
+	set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%
+)
+
+:: if apt-cyg install is selected we need to be able to extract 7z archives
 if "%INSTALL_APT_CYG%" == "yes" (
-	set CYGWIN_PACKAGES=bsdtar,%CYGWIN_PACKAGES%
+	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
 )
 
 :: if selected to install mintty, add it to installed packages
@@ -174,10 +187,19 @@ if "%INSTALL_BASH_FUNK%" == "yes" (
 	set CYGWIN_PACKAGES=git,git-svn,subversion,%CYGWIN_PACKAGES%
 )
 
+:: if pssh install is selected, install required software
+if "%INSTALL_PSSH%" == "yes" (
+	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
+)
+
+:: if pscp install is selected, install required software
+if "%INSTALL_PSCP%" == "yes" (
+	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
+)
+
 :: all cygwin installer commandline options: https://www.cygwin.com/faq/faq.html#faq.setup.cli
 echo Running Cygwin setup...
 "%CYGWIN_ROOT%\%CYGWIN_SETUP%" --no-admin ^
---arch x86_64 ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --root "%CYGWIN_ROOT%" ^
 --local-package-dir "%CYGWIN_ROOT%-pkg-cache" ^
@@ -190,7 +212,7 @@ echo Running Cygwin setup...
 --packages dos2unix,wget,%CYGWIN_PACKAGES% || goto :fail
 
  
-:: disable stock Cygwin launcher
+echo Disabling stock Cygwin launcher...
 set Cygwin_bat=%CYGWIN_ROOT%\Cygwin.bat
 if exist "%Cygwin_bat%" (
 	echo Disabling [%Cygwin_bat%]...
@@ -210,29 +232,33 @@ echo none /cygdrive cygdrive binary,noacl,posix=0,user 0 0 > %CYGWIN_ROOT%\etc\f
 :: creating portable-init.sh script to keep the installation portable
 :: also sends commands to bash to install ConEmu and other software is selected in settings
 set Init_sh=%CYGWIN_ROOT%\portable-init.sh
-echo Creating [%Init_sh%]...
+echo Creating [%Init_sh%] script to keep the installation portable...
 (
 	echo #!/usr/bin/env bash
 	echo.
-	echo # Map Current Windows User to root user
+	echo # Modifying /etc/fstab to make the installation fully portable
+	echo (
+	echo echo $(cygpath -m $CYGWIN_ROOT^)/bin /usr/bin none binary,noacl,override 0 0
+	echo echo $(cygpath -m $CYGWIN_ROOT^)/lib /usr/lib none binary,noacl,override 0 0
+	echo echo $(cygpath -m $CYGWIN_ROOT^) / none binary,noacl,override 0 0
+	echo echo $(cygpath -m $USERPROFILE^) /home/$(basename $USERPROFILE^) none binary,noacl,posix=0,user 0 0
+	echo echo none /mnt cygdrive binary,noacl,posix=0,user 0 0
+	echo ^) ^>/etc/fstab
 	echo.
-	echo # Check if current Windows user is in /etc/passwd
-	echo USER_SID="$(mkpasswd -c | cut -d':' -f 5)"
-	echo.
-	echo # if not, modify /etc/passwd with current user
-	echo if ! grep -F "$USER_SID" /etc/passwd ^&^>/dev/null; then
-	echo 	echo "Mapping Windows user '$USER_SID' to cygwin '$USERNAME' in /etc/passwd..."
-	echo 	GID="$(mkpasswd -c | cut -d':' -f 4)"
-	echo 	echo $USERNAME:unused:1001:$GID:$USER_SID:$HOME:/bin/bash ^>^> /etc/passwd
-	echo 		# and fix permissions (755 become 770 after moving to a new PC causing all binaries to produce "permission denied" error^)
-	echo 		for i in /bin /etc /dev /home /lib /opt /proc /sbin /tmp /usr /var; do
-	echo 		find $i \( -type d -o -type f \^) -perm 770 -exec chmod 755 {} \;
-	echo 		done
-	echo fi
+	echo # Setting custom CygWin username
+	echo (
+	echo mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USERNAME\"; \$6=\"$HOME\"; print}"
+	echo ^) ^>/etc/passwd
 	echo.
 	echo # adjust Cygwin packages cache path
 	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/../cygwin-pkg-cache"^)
 	echo sed -i -E "s/.*\\\cygwin-pkg-cache/        ${pkg_cache_dir//\\/\\\\}/" /etc/setup/setup.rc
+) >"%Init_sh%" || goto :fail
+	
+set Install_sh=%CYGWIN_ROOT%\portable-install.sh
+echo Creating [%Install_sh%] script to install required software...
+(
+	echo #!/usr/bin/env bash
 	echo.
 	if not "%PROXY_HOST%" == "" (
 		echo if [[ $HOSTNAME == "%COMPUTERNAME%" ]]; then
@@ -314,10 +340,11 @@ echo Creating [%Init_sh%]...
 		echo 	fi
 		echo fi
 	)
-) >"%Init_sh%" || goto :fail
+) >"%Install_sh%" || goto :fail
 
-:: converting init script to unix format
+echo Converting [%Init_sh%] and [%Install_sh%] scripts to unix format...
 "%CYGWIN_ROOT%\bin\dos2unix" "%Init_sh%" || goto :fail
+"%CYGWIN_ROOT%\bin\dos2unix" "%Install_sh%" || goto :fail
 
 
 :: defining launchers
@@ -325,33 +352,29 @@ set Start_cmd_begin=%INSTALL_ROOT%Begin
 set Start_cmd=%INSTALL_ROOT%ConCygSys.cmd
 set Start_cmd_bash=%INSTALL_ROOT%ConCygSys_bash.cmd
 set Start_cmd_mintty=%INSTALL_ROOT%ConCygSys_mintty.cmd
+set Start_cmd_install=%INSTALL_ROOT%ConCygSys_install.cmd
 
-:: generating launcher files
+echo Generating launcher files...
 :: generating launcher header
 (
 	echo @echo off
-	echo echo Setting variables...
+	echo.
 	echo set CWD=%%cd%%
 	echo set CYGWIN_DRIVE=%%~d0
 	echo set CYGWIN_ROOT=%%~dp0cygwin
 	echo.
-	echo set PATH=%CYGWIN_PATH%;%%CYGWIN_ROOT%%\bin
+	echo set PATH=%CYGWIN_PATH%;%%CYGWIN_ROOT%%\bin;%%CYGWIN_ROOT%%\usr\local\sbin
 	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%.ProgramData
 	echo set ProgramData=%%ALLUSERSPROFILE%%
-	echo set CYGWIN=nodosfilewarning
 	echo.
 	echo set USERNAME=%CYGWIN_USERNAME%
 	echo set HOME=/home/%%USERNAME%%
 	echo set SHELL=/bin/bash
 	echo set HOMEDRIVE=%%CYGWIN_DRIVE%%
 	echo set HOMEPATH=%%CYGWIN_ROOT%%\home\%%USERNAME%%
-	echo set GROUP=None
-	echo set GRP=
 	echo set LANG=%LOCALE%
 	echo.
-	echo %%CYGWIN_DRIVE%%
 	echo chdir "%%CYGWIN_ROOT%%\bin"
-	echo echo Launching %%CYGWIN_ROOT%%\portable-init.sh ...
 	echo bash "%%CYGWIN_ROOT%%\portable-init.sh"
 	echo.
 ) >"%Start_cmd_begin%" || goto :fail
@@ -389,10 +412,25 @@ if "%INSTALL_MINTTY%" == "yes" (
 	(echo mintty --nopin %MINTTY_OPTIONS% --icon %CYGWIN_ROOT%\Cygwin-Terminal.ico -) >>"%Start_cmd_mintty%" || goto :fail
 )
 
-:: launching bash once to initialize user home dir
-call %Start_cmd_bash% whoami
+:: generating install launcher
+type "%Start_cmd_begin%" > "%Start_cmd_install%"
+(
+	echo bash "%%CYGWIN_ROOT%%\portable-install.sh"
+	echo if "%%1" == "" (
+	echo 	bash --login -i
+	echo ^) else (
+	echo 	bash --login -c %%*
+	echo ^)
+	echo.
+	echo cd "%%CWD%%"
+) >>"%Start_cmd_install%" || goto :fail
+
+echo Launching bash once to initialize user home dir...
+call %Start_cmd_install% whoami
 :: deleting temp files
 del "%Start_cmd_begin%"
+del "%Install_sh%"
+del "%Start_cmd_install%"
 
 
 :: downloading and installing custom ConEmu config
@@ -494,12 +532,6 @@ del "%INSTALL_ROOT%ConCygSys-installer.cmd"
 goto :eof
 
 :fail
-	if exist "%DOWNLOADER%" (
-		del "%DOWNLOADER%"
-	)
-	if exist "%Start_cmd_begin%" (
-		del "%Start_cmd_begin%"
-	)
 	echo.
 	echo ###########################################################
 	echo #Installing [Cygwin Portable] FAILED!
