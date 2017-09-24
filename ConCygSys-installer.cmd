@@ -71,8 +71,6 @@ set CYGWIN_PATH=%%SystemRoot%%\system32;%%SystemRoot%%
 set PROXY_HOST=
 set PROXY_PORT=8080
 
-:: select if you want to install MinTTY: https://mintty.github.io/
-set INSTALL_MINTTY=yes
 :: set Mintty options, see https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
 set MINTTY_OPTIONS=--Title ConCygSys ^
 -o CursorBlinks=yes ^
@@ -172,11 +170,6 @@ if "%INSTALL_APT_CYG%" == "yes" (
 	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
 )
 
-:: if selected to install mintty, add it to installed packages
-if "%INSTALL_MINTTY%" == "yes" (
-	set CYGWIN_PACKAGES=mintty,%CYGWIN_PACKAGES%
-)
-
 :: disable INSTALL_BASH_FUNK if INSTALL_BASHRC_CUSTOMS is set to "yes", to prevent conflicts
 if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
 	set INSTALL_BASH_FUNK=no
@@ -253,6 +246,9 @@ echo Creating [%Init_sh%] script to keep the installation portable...
 	echo # adjust Cygwin packages cache path
 	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/../cygwin-pkg-cache"^)
 	echo sed -i -E "s/.*\\\cygwin-pkg-cache/        ${pkg_cache_dir//\\/\\\\}/" /etc/setup/setup.rc
+	echo.
+	echo # remove apt-get cache
+	echo rm -rf /http*
 ) >"%Init_sh%" || goto :fail
 	
 set Install_sh=%CYGWIN_ROOT%\portable-install.sh
@@ -350,7 +346,7 @@ echo Converting [%Init_sh%] and [%Install_sh%] scripts to unix format...
 :: defining launchers
 set Start_cmd_begin=%INSTALL_ROOT%Begin
 set Start_cmd=%INSTALL_ROOT%ConCygSys.cmd
-set Start_cmd_bash=%INSTALL_ROOT%ConCygSys_bash.cmd
+set Start_cmd_cmd=%INSTALL_ROOT%ConCygSys_cmd.cmd
 set Start_cmd_mintty=%INSTALL_ROOT%ConCygSys_mintty.cmd
 set Start_cmd_install=%INSTALL_ROOT%ConCygSys_install.cmd
 
@@ -396,21 +392,19 @@ if "%INSTALL_CONEMU%" == "yes" (
 	) >>"%Start_cmd%" || goto :fail
 )
 
-:: generating bash launcher
-type "%Start_cmd_begin%" > "%Start_cmd_bash%"
+:: generating cmd launcher
+type "%Start_cmd_begin%" > "%Start_cmd_cmd%"
 (
 	echo if "%%1" == "" (
 	echo 	bash --login -i
 	echo ^) else (
 	echo 	bash --login -c %%*
 	echo ^)
-) >>"%Start_cmd_bash%" || goto :fail
+) >>"%Start_cmd_cmd%" || goto :fail
 
 :: generating mintty launcher
-if "%INSTALL_MINTTY%" == "yes" (
-	type "%Start_cmd_begin%" > "%Start_cmd_mintty%"
-	(echo mintty --nopin %MINTTY_OPTIONS% --icon %CYGWIN_ROOT%\Cygwin-Terminal.ico -) >>"%Start_cmd_mintty%" || goto :fail
-)
+type "%Start_cmd_begin%" > "%Start_cmd_mintty%"
+(echo mintty --nopin %MINTTY_OPTIONS% --icon %CYGWIN_ROOT%\Cygwin-Terminal.ico -) >>"%Start_cmd_mintty%" || goto :fail
 
 :: generating install launcher
 type "%Start_cmd_begin%" > "%Start_cmd_install%"
@@ -504,17 +498,15 @@ if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 :: deleting package cache
 rd /s /q "%INSTALL_ROOT%cygwin-pkg-cache"
 :: deleting temp custom conemu config
-del "%INSTALL_ROOT%ConEmu.xml"
-:: organising readme and licence files
+if exist "%INSTALL_ROOT%ConEmu.xml" (
+	del "%INSTALL_ROOT%ConEmu.xml"
+)
+:: rename readme and licence files to txt if exist
 if exist "%INSTALL_ROOT%LICENSE" (
 	rename "%INSTALL_ROOT%LICENSE" "license.txt"
-) else (
-	cscript //Nologo %DOWNLOADER% https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/LICENSE "%INSTALL_ROOT%licence.txt" || goto :fail
 )
 if exist "%INSTALL_ROOT%README.md" (
 	rename "%INSTALL_ROOT%README.md" "readme.txt"
-) else (
-	cscript //Nologo %DOWNLOADER% https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/README.md "%INSTALL_ROOT%ReadMe.txt" || goto :fail
 )
 :: deleting VB script that can download files
 del "%DOWNLOADER%"
