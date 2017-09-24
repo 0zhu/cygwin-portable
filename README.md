@@ -43,7 +43,7 @@ If you open `ConCygSys-installer.cmd` with [Notepad++](https://notepad-plus-plus
 
 - `CYGWIN_USERNAME` - the desired username *(defaults to __root__)*
 > default: root
-- `CYGWIN_SETUP` - override processor architecture, for instance idа you want to install 32bit CygWin on 64bit Windows
+- `CYGWIN_SETUP` - override processor architecture, for instance if you want to install 32bit CygWin on 64bit Windows
 > default: empty
 - `CYGWIN_MIRROR` - a [mirror](https://cygwin.com/mirrors.html) you would like to download CygWin from
 > default: http://ftp.inf.tu-dresden.de/software/windows/cygwin32
