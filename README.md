@@ -74,7 +74,7 @@ Yes, you can install it on USB stick, move installation to different folder and 
 
 > How Can I access Windows drives?
 
-/mnt/DRIVE. Additionally current Windows folder is mapped to /home/WINUSER
+/mnt/DRIVE. Additionally current Windows user folder is mapped to /home/WINUSER
 
 > Can I change username after installation
 
