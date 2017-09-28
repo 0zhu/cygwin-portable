@@ -429,6 +429,7 @@ del "%Start_cmd_install%"
 
 set conemu_config=%INSTALL_ROOT%conemu\ConEmu.xml
 if "%INSTALL_CONEMU%" == "yes" (
+	echo Replacing ConEmu config...
 	(
 		echo ^<?xml version="1.0" encoding="utf-8"?^>
 		echo ^<!--
