@@ -427,15 +427,88 @@ del "%Install_sh%"
 del "%Start_cmd_install%"
 
 
-:: downloading and installing custom ConEmu config
 set conemu_config=%INSTALL_ROOT%conemu\ConEmu.xml
-set conemu_custom_config=%INSTALL_ROOT%conemu_custom_config
 if "%INSTALL_CONEMU%" == "yes" (
-	cscript //Nologo %DOWNLOADER% https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/ConEmu.xml "%conemu_custom_config%" || goto :fail
-	echo Adding custom ConEmu config to [%conemu_config%]...
-	type "%conemu_custom_config%" > "%conemu_config%"
-	echo Deleting [%conemu_custom_config%]...
-	del "%conemu_custom_config%"
+	(
+		echo ^<?xml version="1.0" encoding="utf-8"?^>
+		echo ^<!--
+		echo Custom ConEmu config specially for CygWin+ConEmu portable build:
+		echo https://github.com/zhubanRuban/ConCygSys
+		echo --^>
+		echo ^<key name="Software"^>
+		echo 	^<key name="ConEmu"^>
+		echo 		^<key name=".Vanilla"^>
+		echo 			^<value name="StartTasksName" type="string" data="{Bash::CygWin bash}"/^>
+		echo 			^<value name="ColorTable00" type="dword" data="00000000"/^>
+		echo			^<value name="ColorTable01" type="dword" data="00ee0000"/^>
+		echo 			^<value name="ColorTable02" type="dword" data="0000cd00"/^>
+		echo 			^<value name="ColorTable03" type="dword" data="00cdcd00"/^>
+		echo 			^<value name="ColorTable04" type="dword" data="000000cd"/^>
+		echo 			^<value name="ColorTable05" type="dword" data="00cd00cd"/^>
+		echo 			^<value name="ColorTable06" type="dword" data="0000cdcd"/^>
+		echo 			^<value name="ColorTable07" type="dword" data="00e5e5e5"/^>
+		echo 			^<value name="ColorTable08" type="dword" data="007f7f7f"/^>
+		echo 			^<value name="ColorTable09" type="dword" data="00ff5c5c"/^>
+		echo 			^<value name="ColorTable10" type="dword" data="0000ff00"/^>
+		echo 			^<value name="ColorTable11" type="dword" data="00ffff00"/^>
+		echo 			^<value name="ColorTable12" type="dword" data="000000ff"/^>
+		echo 			^<value name="ColorTable13" type="dword" data="00ff00ff"/^>
+		echo 			^<value name="ColorTable14" type="dword" data="0000ffff"/^>
+		echo 			^<value name="ColorTable15" type="dword" data="00ffffff"/^>
+		echo 			^<value name="WindowMode" type="dword" data="00000520"/^>
+		echo 			^<value name="ShowScrollbar" type="hex" data="01"/^>
+		echo 			^<value name="QuakeStyle" type="hex" data="01"/^>
+		echo 			^<value name="QuakeAnimation" type="ulong" data="100"/^>
+		echo 			^<value name="Min2Tray" type="hex" data="01"/^>
+		echo 			^<value name="TryToCenter" type="hex" data="01"/^>
+		echo 			^<value name="TabFontHeight" type="long" data="12"/^>
+		echo 			^<value name="TabsLocation" type="hex" data="01"/^>
+		echo 			^<value name="TabFontFace" type="string" data="Arial Black"/^>
+		echo 			^<value name="TabConsole" type="string" data="%%m⬛m%%s"/^>
+		echo 			^<value name="TabModifiedSuffix" type="string" data="*"/^>
+		echo 			^<value name="TabDblClick" type="ulong" data="3"/^>
+		echo 			^<value name="AlphaValue" type="hex" data="dd"/^>
+		echo 			^<value name="StatusBar.Show" type="hex" data="00"/^>
+		echo 			^<value name="CTS.IntelligentExceptions" type="string" data="far"/^>
+		echo 			^<value name="CTS.ResetOnRelease" type="hex" data="01"/^>
+		echo 			^<value name="KeyboardHooks" type="hex" data="01"/^>
+		echo 			^<value name="UseInjects" type="hex" data="01"/^>
+		echo 			^<value name="Update.CheckOnStartup" type="hex" data="00"/^>
+		echo 			^<value name="Update.CheckHourly" type="hex" data="00"/^>
+		echo 			^<value name="Update.UseBuilds" type="hex" data="02"/^>
+		echo 			^<value name="FontUseUnits" type="hex" data="01"/^>
+		echo 			^<value name="FontSize" type="ulong" data="14"/^>
+		echo 			^<value name="StatusFontHeight" type="long" data="12"/^>
+		echo 			^<value name="TabFontHeight" type="long" data="12"/^>
+		echo 			^<value name="DefaultBufferHeight" type="long" data="9999"/^>
+		echo 			^<key name="HotKeys"^>
+		echo 				^<value name="MinimizeRestore" type="dword" data="000011c0"/^>
+		echo 			^</key^>
+		echo 			^<key name="Tasks"^>
+		echo 				^<value name="Count" type="long" data="1"/^>
+		echo 				^<key name="Task1"^>
+		echo 					^<value name="Name" type="string" data="{Bash::CygWin bash}"/^>
+		echo 					^<value name="Flags" type="dword" data="00000005"/^>
+		echo 					^<value name="Hotkey" type="dword" data="0000a254"/^>
+		echo 					^<value name="GuiArgs" type="string" data=""/^>
+		echo 					^<!--
+		echo 					Removed path to icon to get more space for tabs
+		echo 					Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
+		echo 					--^>
+		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
+		echo 					^<value name="Cmd1" type="string" data="%%ConEmuDir%%\..\cygwin\bin\conemu-cyg-64.exe -new_console:p1 -t cygwin"/^>
+		)
+		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
+		echo 					^<value name="Cmd1" type="string" data="%%ConEmuDir%%\..\cygwin\bin\conemu-cyg-32.exe -new_console:p1 -t cygwin"/^>
+		)
+		echo 					^<value name="Active" type="long" data="0"/^>
+		echo 					^<value name="Count" type="long" data="1"/^>
+		echo 				^</key^>
+		echo 			^</key^>
+		echo 		^</key^>
+		echo 	^</key^>
+		echo ^</key^>
+	)> "%conemu_config%" || goto :fail
 )
 
 
