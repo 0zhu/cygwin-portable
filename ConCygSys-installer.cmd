@@ -231,9 +231,9 @@ echo Creating [%Init_sh%] script to keep the installation portable...
 	echo.
 	echo # Modifying /etc/fstab to make the installation fully portable
 	echo (
-	echo echo $(cygpath -m $CYGWIN_ROOT^)/bin /usr/bin none binary,noacl,override 0 0
-	echo echo $(cygpath -m $CYGWIN_ROOT^)/lib /usr/lib none binary,noacl,override 0 0
-	echo echo $(cygpath -m $CYGWIN_ROOT^) / none binary,noacl,override 0 0
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^)/bin /usr/bin none binary,noacl,override 0 0
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^)/lib /usr/lib none binary,noacl,override 0 0
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^) / none binary,noacl,override 0 0
 	echo echo none /mnt cygdrive binary,noacl,posix=0,user 0 0
 	echo ^) ^>/etc/fstab
 	echo.
@@ -271,7 +271,7 @@ echo Creating [%Install_sh%] script to install required software...
 		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)" ^&^& \
 		echo 	echo "Download URL=$conemu_url" ^&^& \
 		echo 	wget -O "${conemu_dir}.7z" $conemu_url ^&^& \
-		echo 	mkdir $conemu_dir ^&^& \
+		echo 	mkdir "$conemu_dir" ^&^& \
 		echo 	bsdtar -xvf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
 		echo 	rm "${conemu_dir}.7z" ^&^& \
 		echo fi
