@@ -22,7 +22,7 @@
 
 ::####################### begin SCRIPT SETTINGS #######################::
 :: choose a user name under Cygwin, leave empty to use your Windows username
-set CYGWIN_USERNAME=root
+set CYGWIN_USERNAME=
 
 :: override processor architecture: setup-x86.exe for 32bit and setup-x86_64.exe for 64bit system, leave empty for autodetect
 set CYGWIN_SETUP=
