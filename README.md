@@ -20,10 +20,10 @@ This will install portable [CygWin](https://www.cygwin.com/) environment and con
 - Create a folder on your PC where you want to store ConCygSys, let it be `D:\concygsys\`
 - Download installer from [this link](https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/ConCygSys-installer.cmd) *(right click > save link as)* to `D:\concygsys\`
 - Launch `ConCygSys-installer.cmd` you downloaded to `D:\concygsys\`
-- Once the installation is finished, launch the desired shell:
-  - `ConCygSys.cmd` to run CygWin via ConEmu *(if installed)* - awesome multitab quake-style console - **recommended**
-  - `ConCygSys-bash.cmd` to run CygWin in standard Windows console - **_helpful for CygWin behaviour troubleshooting_**
-  - `ConCygSys-mintty.cmd` to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator - fully xterm-compatible, but without multitab and quake-style support - **_launch to access a server producing artefacts in ConEmu_**
+- Once the installation is finished, launch the desired shell (you can try them one-by-one to find the most suitable option for you):
+  - `ConCygSys` to run CygWin via ConEmu *(if installed)* - awesome multitab quake-style console - **recommended**
+  - `ConCygSys-cmd` to run CygWin in standard Windows console - **_helpful for CygWin behaviour troubleshooting_**
+  - `ConCygSys-mintty` to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator - fully xterm-compatible, but without multitab and quake-style support - **_launch to access a server producing artefacts in ConEmu_**
 - **have fun**
 ![source: https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg](https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg)
 
@@ -37,12 +37,12 @@ This will install portable [CygWin](https://www.cygwin.com/) environment and con
 
 ## Customization
 
-If you open `ConCygSys-installer.cmd` with [Notepad++](https://notepad-plus-plus.org/) *(forget about standard Notepad, it will mess everything up)*, you will get a control over the installation settings.
+If you open `ConCygSys-installer.cmd` with [Notepad++](https://notepad-plus-plus.org/) *(forget about standard Notepad, it will mess everything up)* before installation, you will get a control over the installation settings.
 
 **Available options:**
 
-- `CYGWIN_USERNAME` - the desired username *(defaults to __root__)*
-> default: root
+- `CYGWIN_USERNAME` - the desired username
+> default: empty (meaning current Windows username is used)
 - `CYGWIN_SETUP` - override processor architecture, for instance if you want to install 32bit CygWin on 64bit Windows
 > default: empty
 - `CYGWIN_MIRROR` - a [mirror](https://cygwin.com/mirrors.html) you would like to download CygWin from
@@ -74,16 +74,12 @@ Yes, you can install it on USB stick, move installation to different folder and 
 
 > How Can I access Windows drives?
 
-/mnt/DRIVE. Additionally current Windows user folder is mapped to /home/WINUSER
+/mnt/DRIVE
 
-> Can I change username after installation
+> Can I change username after installation?
 
-Yes, just open your favourite installer cmd file with NotePad++ and set a new username in `USERNAME=` field
+Yes, just open your favourite installer cmd file (`ConCygSys`, `ConCygSys-cmd` or `ConCygSys-mintty`) with NotePad++ and set a new username in `CYGWIN_USERNAME=` line
 
 ## License
 
 All files are released under the [Apache License 2.0](https://github.com/vegardit/bash-funk/blob/master/LICENSE.txt).
-
-## Where can I report an issue?
-
-[Here](https://github.com/zhubanRuban/ConCygSys/issues)
