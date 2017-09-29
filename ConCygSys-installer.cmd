@@ -21,7 +21,7 @@
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
-:: choose a user name under Cygwin
+:: choose a user name under Cygwin, leave empty to use your Windows username
 set CYGWIN_USERNAME=root
 
 :: override processor architecture: setup-x86.exe for 32bit and setup-x86_64.exe for 64bit system, leave empty for autodetect
@@ -31,7 +31,7 @@ set CYGWIN_SETUP=
 set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 
 :: select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
-set CYGWIN_PACKAGES=bind-utils,curl,inetutils,ipcalc,openssh,openssl,unzip,vim,whois,zip
+set CYGWIN_PACKAGES=bind-utils,curl,inetutils,openssh,openssl,whois
 
 :: select command line language: https://docs.oracle.com/cd/E23824_01/html/E26033/glset.html
 set LOCALE=en_US.UTF-8
@@ -234,7 +234,6 @@ echo Creating [%Init_sh%] script to keep the installation portable...
 	echo echo $(cygpath -m $CYGWIN_ROOT^)/bin /usr/bin none binary,noacl,override 0 0
 	echo echo $(cygpath -m $CYGWIN_ROOT^)/lib /usr/lib none binary,noacl,override 0 0
 	echo echo $(cygpath -m $CYGWIN_ROOT^) / none binary,noacl,override 0 0
-	echo echo $(cygpath -m $USERPROFILE^) /home/$(basename $USERPROFILE^) none binary,noacl,posix=0,user 0 0
 	echo echo none /mnt cygdrive binary,noacl,posix=0,user 0 0
 	echo ^) ^>/etc/fstab
 	echo.
@@ -275,13 +274,6 @@ echo Creating [%Install_sh%] script to install required software...
 		echo 	mkdir $conemu_dir ^&^& \
 		echo 	bsdtar -xvf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
 		echo 	rm "${conemu_dir}.7z" ^&^& \
-		echo 	echo "Installing ConEmu Cygwin Connector..." ^&^& \
-		echo 	conemu_connector_url="https://github.com$(wget https://github.com/Maximus5/cygwin-connector/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)" ^&^& \
-		echo 	echo "Download URL=$conemu_connector_url" ^&^& \
-		echo 	wget -O "${conemu_dir}_cygwin_connector.7z" $conemu_connector_url ^&^& \
-		echo 	bsdtar -xvf "${conemu_dir}_cygwin_connector.7z" -C "/bin"  --include 'conemu-cyg-*.exe' ^&^& \
-		echo 	chmod 755 /bin/conemu-cyg-*.exe ^&^& \
-		echo 	rm "${conemu_dir}_cygwin_connector.7z"
 		echo fi
 	)
 	if "%INSTALL_APT_CYG%" == "yes" (
@@ -343,15 +335,9 @@ echo Converting [%Init_sh%] and [%Install_sh%] scripts to unix format...
 "%CYGWIN_ROOT%\bin\dos2unix" "%Install_sh%" || goto :fail
 
 
-:: defining launchers
-set Start_cmd_begin=%INSTALL_ROOT%Begin
-set Start_cmd=%INSTALL_ROOT%ConCygSys.cmd
-set Start_cmd_cmd=%INSTALL_ROOT%ConCygSys_cmd.cmd
-set Start_cmd_mintty=%INSTALL_ROOT%ConCygSys_mintty.cmd
-set Start_cmd_install=%INSTALL_ROOT%ConCygSys_install.cmd
-
 echo Generating launcher files...
 :: generating launcher header
+set Start_cmd_begin=%INSTALL_ROOT%Begin
 (
 	echo @echo off
 	echo.
@@ -363,11 +349,15 @@ echo Generating launcher files...
 	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%.ProgramData
 	echo set ProgramData=%%ALLUSERSPROFILE%%
 	echo.
-	echo set USERNAME=%CYGWIN_USERNAME%
-	echo set HOME=/home/%%USERNAME%%
+	echo set CYGWIN_USERNAME=%CYGWIN_USERNAME%
+	echo.
+	echo if not "%%CYGWIN_USERNAME%%" == "" (
+	echo 	set USERNAME=%%CYGWIN_USERNAME%%
+	echo ^)
+	echo set HOME=/home/concygsys
+	echo set HOMEPATH=%%CYGWIN_ROOT%%\home\concygsys
 	echo set SHELL=/bin/bash
 	echo set HOMEDRIVE=%%CYGWIN_DRIVE%%
-	echo set HOMEPATH=%%CYGWIN_ROOT%%\home\%%USERNAME%%
 	echo set LANG=%LOCALE%
 	echo.
 	echo chdir "%%CYGWIN_ROOT%%\bin"
@@ -376,10 +366,10 @@ echo Generating launcher files...
 ) >"%Start_cmd_begin%" || goto :fail
 
 :: generating conemu launcher
+set Start_cmd=%INSTALL_ROOT%ConCygSys.cmd
 if "%INSTALL_CONEMU%" == "yes" (
-	type "%Start_cmd_begin%" >"%Start_cmd%"
 	(
-		echo echo Launching CygWin via ConEmu console
+		type "%Start_cmd_begin%"
 		echo if "%%PROCESSOR_ARCHITEW6432%%" == "AMD64" (
 		echo 	start %%~dp0conemu\ConEmu64.exe %CON_EMU_OPTIONS%
 		echo ^) else (
@@ -389,26 +379,31 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 		start %%~dp0conemu\ConEmu64.exe %CON_EMU_OPTIONS%
 		echo 	^)
 		echo ^)
-	) >>"%Start_cmd%" || goto :fail
+	) >"%Start_cmd%" || goto :fail
 )
 
 :: generating cmd launcher
-type "%Start_cmd_begin%" > "%Start_cmd_cmd%"
+set Start_cmd_cmd=%INSTALL_ROOT%ConCygSys_cmd.cmd
 (
+	type "%Start_cmd_begin%"
 	echo if "%%1" == "" (
 	echo 	bash --login -i
 	echo ^) else (
 	echo 	bash --login -c %%*
 	echo ^)
-) >>"%Start_cmd_cmd%" || goto :fail
+) >"%Start_cmd_cmd%" || goto :fail
 
 :: generating mintty launcher
-type "%Start_cmd_begin%" > "%Start_cmd_mintty%"
-(echo mintty --nopin %MINTTY_OPTIONS% --icon %CYGWIN_ROOT%\Cygwin-Terminal.ico -) >>"%Start_cmd_mintty%" || goto :fail
+set Start_cmd_mintty=%INSTALL_ROOT%ConCygSys_mintty.cmd
+(
+	type "%Start_cmd_begin%"
+	echo mintty --nopin %MINTTY_OPTIONS% --icon %CYGWIN_ROOT%\Cygwin-Terminal.ico -
+) >"%Start_cmd_mintty%" || goto :fail
 
 :: generating install launcher
-type "%Start_cmd_begin%" > "%Start_cmd_install%"
+set Start_cmd_install=%INSTALL_ROOT%ConCygSys_install.cmd
 (
+	type "%Start_cmd_begin%"
 	echo bash "%%CYGWIN_ROOT%%\portable-install.sh"
 	echo if "%%1" == "" (
 	echo 	bash --login -i
@@ -417,7 +412,7 @@ type "%Start_cmd_begin%" > "%Start_cmd_install%"
 	echo ^)
 	echo.
 	echo cd "%%CWD%%"
-) >>"%Start_cmd_install%" || goto :fail
+) >"%Start_cmd_install%" || goto :fail
 
 echo Launching bash once to initialize user home dir...
 call %Start_cmd_install% whoami
@@ -488,20 +483,30 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 			^<key name="Tasks"^>
 		echo 				^<value name="Count" type="long" data="1"/^>
 		echo 				^<key name="Task1"^>
-		echo 					^<value name="Name" type="string" data="{Bash::CygWin bash}"/^>
+		echo 					^<value name="Name" type="string" data="{CygWin via Connector}"/^>
 		echo 					^<value name="Flags" type="dword" data="00000005"/^>
 		echo 					^<value name="Hotkey" type="dword" data="0000a254"/^>
 		echo 					^<value name="GuiArgs" type="string" data=""/^>
 		echo 					^<!--
 		echo 					Removed path to icon to get more space for tabs
+		echo 					The latest ConEmu releases come with cygwin connector preinstalled
 		echo 					Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
 		echo 					--^>
 		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-		echo 					^<value name="Cmd1" type="string" data="%%ConEmuDir%%\..\cygwin\bin\conemu-cyg-64.exe -new_console:p1 -t cygwin"/^>
+		echo 					^<value name="Cmd1" type="string" data="%%ConEmuDir%%\ConEmu\conemu-cyg-64.exe -new_console:p1 -t cygwin"/^>
 		)
 		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-		echo 					^<value name="Cmd1" type="string" data="%%ConEmuDir%%\..\cygwin\bin\conemu-cyg-32.exe -new_console:p1 -t cygwin"/^>
+		echo 					^<value name="Cmd1" type="string" data="%%ConEmuDir%%\ConEmu\conemu-cyg-32.exe -new_console:p1 -t cygwin"/^>
 		)
+		echo 					^<value name="Active" type="long" data="0"/^>
+		echo 					^<value name="Count" type="long" data="1"/^>
+		echo 				^</key^>
+		echo 				^<key name="Task2"^>
+		echo 					^<value name="Name" type="string" data="{CygWin Bash}"/>
+		echo 					^<value name="Flags" type="dword" data="00000004"/^>
+		echo 					^<value name="Hotkey" type="dword" data="0000a242"/^>
+		echo 					^<value name="GuiArgs" type="string" data=""/^>
+		echo 					^<value name="Cmd1" type="string" data="%%ConEmuDir%%\..\cygwin\bin\bash.exe --login -i"/^>
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
 		echo 				^</key^>
@@ -587,10 +592,10 @@ del "%DOWNLOADER%"
 
 echo.
 echo ###########################################################
-echo # Installing [Cygwin Portable] succeeded.
+echo # Installation succeeded.
 echo ###########################################################
 echo.
-echo Use launchers in [%INSTALL_ROOT%] to run Cygwin Portable.
+echo Use launchers in [%INSTALL_ROOT%] to run ConCygSys.
 echo.
 pause
 :: deleting installer
@@ -600,7 +605,7 @@ goto :eof
 :fail
 	echo.
 	echo ###########################################################
-	echo #Installing [Cygwin Portable] FAILED!
+	echo #Installation FAILED!
 	echo ###########################################################
 	echo.
 	pause
