@@ -268,12 +268,12 @@ echo Creating [%Install_sh%] script to install required software...
 		echo conemu_dir=$(cygpath -w "$CYGWIN_ROOT/../conemu"^)
 		echo if [[ ! -e $conemu_dir ]]; then
 		echo 	echo "Installing ConEmu..."
-		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)" ^&^& \
-		echo 	echo "Download URL=$conemu_url" ^&^& \
-		echo 	wget -O "${conemu_dir}.7z" $conemu_url ^&^& \
-		echo 	mkdir "$conemu_dir" ^&^& \
-		echo 	bsdtar -xvf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
-		echo 	rm "${conemu_dir}.7z" ^&^& \
+		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)"
+		echo 	echo "Download URL=$conemu_url"
+		echo 	wget -O "${conemu_dir}.7z" $conemu_url
+		echo 	mkdir "$conemu_dir"
+		echo 	bsdtar -xvf "${conemu_dir}.7z" -C "$conemu_dir"
+		echo 	rm "${conemu_dir}.7z"
 		echo fi
 	)
 	if "%INSTALL_APT_CYG%" == "yes" (
@@ -397,7 +397,7 @@ set Start_cmd_cmd=%INSTALL_ROOT%ConCygSys_cmd.cmd
 set Start_cmd_mintty=%INSTALL_ROOT%ConCygSys_mintty.cmd
 (
 	type "%Start_cmd_begin%"
-	echo mintty --nopin %MINTTY_OPTIONS% --icon %CYGWIN_ROOT%\Cygwin-Terminal.ico -
+	echo mintty --nopin %MINTTY_OPTIONS% --icon "%CYGWIN_ROOT%\Cygwin-Terminal.ico" -
 ) >"%Start_cmd_mintty%" || goto :fail
 
 :: generating install launcher
