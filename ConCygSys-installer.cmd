@@ -151,7 +151,7 @@ if exist "%CYGWIN_ROOT%\%CYGWIN_SETUP%" (
 echo Chosen installer: %CYGWIN_SETUP%
 
 :: downloading cygwin installer
-cscript //Nologo %DOWNLOADER% http://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
+cscript //Nologo "%DOWNLOADER%" http://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
 
 :: Cygwin command line options: https://cygwin.com/faq/faq.html#faq.setup.cli
 if "%PROXY_HOST%" == "" (
@@ -212,15 +212,15 @@ if exist "%Cygwin_bat%" (
 	if exist "%Cygwin_bat%.disabled" (
 		del "%Cygwin_bat%.disabled" || goto :fail
 	)
-	rename %Cygwin_bat% Cygwin.bat.disabled || goto :fail
+	rename "%Cygwin_bat%" Cygwin.bat.disabled || goto :fail
 )
 
 
 :configure
 :: disable Cygwin's - apparently broken - special ACL treatment which prevents apt-cyg and other programs from working
 echo Replacing etc/fstab
-rename %CYGWIN_ROOT%\etc\fstab fstab.orig || goto :fail
-echo none /cygdrive cygdrive binary,noacl,posix=0,user 0 0 > %CYGWIN_ROOT%\etc\fstab
+rename "%CYGWIN_ROOT%\etc\fstab" fstab.orig || goto :fail
+echo none /cygdrive cygdrive binary,noacl,posix=0,user 0 0 >"%CYGWIN_ROOT%\etc\fstab"
 
 :: creating portable-init.sh script to keep the installation portable
 :: also sends commands to bash to install ConEmu and other software is selected in settings
@@ -415,7 +415,7 @@ set Start_cmd_install=%INSTALL_ROOT%ConCygSys_install.cmd
 ) >"%Start_cmd_install%" || goto :fail
 
 echo Launching bash once to initialize user home dir...
-call %Start_cmd_install% whoami
+call "%Start_cmd_install%" whoami
 :: deleting temp files
 del "%Start_cmd_begin%"
 del "%Install_sh%"
@@ -460,7 +460,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 			^<value name="TabFontHeight" type="long" data="12"/^>
 		echo 			^<value name="TabsLocation" type="hex" data="01"/^>
 		echo 			^<value name="TabFontFace" type="string" data="Arial Black"/^>
-		echo 			^<value name="TabConsole" type="string" data="%%m⬛m%%s"/^>
+		echo 			^<value name="TabConsole" type="string" data="%%m⬛ m%%s"/^>
 		echo 			^<value name="TabModifiedSuffix" type="string" data="*"/^>
 		echo 			^<value name="TabDblClick" type="ulong" data="3"/^>
 		echo 			^<value name="AlphaValue" type="hex" data="dd"/^>
@@ -523,6 +523,7 @@ set Bashrc_sh=%CYGWIN_ROOT%\home\%CYGWIN_USERNAME%\.bashrc
 
 :: inserting proxy settings to .bashrc
 if not "%PROXY_HOST%" == "" (
+	echo.
 	echo Adding proxy settings for host [%COMPUTERNAME%] to [/home/%CYGWIN_USERNAME%/.bashrc]...
 	find "export http_proxy" "%Bashrc_sh%" >NUL || (
 	echo.
@@ -551,8 +552,8 @@ set bashrc_custom_config=%INSTALL_ROOT%bashrc_custom_config
 set Inputrc_sh=%CYGWIN_ROOT%\home\%CYGWIN_USERNAME%\.inputrc
 set inputrc_custom_config=%INSTALL_ROOT%inputrc_custom_config
 if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
-	cscript //Nologo %DOWNLOADER% https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/bashrc_custom "%bashrc_custom_config%" || goto :fail
-	cscript //Nologo %DOWNLOADER% https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/inputrc_custom "%inputrc_custom_config%" || goto :fail
+	cscript //Nologo "%DOWNLOADER%" https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/bashrc_custom "%bashrc_custom_config%" || goto :fail
+	cscript //Nologo "%DOWNLOADER%" https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/inputrc_custom "%inputrc_custom_config%" || goto :fail
 	echo Adding .bashrc customizations to [/home/%CYGWIN_USERNAME%/.bashrc] and [/home/%CYGWIN_USERNAME%/.inputrc]...
 	type "%bashrc_custom_config%" >> "%Bashrc_sh%"
 	type "%inputrc_custom_config%" >> "%Inputrc_sh%"
@@ -563,7 +564,7 @@ if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
 :: inserting ssh-agent settings
 set ssh_agent_config=%INSTALL_ROOT%ssh_agent_config
 if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
-	cscript //Nologo %DOWNLOADER% https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/re-use-ssh-agent "%ssh_agent_config%" || goto :fail
+	cscript //Nologo "%DOWNLOADER%" https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/re-use-ssh-agent "%ssh_agent_config%" || goto :fail
 	echo Adding SSH agent tweak to [/home/%CYGWIN_USERNAME%/.bashrc]...
 	type "%ssh_agent_config%" >> "%Bashrc_sh%"
 	echo Deleting [%ssh_agent_config%]...
