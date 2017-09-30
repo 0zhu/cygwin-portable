@@ -36,6 +36,9 @@ set CYGWIN_PACKAGES=bind-utils,curl,inetutils,openssh,openssl,whois
 :: select command line language: https://docs.oracle.com/cd/E23824_01/html/E26033/glset.html
 set LOCALE=en_US.UTF-8
 
+:: CygWin ACLs, refer to FAQ at https://github.com/zhubanRuban/ConCygSys
+set INSTALL_ACL=no
+
 :: if set to 'yes' the apt-cyg command line package manager (https://github.com/transcode-open/apt-cyg) will be installed automatically
 set INSTALL_APT_CYG=yes
 
@@ -195,7 +198,7 @@ echo Running Cygwin setup...
 "%CYGWIN_ROOT%\%CYGWIN_SETUP%" --no-admin ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --root "%CYGWIN_ROOT%" ^
---local-package-dir "%CYGWIN_ROOT%-pkg-cache" ^
+--local-package-dir "%CYGWIN_ROOT%\pkg-cache" ^
 --no-shortcuts ^
 --no-desktop ^
 --delete-orphans ^
@@ -203,6 +206,43 @@ echo Running Cygwin setup...
 --no-replaceonreboot ^
 --quiet-mode ^
 --packages dos2unix,wget,%CYGWIN_PACKAGES% || goto :fail
+
+set cygwin_updater=%CYGWIN_ROOT%\updater.cmd
+echo Creating CygWin updater [%cygwin_updater%]...
+(
+	echo @echo off
+	echo set CYGWIN_ROOT=%%~dp0
+	echo :: all cygwin installer commandline options: https://www.cygwin.com/faq/faq.html#faq.setup.cli
+	echo echo.
+	echo echo Running Cygwin update...
+	echo echo.
+	echo "%%CYGWIN_ROOT%%%CYGWIN_SETUP%" --no-admin ^^
+	echo --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^^
+	echo --root "%%CYGWIN_ROOT%%" ^^
+	echo --local-package-dir "%%CYGWIN_ROOT%%pkg-cache" ^^
+	echo --no-shortcuts ^^
+	echo --no-desktop ^^
+	echo --delete-orphans ^^
+	echo --upgrade-also ^^
+	echo --no-replaceonreboot ^^
+	echo --quiet-mode ^|^| goto :fail
+	echo echo.
+	echo echo ###########################################################
+	echo echo # Update succeeded.
+	echo echo ###########################################################
+	echo echo.
+	echo pause
+	echo rd /s /q "%%CYGWIN_ROOT%%pkg-cache"
+	echo goto :eof
+	echo :fail
+	echo 	echo.
+	echo 	echo ###########################################################
+	echo 	echo # Update FAILED!
+	echo 	echo ###########################################################
+	echo 	echo.
+	echo 	pause
+	echo 	exit /b 1
+) >"%cygwin_updater%" || goto :fail
 
  
 echo Disabling stock Cygwin launcher...
@@ -230,10 +270,13 @@ echo Creating [%Init_sh%] script to keep the installation portable...
 	echo #!/usr/bin/env bash
 	echo.
 	echo # Modifying /etc/fstab to make the installation fully portable
+	echo # if cygwin is installed in folder with spaces, they are replaced with \040 (fstab compatible^)
 	echo (
-	echo echo $(cygpath -m "$CYGWIN_ROOT"^)/bin /usr/bin none binary,noacl,override 0 0
-	echo echo $(cygpath -m "$CYGWIN_ROOT"^)/lib /usr/lib none binary,noacl,override 0 0
-	echo echo $(cygpath -m "$CYGWIN_ROOT"^) / none binary,noacl,override 0 0
+if not "%INSTALL_ACL%" == "yes" (
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/'^)/bin /usr/bin none binary,noacl,override 0 0
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/'^)/lib /usr/lib none binary,noacl,override 0 0
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/'^) / none binary,noacl,override 0 0
+)
 	echo echo none /mnt cygdrive binary,noacl,posix=0,user 0 0
 	echo ^) ^>/etc/fstab
 	echo.
@@ -243,8 +286,8 @@ echo Creating [%Init_sh%] script to keep the installation portable...
 	echo ^) ^>/etc/passwd
 	echo.
 	echo # adjust Cygwin packages cache path
-	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/../cygwin-pkg-cache"^)
-	echo sed -i -E "s/.*\\\cygwin-pkg-cache/        ${pkg_cache_dir//\\/\\\\}/" /etc/setup/setup.rc
+	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/pkg-cache"^)
+	echo sed -i '/^^last-cache/!b;n;c\\t'"${pkg_cache_dir//\\/\\\\}"'' /etc/setup/setup.rc
 	echo.
 	echo # remove apt-get cache
 	echo rm -rf /http*
@@ -469,7 +512,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 			^<value name="CTS.ResetOnRelease" type="hex" data="01"/^>
 		echo 			^<value name="KeyboardHooks" type="hex" data="01"/^>
 		echo 			^<value name="UseInjects" type="hex" data="01"/^>
-		echo 			^<value name="Update.CheckOnStartup" type="hex" data="00"/^>
+		echo 			^<value name="Update.CheckOnStartup" type="hex" data="01"/^>
 		echo 			^<value name="Update.CheckHourly" type="hex" data="00"/^>
 		echo 			^<value name="Update.UseBuilds" type="hex" data="02"/^>
 		echo 			^<value name="FontUseUnits" type="hex" data="01"/^>
@@ -502,7 +545,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 					^<value name="Count" type="long" data="1"/^>
 		echo 				^</key^>
 		echo 				^<key name="Task2"^>
-		echo 					^<value name="Name" type="string" data="{CygWin Bash}"/>
+		echo 					^<value name="Name" type="string" data="{CygWin Bash}"/^>
 		echo 					^<value name="Flags" type="dword" data="00000004"/^>
 		echo 					^<value name="Hotkey" type="dword" data="0000a242"/^>
 		echo 					^<value name="GuiArgs" type="string" data=""/^>
@@ -518,6 +561,9 @@ if "%INSTALL_CONEMU%" == "yes" (
 )
 
 
+if "%CYGWIN_USERNAME%" == "" (
+	set CYGWIN_USERNAME=concygsys
+)
 :: setting path to .bashrc
 set Bashrc_sh=%CYGWIN_ROOT%\home\%CYGWIN_USERNAME%\.bashrc
 
@@ -576,7 +622,11 @@ if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 
 
 :: deleting package cache
-rd /s /q "%INSTALL_ROOT%cygwin-pkg-cache"
+rd /s /q "%CYGWIN_ROOT%\pkg-cache"
+:: deleting data folder
+if exist "%INSTALL_ROOT%data" (
+	rd /s /q "%INSTALL_ROOT%data"
+)
 :: deleting temp custom conemu config
 if exist "%INSTALL_ROOT%ConEmu.xml" (
 	del "%INSTALL_ROOT%ConEmu.xml"
@@ -596,7 +646,7 @@ echo ###########################################################
 echo # Installation succeeded.
 echo ###########################################################
 echo.
-echo Use launchers in [%INSTALL_ROOT%] to run ConCygSys.
+echo Use launchers in [%INSTALL_ROOT%] to run CygWin Portable.
 echo.
 pause
 :: deleting installer
