@@ -218,7 +218,7 @@ echo Creating CygWin updater [%cygwin_updater%]...
 	echo echo.
 	echo "%%CYGWIN_ROOT%%%CYGWIN_SETUP%" --no-admin ^^
 	echo --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^^
-	echo --root "%%CYGWIN_ROOT%%" ^^
+	echo --root "%%CYGWIN_ROOT%%." ^^
 	echo --local-package-dir "%%CYGWIN_ROOT%%pkg-cache" ^^
 	echo --no-shortcuts ^^
 	echo --no-desktop ^^
@@ -389,7 +389,7 @@ set Start_cmd_begin=%INSTALL_ROOT%Begin
 	echo set CYGWIN_ROOT=%%~dp0cygwin
 	echo.
 	echo set PATH=%CYGWIN_PATH%;%%CYGWIN_ROOT%%\bin;%%CYGWIN_ROOT%%\usr\local\sbin
-	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%.ProgramData
+	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%\ProgramData
 	echo set ProgramData=%%ALLUSERSPROFILE%%
 	echo.
 	echo set CYGWIN_USERNAME=%CYGWIN_USERNAME%
@@ -414,12 +414,12 @@ if "%INSTALL_CONEMU%" == "yes" (
 	(
 		type "%Start_cmd_begin%"
 		echo if "%%PROCESSOR_ARCHITEW6432%%" == "AMD64" (
-		echo 	start %%~dp0conemu\ConEmu64.exe %CON_EMU_OPTIONS%
+		echo 	start "" "%%~dp0conemu\ConEmu64.exe" %CON_EMU_OPTIONS%
 		echo ^) else (
 		echo 	if "%%PROCESSOR_ARCHITECTURE%%" == "x86" (
-		echo 		start %%~dp0conemu\ConEmu.exe %CON_EMU_OPTIONS%
+		echo 		start "" "%%~dp0conemu\ConEmu.exe" %CON_EMU_OPTIONS%
 		echo 	^) else (
-		echo 		start %%~dp0conemu\ConEmu64.exe %CON_EMU_OPTIONS%
+		echo 		start "" "%%~dp0conemu\ConEmu64.exe" %CON_EMU_OPTIONS%
 		echo 	^)
 		echo ^)
 	) >"%Start_cmd%" || goto :fail
