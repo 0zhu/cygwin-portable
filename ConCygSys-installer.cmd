@@ -24,6 +24,9 @@
 :: choose a user name under Cygwin, leave empty to use your Windows username
 set CYGWIN_USERNAME=
 
+:: home folder name e.g. /home/HOME_FOLDER
+set HOME_FOLDER=concygsys
+
 :: override processor architecture: setup-x86.exe for 32bit and setup-x86_64.exe for 64bit system, leave empty for autodetect
 set CYGWIN_SETUP=
 
@@ -393,12 +396,13 @@ set Start_cmd_begin=%INSTALL_ROOT%Begin
 	echo set ProgramData=%%ALLUSERSPROFILE%%
 	echo.
 	echo set CYGWIN_USERNAME=%CYGWIN_USERNAME%
+	echo set HOME_FOLDER=%HOME_FOLDER%
 	echo.
 	echo if not "%%CYGWIN_USERNAME%%" == "" (
 	echo 	set USERNAME=%%CYGWIN_USERNAME%%
 	echo ^)
-	echo set HOME=/home/concygsys
-	echo set HOMEPATH=%%CYGWIN_ROOT%%\home\concygsys
+	echo set HOME=/home/%HOME_FOLDER%
+	echo set HOMEPATH=%%CYGWIN_ROOT%%\home\%HOME_FOLDER%
 	echo set SHELL=/bin/bash
 	echo set HOMEDRIVE=%%CYGWIN_DRIVE%%
 	echo set LANG=%LOCALE%
@@ -561,16 +565,13 @@ if "%INSTALL_CONEMU%" == "yes" (
 )
 
 
-if "%CYGWIN_USERNAME%" == "" (
-	set CYGWIN_USERNAME=concygsys
-)
 :: setting path to .bashrc
-set Bashrc_sh=%CYGWIN_ROOT%\home\%CYGWIN_USERNAME%\.bashrc
+set Bashrc_sh=%CYGWIN_ROOT%\home\%HOME_FOLDER%\.bashrc
 
 :: inserting proxy settings to .bashrc
 if not "%PROXY_HOST%" == "" (
 	echo.
-	echo Adding proxy settings for host [%COMPUTERNAME%] to [/home/%CYGWIN_USERNAME%/.bashrc]...
+	echo Adding proxy settings for host [%COMPUTERNAME%] to [/home/%HOME_FOLDER%/.bashrc]...
 	find "export http_proxy" "%Bashrc_sh%" >NUL || (
 	echo.
 	echo if [[ $HOSTNAME == "%COMPUTERNAME%" ]]; then
@@ -585,7 +586,7 @@ if not "%PROXY_HOST%" == "" (
 )
 :: inserting soursing bash-funk in .bashrc if one is selected to install
 if "%INSTALL_BASH_FUNK%" == "yes" (
-	echo Adding bash-funk to [/home/%CYGWIN_USERNAME%/.bashrc]...
+	echo Adding bash-funk to [/home/%HOME_FOLDER%/.bashrc]...
 	find "bash-funk" "%Bashrc_sh%" >NUL || (
 		(
 			echo.
@@ -595,12 +596,12 @@ if "%INSTALL_BASH_FUNK%" == "yes" (
 )
 :: inserting custom .bashrc settings
 set bashrc_custom_config=%INSTALL_ROOT%bashrc_custom_config
-set Inputrc_sh=%CYGWIN_ROOT%\home\%CYGWIN_USERNAME%\.inputrc
+set Inputrc_sh=%CYGWIN_ROOT%\home\%HOME_FOLDER%\.inputrc
 set inputrc_custom_config=%INSTALL_ROOT%inputrc_custom_config
 if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
 	cscript //Nologo "%DOWNLOADER%" https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/bashrc_custom "%bashrc_custom_config%" || goto :fail
 	cscript //Nologo "%DOWNLOADER%" https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/inputrc_custom "%inputrc_custom_config%" || goto :fail
-	echo Adding .bashrc customizations to [/home/%CYGWIN_USERNAME%/.bashrc] and [/home/%CYGWIN_USERNAME%/.inputrc]...
+	echo Adding .bashrc customizations to [/home/%HOME_FOLDER%/.bashrc] and [/home/%HOME_FOLDER%/.inputrc]...
 	type "%bashrc_custom_config%" >> "%Bashrc_sh%"
 	type "%inputrc_custom_config%" >> "%Inputrc_sh%"
 	echo Deleting [%bashrc_custom_config%] and [%inputrc_custom_config%]...
@@ -611,7 +612,7 @@ if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
 set ssh_agent_config=%INSTALL_ROOT%ssh_agent_config
 if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 	cscript //Nologo "%DOWNLOADER%" https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/re-use-ssh-agent "%ssh_agent_config%" || goto :fail
-	echo Adding SSH agent tweak to [/home/%CYGWIN_USERNAME%/.bashrc]...
+	echo Adding SSH agent tweak to [/home/%HOME_FOLDER%/.bashrc]...
 	type "%ssh_agent_config%" >> "%Bashrc_sh%"
 	echo Deleting [%ssh_agent_config%]...
 	del "%ssh_agent_config%"
