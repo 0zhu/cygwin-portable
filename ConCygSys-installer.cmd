@@ -228,42 +228,14 @@ echo Creating CygWin updater [%cygwin_updater%]...
 	echo --delete-orphans ^^
 	echo --upgrade-also ^^
 	echo --no-replaceonreboot ^^
-	echo --quiet-mode ^|^| goto :fail
-	echo echo.
-	echo echo ###########################################################
-	echo echo # Update succeeded.
-	echo echo ###########################################################
+	echo --quiet-mode
 	echo echo.
 	echo pause
 	echo rd /s /q "%%CYGWIN_ROOT%%pkg-cache"
-	echo goto :eof
-	echo :fail
-	echo 	echo.
-	echo 	echo ###########################################################
-	echo 	echo # Update FAILED!
-	echo 	echo ###########################################################
-	echo 	echo.
-	echo 	pause
-	echo 	exit /b 1
 ) >"%cygwin_updater%" || goto :fail
-
- 
-echo Disabling stock Cygwin launcher...
-set Cygwin_bat=%CYGWIN_ROOT%\Cygwin.bat
-if exist "%Cygwin_bat%" (
-	echo Disabling [%Cygwin_bat%]...
-	if exist "%Cygwin_bat%.disabled" (
-		del "%Cygwin_bat%.disabled" || goto :fail
-	)
-	rename "%Cygwin_bat%" Cygwin.bat.disabled || goto :fail
-)
 
 
 :configure
-:: disable Cygwin's - apparently broken - special ACL treatment which prevents apt-cyg and other programs from working
-echo Replacing etc/fstab
-rename "%CYGWIN_ROOT%\etc\fstab" fstab.orig || goto :fail
-echo none /cygdrive cygdrive binary,noacl,posix=0,user 0 0 >"%CYGWIN_ROOT%\etc\fstab"
 
 :: creating portable-init.sh script to keep the installation portable
 :: also sends commands to bash to install ConEmu and other software is selected in settings
@@ -271,6 +243,11 @@ set Init_sh=%CYGWIN_ROOT%\portable-init.sh
 echo Creating [%Init_sh%] script to keep the installation portable...
 (
 	echo #!/usr/bin/env bash
+	echo.
+	echo # Setting custom CygWin username
+	echo (
+	echo mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USERNAME\"; \$6=\"$HOME\"; print}"
+	echo ^) ^>/etc/passwd
 	echo.
 	echo # Modifying /etc/fstab to make the installation fully portable
 	echo # if cygwin is installed in folder with spaces, they are replaced with \040 (fstab compatible^)
@@ -282,11 +259,6 @@ if not "%INSTALL_ACL%" == "yes" (
 )
 	echo echo none /mnt cygdrive binary,noacl,posix=0,user 0 0
 	echo ^) ^>/etc/fstab
-	echo.
-	echo # Setting custom CygWin username
-	echo (
-	echo mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USERNAME\"; \$6=\"$HOME\"; print}"
-	echo ^) ^>/etc/passwd
 	echo.
 	echo # adjust Cygwin packages cache path
 	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/pkg-cache"^)
@@ -407,6 +379,7 @@ set Start_cmd_begin=%INSTALL_ROOT%Begin
 	echo set HOMEDRIVE=%%CYGWIN_DRIVE%%
 	echo set LANG=%LOCALE%
 	echo.
+	echo %%CYGWIN_DRIVE%%
 	echo chdir "%%CYGWIN_ROOT%%\bin"
 	echo bash "%%CYGWIN_ROOT%%\portable-init.sh"
 	echo.
