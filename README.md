@@ -87,9 +87,18 @@ Set to **no** if you want fully portable environment. Minimal permissions you wi
 
 Yes, you can install it on USB stick, move installation to different folder and different PC
 
-> How Can I access Windows drives?
+> What is the path to Windows drives when I'm in CygWin console?
 
 /mnt/DRIVE
+
+BTW, different Windows files are symlinked in CygWin environment, for instance:
+
+- `/etc/hosts` file in CygWin is linked to `%WINDIR%\System32\drivers\etc\hosts`
+- if you go to `/proc/registry` folder, you will see Windows registry structure
+
+Many Windows programs can be executed from CygWin as well, for instance:
+
+`ipconfig /flushdns` - to flush your local DNS cache
 
 > Can I change username after installation?
 
