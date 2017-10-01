@@ -15,7 +15,7 @@ This will install portable [CygWin](https://www.cygwin.com/) environment and con
 
 ## Installation
 
-> In order to install ConCygSys successully, make sure you uninstalled any existing non-portable [CygWin](https://cygwin.com/faq/faq.html#faq.setup.uninstall-all) and [ConEmu](https://conemu.github.io/en/Installation.html) instances. Also disable antivirus software on your PC. [Why it is recommended](https://cygwin.com/faq/faq.html#faq.using.bloda)
+> In order to install ConCygSys successully, make sure you uninstalled any existing non-portable [CygWin](https://cygwin.com/faq/faq.html#faq.setup.uninstall-all) and [ConEmu](https://conemu.github.io/en/Installation.html) instances. Also disable antivirus software on your PC during installation. [Why it is recommended](https://cygwin.com/faq/faq.html#faq.using.bloda)
 
 - Create a folder on your PC where you want to store ConCygSys, let it be `D:\concygsys\`
 - Download installer from [this link](https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/ConCygSys-installer.cmd) *(right click > save link as)* to `D:\concygsys\`
