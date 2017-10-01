@@ -34,7 +34,7 @@ set CYGWIN_SETUP=
 set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 
 :: select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
-set CYGWIN_PACKAGES=bind-utils,curl,inetutils,openssh,openssl,whois
+set CYGWIN_PACKAGES=bind-utils,curl,inetutils,openssh,openssl,vim,whois
 
 :: select command line language: https://docs.oracle.com/cd/E23824_01/html/E26033/glset.html
 set LOCALE=en_US.UTF-8
