@@ -253,9 +253,9 @@ echo Creating [%Init_sh%] script to keep the installation portable...
 	echo # if cygwin is installed in folder with spaces, they are replaced with \040 (fstab compatible^)
 	echo (
 if not "%INSTALL_ACL%" == "yes" (
-	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/'^)/bin /usr/bin none binary,noacl,override 0 0
-	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/'^)/lib /usr/lib none binary,noacl,override 0 0
-	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/'^) / none binary,noacl,override 0 0
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/bin /usr/bin none binary,noacl,override 0 0
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/lib /usr/lib none binary,noacl,override 0 0
+	echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^) / none binary,noacl,override 0 0
 )
 	echo echo none /mnt cygdrive binary,noacl,posix=0,user 0 0
 	echo ^) ^>/etc/fstab
