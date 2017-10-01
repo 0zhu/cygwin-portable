@@ -263,9 +263,6 @@ if not "%INSTALL_ACL%" == "yes" (
 	echo # adjust Cygwin packages cache path
 	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/pkg-cache"^)
 	echo sed -i '/^^last-cache/!b;n;c\\t'"${pkg_cache_dir//\\/\\\\}"'' /etc/setup/setup.rc
-	echo.
-	echo # remove apt-get cache
-	echo rm -rf /http*
 ) >"%Init_sh%" || goto :fail
 	
 set Install_sh=%CYGWIN_ROOT%\portable-install.sh
@@ -359,7 +356,6 @@ set Start_cmd_begin=%INSTALL_ROOT%Begin
 (
 	echo @echo off
 	echo.
-	echo set CWD=%%cd%%
 	echo set CYGWIN_DRIVE=%%~d0
 	echo set CYGWIN_ROOT=%%~dp0cygwin
 	echo.
@@ -380,6 +376,8 @@ set Start_cmd_begin=%INSTALL_ROOT%Begin
 	echo set LANG=%LOCALE%
 	echo.
 	echo %%CYGWIN_DRIVE%%
+	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache"
+	echo type NUL ^>"%%CYGWIN_ROOT%%\etc\fstab"
 	echo chdir "%%CYGWIN_ROOT%%\bin"
 	echo bash "%%CYGWIN_ROOT%%\portable-init.sh"
 	echo.
@@ -423,6 +421,7 @@ set Start_cmd_mintty=%INSTALL_ROOT%ConCygSys_mintty.cmd
 :: generating install launcher
 set Start_cmd_install=%INSTALL_ROOT%ConCygSys_install.cmd
 (
+	echo set CWD=%%cd%%
 	type "%Start_cmd_begin%"
 	echo bash "%%CYGWIN_ROOT%%\portable-install.sh"
 	echo if "%%1" == "" (
@@ -454,7 +453,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo ^<key name="Software"^>
 		echo 	^<key name="ConEmu"^>
 		echo 		^<key name=".Vanilla"^>
-		echo 			^<value name="StartTasksName" type="string" data="{Bash::CygWin bash}"/^>
+		echo 			^<value name="StartTasksName" type="string" data="{CygWin via Connector}"/^>
 		echo 			^<value name="ColorTable00" type="dword" data="00000000"/^>
 		echo			^<value name="ColorTable01" type="dword" data="00ee0000"/^>
 		echo 			^<value name="ColorTable02" type="dword" data="0000cd00"/^>
@@ -501,7 +500,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 				^<value name="MinimizeRestore" type="dword" data="000011c0"/^>
 		echo 			^</key^>
 		echo 			^<key name="Tasks"^>
-		echo 				^<value name="Count" type="long" data="1"/^>
+		echo 				^<value name="Count" type="long" data="2"/^>
 		echo 				^<key name="Task1"^>
 		echo 					^<value name="Name" type="string" data="{CygWin via Connector}"/^>
 		echo 					^<value name="Flags" type="dword" data="00000005"/^>
@@ -600,10 +599,6 @@ rd /s /q "%CYGWIN_ROOT%\pkg-cache"
 :: deleting data folder
 if exist "%INSTALL_ROOT%data" (
 	rd /s /q "%INSTALL_ROOT%data"
-)
-:: deleting temp custom conemu config
-if exist "%INSTALL_ROOT%ConEmu.xml" (
-	del "%INSTALL_ROOT%ConEmu.xml"
 )
 :: rename readme and licence files to txt if exist
 if exist "%INSTALL_ROOT%LICENSE" (
