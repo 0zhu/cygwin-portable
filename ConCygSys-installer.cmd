@@ -376,7 +376,7 @@ set Start_cmd_begin=%INSTALL_ROOT%Begin
 	echo set LANG=%LOCALE%
 	echo.
 	echo %%CYGWIN_DRIVE%%
-	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache"
+	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache" 2^>NUL
 	echo type NUL ^>"%%CYGWIN_ROOT%%\etc\fstab"
 	echo chdir "%%CYGWIN_ROOT%%\bin"
 	echo bash "%%CYGWIN_ROOT%%\portable-init.sh"
