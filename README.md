@@ -52,7 +52,7 @@ If you open `ConCygSys-installer.cmd` with [Notepad++](https://notepad-plus-plus
 - `CYGWIN_MIRROR` - a [mirror](https://cygwin.com/mirrors.html) you would like to download CygWin from
 > default: http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 - `CYGWIN_PACKAGES` - [packages to install](https://cygwin.com/packages/package_list.html)
-> default: bind-utils,curl,inetutils,openssh,openssl,whois
+> default: bind-utils,curl,inetutils,openssh,openssl,vim,whois
 - `LOCALE` - [the language of your command prompt](https://docs.oracle.com/cd/E23824_01/html/E26033/glset.html)
 > default: en_US.UTF-8
 - `INSTALL_ACL` - enable or disable CygWin ACLs
