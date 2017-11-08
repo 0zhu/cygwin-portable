@@ -15,10 +15,10 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 
-set CONCYGSYS_VERSION=171106
+set CONCYGSYS_VERSION=171108
+
 
 :: You can customize the following variables to your needs before running the batch file
-:: https://github.com/zhubanRuban/ConCygSys#customization
 
 ::####################### begin SCRIPT SETTINGS #######################::
 :: choose a user name under Cygwin, leave empty to use your Windows username
@@ -39,13 +39,18 @@ set CYGWIN_PACKAGES=bind-utils,curl,inetutils,openssh,openssl,vim,whois
 :: select command line language: https://docs.oracle.com/cd/E23824_01/html/E26033/glset.html
 set LOCALE=en_US.UTF-8
 
-:: CygWin ACLs, refer to FAQ at https://github.com/zhubanRuban/ConCygSys
+:: CygWin uses ACLs to implement real Unix permissions (000, 777 etc.) which are not supported by Windows: https://cygwin.com/cygwin-ug-net/using-filemodes.html
+:: However, if you move installation to different directory or PC, ACLs will be broken and will have troubles running CygWin binaries.
+:: Set to **yes** if you want real Unix permissions to the detriment of portability
+:: Set to **no** if you want fully portable environment.
+:: Minimal permissions you will be able to set with disabled ACLs: "-r--r--r--" or "444"
+:: Maximal: "-rw-r--r--" or "644". Files with exe extension or beginning with shebang (#!) will automatically have 755 permissions
 set INSTALL_ACL=no
 
-:: if set to 'yes' the apt-cyg command line package manager (https://github.com/transcode-open/apt-cyg) will be installed automatically
+:: if set to 'yes' the apt-cyg command line package manager (https://github.com/kou1okada/apt-cyg) will be installed
 set INSTALL_APT_CYG=yes
 
-:: if set to 'yes' the bash-funk adaptive Bash prompt (https://github.com/vegardit/bash-funk) will be installed automatically
+:: if set to 'yes' the bash-funk adaptive Bash prompt (https://github.com/vegardit/bash-funk) will be installed
 set INSTALL_BASH_FUNK=yes
 
 :: install parallel ssh tool https://github.com/zhubanRuban/cygwin-extras#pssh-parallelssh
@@ -67,7 +72,6 @@ set INSTALL_CONEMU=yes
 set CONEMU_OPTIONS=-Title ConCygSys
 
 :: paths where to look for binaries, add more path if required, but at the cost of runtime performance
-:: %CYGWIN_ROOT%\bin is added automatically during CygWin launch, no need to add here
 set CYGWIN_PATH=%%SystemRoot%%\system32;%%SystemRoot%%;%%CYGWIN_ROOT%%\bin;%%CYGWIN_ROOT%%\usr\sbin;%%CYGWIN_ROOT%%\usr\local\sbin
 
 :: set proxy if required (unfortunately Cygwin setup.exe does not have commandline options to specify proxy user credentials)
@@ -89,6 +93,8 @@ set MINTTY_OPTIONS=--nopin ^
 ::####################### end SCRIPT SETTINGS #######################::
 
 
+echo CONCYGSYS installer version %CONCYGSYS_VERSION%
+
 echo.
 echo ###########################################################
 echo # Installing [Cygwin Portable]...
@@ -108,8 +114,9 @@ if not exist "%CYGWIN_ROOT%" (
 ) else (
 	echo Existing CygWin folder detected [%CYGWIN_ROOT%], entering update mode...
 	wmic process get ExecutablePath 2>NUL | find /I "%CYGWIN_ROOT%">NUL
-	:: for those wondering why I didn't use if "%ERRORLEVEL%"=="0"
-	:: https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
+	:: rem is used below instead of :: for commenting as cycles produce "system cannot find disk" when using :: in miltiple lines
+	rem for those wondering why I didn't use if "%ERRORLEVEL%"=="0"
+	rem https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
 		echo !!! Active CygWin processes detected, please close them and re-run update:
@@ -260,7 +267,6 @@ echo Creating [%Init_sh%] script to keep the installation portable...
 	echo.
 	echo (
 	if not "%INSTALL_ACL%" == "yes" (
-		echo # see INSTALL_ACL section of https://github.com/zhubanRuban/ConCygSys#customization
 		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/bin /usr/bin none binary,auto,noacl 0 0
 		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/lib /usr/lib none binary,auto,noacl 0 0
 		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^) / none override,binary,auto,noacl 0 0
@@ -388,7 +394,6 @@ set Start_cmd_begin=%INSTALL_ROOT%Begin
 	echo call "%%CYGWIN_ROOT%%\cygwin-settings.cmd"
 	echo.
 	echo set PATH=%CYGWIN_PATH%
-	echo set LANG=%LOCALE%
 	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%\ProgramData
 	echo set ProgramData=%%ALLUSERSPROFILE%%
 	echo.
@@ -517,8 +522,8 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 					^<value name="Flags" type="dword" data="00000004"/^>
 		echo 					^<value name="Hotkey" type="dword" data="00005b54"/^>
 		echo 					^<value name="GuiArgs" type="string" data=""/^>
-		:: Removed path to icon to get more space for tabs
-		:: Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
+		rem Removed path to icon to get more space for tabs
+		rem Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
 		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
 			echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuBaseDirShort%%\conemu-cyg-64.exe&quot; -t cygwin -new_console:p1 -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
 		)
