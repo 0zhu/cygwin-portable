@@ -78,7 +78,7 @@ All settings are accompanied with description. [Preview](https://github.com/zhub
 
 ## FAQ
 
-- What is the path to Windows drives when I'm in CygWin console?
+- **What is the path to Windows drives when I'm in CygWin console?**
 
 /mnt/DRIVE
 
@@ -88,15 +88,15 @@ Many Windows programs can be executed from CygWin as well, for instance:
 
 `ipconfig /flushdns` - to flush your local DNS cache
 
-- Can I change CygWin username after installation?
+- **Can I change CygWin username after installation?**
 
 Yes, just open your **`ConCygSys\cygwin\cygwin-settings.cmd`** file with NotePad and set a new username in `CYGWIN_USERNAME=` line
 
-- Can I change CygWin home folder after installation?
+- **Can I change CygWin home folder after installation?**
 
-Yes, just open your **`ConCygSys\cygwin\cygwin-settings.cmd`** file with NotePad and set a new username in `CYGWIN_USERNAME=` line
+Yes, just open your **`ConCygSys\cygwin\cygwin-settings.cmd`** file with NotePad and set a new username in `HOME_FOLDER=` line
 
-- How can I install a package from command line?
+- **How can I install a package from command line?**
 
 If you choose to install `apt-cyg` (enabled by default in installer) later you can istall packages from command line, for instance:
 
@@ -108,7 +108,7 @@ apt-cyg install nano
 
 [Available packages](https://cygwin.com/packages/package_list.html)
 
-- I cannot find a package I require, what should I do?
+- **I cannot find a package I require, what should I do?**
 
 You can still build it from source, below are some examples for the reference:
 
