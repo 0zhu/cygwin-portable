@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=171108
+set CONCYGSYS_VERSION=171119
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -119,10 +119,10 @@ if not exist "%CYGWIN_ROOT%" (
 			set UPDATEFROMOLD=yes
 		)
 		echo.
-		set /p UPDATECYGWINONLY=[0m [1;7m 1 [0m upgrade Cygwin only   [1;7m ENTER [0m upgrade everything 
+		set /p UPDATECYGWINONLY=[0m [1;7m 1 [0m update Cygwin only   [1;7m ENTER [0m update everything 
 		if not "!UPDATECYGWINONLY!" == "" goto :updatecygwinonly
 		echo.
-		echo [7;93mBefore you proceed with upgrade...[0m
+		echo [7;93mBefore you proceed with update...[0m
 		if "!UPDATEFROMOLD!" == "yes" (
 			echo It seems that you are upgrading from one of the oldest ConCygSys releases
 			echo Please BACKUP your personal records in .bashrc
@@ -703,7 +703,7 @@ del "%INSTALL_ROOT%README.md" >NUL 2>&1
 
 echo.
 if "%UPDATEMODE%" == "yes" (
-	echo                   [102;30mUpgrade SUCCEEDED![0m
+	echo                   [102;30mUpdate SUCCEEDED![0m
 ) else (
 	echo                 [102;30mInstallation SUCCEEDED![0m
 )
