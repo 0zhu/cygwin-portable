@@ -35,7 +35,7 @@ set LOCALE=
 :: Maximal: "-rw-r--r--" or "644". Files with exe extension or beginning with shebang (#!) will automatically have 755 permissions
 set INSTALL_ACL=no
 
-:: if set to 'yes' the apt-cyg command line package manager (https://github.com/kou1okada/apt-cyg) will be installed
+:: if set to 'yes' the apt-cyg command line package manager (https://github.com/transcode-open/apt-cyg) will be installed
 set INSTALL_APT_CYG=yes
 
 :: if set to 'yes' the bash-funk adaptive Bash prompt (https://github.com/vegardit/bash-funk) will be installed
@@ -93,7 +93,7 @@ set CYGWIN_ROOT=%INSTALL_ROOT%cygwin
 set Concygsys_settings_name=update.cmd
 set Concygsys_settings=%INSTALL_ROOT%%Concygsys_settings_name%
 
-:: to use 'set' in full in loops https://ss64.com/nt/delayedexpansion.html
+:: to use 'set' in full in "if" loop below https://ss64.com/nt/delayedexpansion.html
 setlocal EnableDelayedExpansion
 
 if not exist "%CYGWIN_ROOT%" (
@@ -141,6 +141,8 @@ if not exist "%CYGWIN_ROOT%" (
 		)
 	)
 )
+:: not needed anymore and to prevent issues in bash script generation down below (they conatin "!" which should have been escaped by ^^)
+setlocal DisableDelayedExpansion
 
 :updatecygwinonly
 :: There is no true-commandline download tool in Windows
@@ -213,9 +215,9 @@ if "%PROXY_HOST%" == "" (
 if "%INSTALL_CONEMU%" == "yes" (
 	set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%
 )
-:: add required packages if apt-cyg install is selected: https://github.com/kou1okada/apt-cyg#requirements
+:: add required packages if apt-cyg install is selected
 if "%INSTALL_APT_CYG%" == "yes" (
-	set CYGWIN_PACKAGES=wget,ca-certificates,gnupg,%CYGWIN_PACKAGES%
+	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
 )
 :: disable INSTALL_BASH_FUNK if INSTALL_BASHRC_CUSTOMS is set to "yes", to prevent conflicts
 if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
@@ -232,6 +234,10 @@ if "%INSTALL_PSSH%" == "yes" (
 :: if pscp install is selected, install required software
 if "%INSTALL_PSCP%" == "yes" (
 	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
+)
+:: if ssh tweak install is selected, install required software
+if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
+	set CYGWIN_PACKAGES=openssh,%CYGWIN_PACKAGES%
 )
 
 :: all cygwin installer commandline options: https://www.cygwin.com/faq/faq.html#faq.setup.cli
@@ -409,7 +415,7 @@ echo Creating script to install required software [%Pre_install%]...
 	)
 	if "%INSTALL_APT_CYG%" == "yes" (
 		echo echo "Installing/updating apt-cyg..."
-		echo wget -nv --show-progress -O /usr/local/bin/apt-cyg https://raw.githubusercontent.com/kou1okada/apt-cyg/master/apt-cyg
+		echo wget -nv --show-progress -O /usr/local/bin/apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
 		echo chmod +x /usr/local/bin/apt-cyg
 	) else (
 		echo rm -f /usr/local/bin/apt-cyg
