@@ -1,4 +1,4 @@
-# ConCygSys <a href="https://github.com/zhubanRuban/ConCygSys/"><img alt="ConCygSys" height="30" src="http://iconshow.me/media/images/ui/ios7-icons/png/128/social-github.png"></a> <a href="https://mintty.github.io/" target="_blank"><img alt="MinTTY" align="right" height="40" src="https://pbs.twimg.com/profile_images/1938877716/terminal-256.png"></a> <a href="https://conemu.github.io/" target="_blank"><img alt="ConEmu" align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img alt="CygWin" align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
+# ConCygSys <a href="https://github.com/zhubanRuban/ConCygSys/"><img height="30" src="http://iconshow.me/media/images/ui/ios7-icons/png/128/social-github.png"></a> <a href="https://mintty.github.io/" target="_blank"><img align="right" height="40" src="https://pbs.twimg.com/profile_images/1938877716/terminal-256.png"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
 
 - [Description](#description)
 - [Features](#features)
@@ -31,14 +31,20 @@ This is an independent fork of amazing [cygwin-portable-installer](https://githu
 ## Installation
 
 > Disable antivirus software on your PC during installation. [Why it is recommended](https://cygwin.com/faq/faq.html#faq.using.bloda)
+
 - Download the [latest ConCygSys release](https://github.com/zhubanRuban/ConCygSys/releases), extract the archive and go to the extracted folder
+
 > **Optional:** Edit **`ConCygSys-installer`** to [customize](#customization) the installation per your requirements
+
 - Launch **`ConCygSys-installer`**
+
 > If Windows complains with a **Windows protected your PC** popup, you may need to click **Run anyway** to proceed with the installation.
+
 - Once the installation is finished, you can run CygWin via one of the following launchers:
   - <img align="middle" height="50" src="http://i1-win.softpedia-static.com/screenshots/Cygwin_2.png?1350904296"> **`CygWin-Cmd`** to run CygWin in standard Windows console
   - <img align="middle" height="50" src="https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg"> **`CygWin-ConEmu`** to run CygWin via ConEmu - multitab quake-style console **(RECOMMENDED)**
   - <img align="middle" height="50" src="https://www.howtogeek.com/wp-content/uploads/2011/07/sshot-35.png"> **`CygWin-MinTTY`** to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator - fully xterm-compatible, but without multitab and quake-style support
+  
 > You can try the launchers one-by-one to find the most suitable option
 
 ## Usage
@@ -71,11 +77,12 @@ Use **`update`** launcher in the root of your ConCygSys directory to update the 
 
 You will be able either to update **Cygwin only** or to perform a **full update**: CygWin + ConCygSys core. ConEmu is already set to check its updates on startup and can update itself independently.
 
-<details><summary><strong>If you cannot find <code>update</code> launcher</strong></p></summary><p>
+<details><summary><strong>If you cannot find <code>update</code> launcher</strong></summary><p>
 
 > This means that you are updating one of the earliest stable/beta releases, therefore you need to perfrom the update manually:
 
 - Download **`ConCygSys-installer.cmd`** from [this link](https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
+
 - Launch **`ConCygSys-installer`**
 
 </p></details>
@@ -108,7 +115,7 @@ If you've chosen to install `apt-cyg` *(enabled by default in installer)*, you c
 apt-cyg install nano
 ```
 
-[More info about apt-cyg usage](https://github.com/kou1okada/apt-cyg) | [Available packages](https://cygwin.com/packages/package_list.html)
+[More info about apt-cyg usage](https://github.com/transcode-open/apt-cyg) | [Available packages](https://cygwin.com/packages/package_list.html)
 
 - **I cannot find a desired package in CygWin repository, what should I do?**
 
