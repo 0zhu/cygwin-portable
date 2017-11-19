@@ -1,26 +1,14 @@
 @echo off
-::
-:: Cygwin and ConEmu portable installer: https://github.com/zhubanRuban/ConCygSys
+
+:: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
-::
-:: Licensed under the Apache License, Version 2.0 (the "License");
-:: you may not use this file except in compliance with the License.
-:: You may obtain a copy of the License at
-::
-::      http://www.apache.org/licenses/LICENSE-2.0
-::
-:: Unless required by applicable law or agreed to in writing, software
-:: distributed under the License is distributed on an "AS IS" BASIS,
-:: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-:: See the License for the specific language governing permissions and
-:: limitations under the License.
 
 set CONCYGSYS_VERSION=171108
 
 
+::####################### begin SCRIPT SETTINGS #######################::
 :: You can customize the following variables to your needs before running the batch file
 
-::####################### begin SCRIPT SETTINGS #######################::
 :: choose a user name under Cygwin, leave empty to use your Windows username
 set CYGWIN_USERNAME=
 
@@ -37,7 +25,7 @@ set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 set CYGWIN_PACKAGES=bind-utils,curl,inetutils,openssh,openssl,vim,whois
 
 :: select command line language: https://docs.oracle.com/cd/E23824_01/html/E26033/glset.html
-set LOCALE=en_US.UTF-8
+set LOCALE=
 
 :: CygWin uses ACLs to implement real Unix permissions (000, 777 etc.) which are not supported by Windows: https://cygwin.com/cygwin-ug-net/using-filemodes.html
 :: However, if you move installation to different directory or PC, ACLs will be broken and will have troubles running CygWin binaries.
@@ -93,54 +81,74 @@ set MINTTY_OPTIONS=--nopin ^
 ::####################### end SCRIPT SETTINGS #######################::
 
 
-echo CONCYGSYS installer version %CONCYGSYS_VERSION%
-
 echo.
-echo ###########################################################
-echo # Installing [Cygwin Portable]...
-echo ###########################################################
+set CONCYGSYS_INFO=ConCygSys v.%CONCYGSYS_VERSION% https://github.com/zhubanRuban/ConCygSys
+echo [7;96m%CONCYGSYS_INFO%[0m
 echo.
 
 :: %~dp0 means current directory with backslash at the end
 set INSTALL_ROOT=%~dp0
 
 set CYGWIN_ROOT=%INSTALL_ROOT%cygwin
-set Start_cygwin_settings=%CYGWIN_ROOT%\cygwin-settings.cmd
-set Start_cygwin_install_options=%CYGWIN_ROOT%\cygwin-install-options.cmd
+set Concygsys_settings_name=update.cmd
+set Concygsys_settings=%INSTALL_ROOT%%Concygsys_settings_name%
+
+:: to use 'set' in full in loops https://ss64.com/nt/delayedexpansion.html
+setlocal EnableDelayedExpansion
 
 if not exist "%CYGWIN_ROOT%" (
-	echo Creating cygwin folder [%CYGWIN_ROOT%]...
+	echo Creating CygWin folder [%CYGWIN_ROOT%]...
 	md "%CYGWIN_ROOT%"
 ) else (
 	echo Existing CygWin folder detected [%CYGWIN_ROOT%], entering update mode...
+	set UPDATEMODE=yes
 	wmic process get ExecutablePath 2>NUL | find /I "%CYGWIN_ROOT%">NUL
-	:: rem is used below instead of :: for commenting as cycles produce "system cannot find disk" when using :: in miltiple lines
+	:: rem is used below instead of :: for commenting as cycles produce "system cannot find disk" warning when using :: in miltiple lines
 	rem for those wondering why I didn't use if "%ERRORLEVEL%"=="0"
 	rem https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
-		echo !!! Active CygWin processes detected, please close them and re-run update:
+		echo [7;91mActive CygWin processes detected, please close them and re-run update[0m
 		wmic process get ExecutablePath | find /I "%CYGWIN_ROOT%"
 		goto :fail
 	) else (
-		if exist "%Start_cygwin_settings%" (
-			call "%Start_cygwin_settings%"
+		if exist "%Concygsys_settings%" (
+			call "%Concygsys_settings%" cygwinsettings
+			call "%Concygsys_settings%" installoptions
 		) else (
 			set UPDATEFROMOLD=yes
 		)
-		if exist "%Start_cygwin_install_options%" (
-			call "%Start_cygwin_install_options%"
+		echo.
+		set /p UPDATECYGWINONLY=[0m [1;7m 1 [0m upgrade Cygwin only   [1;7m ENTER [0m upgrade everything 
+		if not "!UPDATECYGWINONLY!" == "" goto :updatecygwinonly
+		echo.
+		echo [7;93mBefore you proceed with upgrade...[0m
+		if "!UPDATEFROMOLD!" == "yes" (
+			echo It seems that you are upgrading from one of the oldest ConCygSys releases
+			echo Please BACKUP your personal records in .bashrc
+			echo Hit ENTER when done
+			echo.
+			pause
 		) else (
-			set UPDATEFROMOLD=yes
+			echo To customize update process:
+			echo - close this window
+			echo - modify "installoptions" section of [%Concygsys_settings%] file accordingly
+			echo - re-run update
+			echo.
+			echo If you are good with existing setup, just hit ENTER
+			echo.
+			pause
 		)
 	)
 )
 
+:updatecygwinonly
 :: There is no true-commandline download tool in Windows
 :: creating VB script that can download files...
 :: not using PowerShell which may be blocked by group policies
 set DOWNLOADER=%INSTALL_ROOT%downloader.vbs
-echo Creating [%DOWNLOADER%] script that can download files...
+echo.
+echo Creating script that can download files [%DOWNLOADER%]...
 if "%PROXY_HOST%" == "" (
 	set DOWNLOADER_PROXY=.
 ) else (
@@ -168,6 +176,7 @@ if "%PROXY_HOST%" == "" (
 	echo.
 ) >"%DOWNLOADER%" || goto :fail
 
+echo.
 echo Choosing correct version of cygwin installer depending on system...
 if "%CYGWIN_SETUP%" == "" (
 echo CYGWIN_SETUP setting is empty, autodetecting...
@@ -183,13 +192,13 @@ echo CYGWIN_SETUP setting is empty, autodetecting...
 )
 echo Chosen installer: %CYGWIN_SETUP%
 
-if exist "%CYGWIN_ROOT%\%CYGWIN_SETUP%" (
-	echo Removing existing setup.exe
-	del "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
-)
+:: Removing existing setup.exe
+del "%CYGWIN_ROOT%\%CYGWIN_SETUP%" >NUL 2>&1
 
 :: downloading cygwin installer
+echo.
 cscript //Nologo "%DOWNLOADER%" http://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
+del "%DOWNLOADER%" >NUL 2>&1
 
 :: Cygwin command line options: https://cygwin.com/faq/faq.html#faq.setup.cli
 if "%PROXY_HOST%" == "" (
@@ -198,37 +207,35 @@ if "%PROXY_HOST%" == "" (
 	set CYGWIN_PROXY=--proxy "%PROXY_HOST%:%PROXY_PORT%"
 )
 
+
+:: checking package list
 :: add required packages if conemu install is selected (we need to be able to extract 7z archives)
 if "%INSTALL_CONEMU%" == "yes" (
 	set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%
 )
-
 :: add required packages if apt-cyg install is selected: https://github.com/kou1okada/apt-cyg#requirements
 if "%INSTALL_APT_CYG%" == "yes" (
 	set CYGWIN_PACKAGES=wget,ca-certificates,gnupg,%CYGWIN_PACKAGES%
 )
-
 :: disable INSTALL_BASH_FUNK if INSTALL_BASHRC_CUSTOMS is set to "yes", to prevent conflicts
 if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
 	set INSTALL_BASH_FUNK=no
 )
-
 :: if bash-funk install is selected, install required software
 if "%INSTALL_BASH_FUNK%" == "yes" (
 	set CYGWIN_PACKAGES=git,git-svn,subversion,%CYGWIN_PACKAGES%
 )
-
 :: if pssh install is selected, install required software
 if "%INSTALL_PSSH%" == "yes" (
 	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
 )
-
 :: if pscp install is selected, install required software
 if "%INSTALL_PSCP%" == "yes" (
 	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
 )
 
 :: all cygwin installer commandline options: https://www.cygwin.com/faq/faq.html#faq.setup.cli
+echo.
 echo Running Cygwin setup...
 "%CYGWIN_ROOT%\%CYGWIN_SETUP%" --no-admin ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
@@ -243,22 +250,20 @@ echo Running Cygwin setup...
 --packages dos2unix,wget,%CYGWIN_PACKAGES% || goto :fail
 
 :: deleting standard CygWin launcher
-set Cygwin_bat=%CYGWIN_ROOT%\Cygwin.bat
-if exist "%Cygwin_bat%" (
-	del "%Cygwin_bat%"
-)
+del "%CYGWIN_ROOT%\Cygwin.bat" >NUL 2>&1
 
-:: deleting CygWin updater if left by previous ConCygSys versions
-if exist "%CYGWIN_ROOT%\updater.cmd" (
-	del "%CYGWIN_ROOT%\updater.cmd"
-)
+if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
 
-set Init_sh=%CYGWIN_ROOT%\portable-init.sh
-echo Creating [%Init_sh%] script to keep the installation portable...
+
+echo.
+echo Creating portable settings files...
+
+set Portable_init_name=portable-init.sh
+set Portable_init=%CYGWIN_ROOT%\%Portable_init_name%
+echo Creating init script to keep the installation portable [%Portable_init%]...
 (
 	echo #!/usr/bin/env bash
-	echo # https://github.com/zhubanRuban/ConCygSys
-	echo # ConCygSys version %CONCYGSYS_VERSION%
+	echo # %CONCYGSYS_INFO%
 	echo.
 	echo # Setting custom CygWin username
 	echo (
@@ -277,10 +282,107 @@ echo Creating [%Init_sh%] script to keep the installation portable...
 	echo # adjust Cygwin packages cache path
 	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/pkg-cache"^)
 	echo sed -i '/^^last-cache/!b;n;c\\t'"${pkg_cache_dir//\\/\\\\}"'' /etc/setup/setup.rc
-) >"%Init_sh%" || goto :fail
+) >"%Portable_init%" || goto :fail
+
+:: converting script to unix format as it was created via Windows command line
+"%CYGWIN_ROOT%\bin\dos2unix" "%Portable_init%" || goto :fail
+
+echo Generating one-file settings and updater file [%Concygsys_settings%]...
+(
+	echo @echo off
+	echo :: %CONCYGSYS_INFO%
+	echo.
+	echo if "%%1" == "cygwinsettings" goto :cygwinsettings
+	echo if "%%1" == "installoptions" goto :installoptions
+	echo if "%%1" == "launcherheader" goto :launcherheader
+	echo goto :update
+	echo.
+	echo :cygwinsettings
+	echo set CYGWIN_USERNAME=%CYGWIN_USERNAME%
+	echo set HOME_FOLDER=%HOME_FOLDER%
+	echo set LOCALE=%LOCALE%
+	echo exit /b 0
+	echo.
+	echo :installoptions
+	echo set CYGWIN_SETUP=%CYGWIN_SETUP%
+	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
+	echo :: fill only if new packages should be installed during next update
+	echo set CYGWIN_PACKAGES=
+	echo set INSTALL_ACL=%INSTALL_ACL%
+	echo set INSTALL_APT_CYG=%INSTALL_APT_CYG%
+	echo set INSTALL_BASH_FUNK=%INSTALL_BASH_FUNK%
+	echo set INSTALL_PSSH=%INSTALL_PSSH%
+	echo set INSTALL_PSCP=%INSTALL_PSCP%
+	echo set INSTALL_SSH_AGENT_TWEAK=%INSTALL_SSH_AGENT_TWEAK%
+	echo set INSTALL_BASHRC_CUSTOMS=%INSTALL_BASHRC_CUSTOMS%
+	echo set INSTALL_CONEMU=%INSTALL_CONEMU%
+	echo set PROXY_HOST=%PROXY_HOST%
+	echo set PROXY_PORT=%PROXY_PORT%
+	echo exit /b 0
+	echo.
+	echo :launcherheader
+	echo set CYGWIN_ROOT=%%~dp0cygwin
+	echo call "%Concygsys_settings_name%" cygwinsettings
+	echo set PATH=%CYGWIN_PATH%
+	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%\ProgramData
+	echo set ProgramData=%%ALLUSERSPROFILE%%
+	echo if not "%%CYGWIN_USERNAME%%" == "" (
+	echo 	set USERNAME=%%CYGWIN_USERNAME%%
+	echo ^)
+	echo if "%%HOME_FOLDER%%" == "" (
+	echo 	set HOME_FOLDER=concygsys
+	echo ^)
+	echo set HOME=/home/%%HOME_FOLDER%%
+	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache" 2^>NUL
+	echo type NUL ^>"%%CYGWIN_ROOT%%\etc\fstab"
+	echo "%%CYGWIN_ROOT%%\bin\bash" "%%CYGWIN_ROOT%%\%Portable_init_name%"
+	echo exit /b 0
+	echo.
+	echo :update
+	echo echo [96mCONCYGSYS updater version %CONCYGSYS_VERSION%[0m
+	echo set INSTALL_ROOT=%%~dp0
+	echo set DOWNLOADER=%%INSTALL_ROOT%%downloader.vbs
+	echo echo Creating [%DOWNLOADER%] script that can download files...
+	echo (
+	echo 	echo url = Wscript.Arguments(0^^^)
+	echo 	echo target = Wscript.Arguments(1^^^)
+	echo 	echo WScript.Echo "Downloading '" ^^^& url ^^^& "' to '" ^^^& target ^^^& "'..."
+	echo 	echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^^^)
+	echo 	echo req.Open "GET", url, False
+	echo 	echo req.Send
+	echo 	echo If req.Status ^^^<^^^> 200 Then
+	echo 	echo    WScript.Echo "FAILED to download: HTTP Status " ^^^& req.Status
+	echo 	echo    WScript.Quit 1
+	echo 	echo End If
+	echo 	echo Set buff = CreateObject("ADODB.Stream"^^^)
+	echo 	echo buff.Open
+	echo 	echo buff.Type = 1
+	echo 	echo buff.Write req.ResponseBody
+	echo 	echo buff.Position = 0
+	echo 	echo buff.SaveToFile target
+	echo 	echo buff.Close
+	echo 	echo.
+	echo ^) ^>"%%DOWNLOADER%%" ^|^| goto :fail
+	echo set INSTALLER=ConCygSys-installer.cmd
+	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
+	echo start "" "%%INSTALLER%%" ^|^| goto :fail
+	echo exit /b 0
+	echo :fail
+	echo del "%%DOWNLOADER%%" ^>NUL 2^>^&1
+	echo echo.
+	echo echo                       [101;30mUpdate FAILED![0m
+	echo echo Try uploading installer manually from https://github.com/zhubanRuban/ConCygSys
+	echo echo.
+	echo pause
+	echo exit /b 1
+) >"%Concygsys_settings%" || goto :fail
+
+echo Launching init script...
+call "%Concygsys_settings%" launcherheader || goto :fail
 	
-set Install_sh=%CYGWIN_ROOT%\portable-install.sh
-echo Creating [%Install_sh%] script to install required software...
+set Pre_install=%CYGWIN_ROOT%\concygsys-pre-install.sh
+echo.
+echo Creating script to install required software [%Pre_install%]...
 (
 	echo #!/usr/bin/env bash
 	echo.
@@ -301,7 +403,7 @@ echo Creating [%Install_sh%] script to install required software...
 		echo 	bsdtar -xvf "${conemu_dir}.7z" -C "$conemu_dir"
 		echo 	rm "${conemu_dir}.7z"
 		echo fi
-		echo echo https://github.com/zhubanRuban/ConCygSys ConCygSys version %CONCYGSYS_VERSION% ^> "$CYGWIN_ROOT/../conemu/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
+		echo echo %CONCYGSYS_INFO% ^> "$CYGWIN_ROOT/../conemu/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
 	) else (
 		echo rm -rf $(cygpath -w "$CYGWIN_ROOT/../conemu"^)
 	)
@@ -343,83 +445,28 @@ echo Creating [%Install_sh%] script to install required software...
 	) else (
 		echo rm -rf /opt/bash-funk
 	)
-) >"%Install_sh%" || goto :fail
+) >"%Pre_install%" || goto :fail
 
-:: converting scripts to unix format as they were created via cmd
-"%CYGWIN_ROOT%\bin\dos2unix" "%Init_sh%" || goto :fail
-"%CYGWIN_ROOT%\bin\dos2unix" "%Install_sh%" || goto :fail
+"%CYGWIN_ROOT%\bin\dos2unix" "%Pre_install%" || goto :fail
+
+echo Launching pre-install script...
+"%CYGWIN_ROOT%\bin\bash" "%Pre_install%" || goto :fail
+del "%Pre_install%" >NUL 2>&1
 
 
-echo Generating launcher files...
+echo.
+echo Generating main launchers...
 
-echo Generating [%Start_cygwin_install_options%]...
-(
-	echo :: https://github.com/zhubanRuban/ConCygSys#customization
-	echo :: ConCygSys version %CONCYGSYS_VERSION%
-	echo set CYGWIN_SETUP=%CYGWIN_SETUP%
-	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
-	echo :: fill only if new packages should be installed during next update
-	echo set CYGWIN_PACKAGES=
-	echo set INSTALL_ACL=%INSTALL_ACL%
-	echo set INSTALL_APT_CYG=%INSTALL_APT_CYG%
-	echo set INSTALL_BASH_FUNK=%INSTALL_BASH_FUNK%
-	echo set INSTALL_PSSH=%INSTALL_PSSH%
-	echo set INSTALL_PSCP=%INSTALL_PSCP%
-	echo set INSTALL_SSH_AGENT_TWEAK=%INSTALL_SSH_AGENT_TWEAK%
-	echo set INSTALL_BASHRC_CUSTOMS=%INSTALL_BASHRC_CUSTOMS%
-	echo set INSTALL_CONEMU=%INSTALL_CONEMU%
-	echo set PROXY_HOST=%PROXY_HOST%
-	echo set PROXY_PORT=%PROXY_PORT%
-) >"%Start_cygwin_install_options%" || goto :fail
-
-echo Generating [%Start_cygwin_settings%]...
-(
-	echo :: https://github.com/zhubanRuban/ConCygSys#customization
-	echo :: ConCygSys version %CONCYGSYS_VERSION%
-	echo set CYGWIN_USERNAME=%CYGWIN_USERNAME%
-	echo set HOME_FOLDER=%HOME_FOLDER%
-	echo set LOCALE=%LOCALE%
-) >"%Start_cygwin_settings%" || goto :fail
-
-:: generating launcher header
-set Start_cmd_begin=%INSTALL_ROOT%Begin
-(
-	echo @echo off
-	echo :: https://github.com/zhubanRuban/ConCygSys
-	echo :: ConCygSys version %CONCYGSYS_VERSION%
-	echo.
-	echo set CYGWIN_DRIVE=%%~d0
-	echo set CYGWIN_ROOT=%%~dp0cygwin
-	echo.
-	echo call "%%CYGWIN_ROOT%%\cygwin-settings.cmd"
-	echo.
-	echo set PATH=%CYGWIN_PATH%
-	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%\ProgramData
-	echo set ProgramData=%%ALLUSERSPROFILE%%
-	echo.
-	echo if not "%%CYGWIN_USERNAME%%" == "" (
-	echo 	set USERNAME=%%CYGWIN_USERNAME%%
-	echo ^)
-	echo if "%%HOME_FOLDER%%" == "" (
-	echo 	set HOME_FOLDER=concygsys
-	echo ^)
-	echo set HOME=/home/%%HOME_FOLDER%%
-	echo set HOMEPATH=%%CYGWIN_ROOT%%\home\%%HOME_FOLDER%%
-	echo set HOMEDRIVE=%%CYGWIN_DRIVE%%
-	echo.
-	echo %%CYGWIN_DRIVE%%
-	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache" 2^>NUL
-	echo type NUL ^>"%%CYGWIN_ROOT%%\etc\fstab"
-	echo chdir "%%CYGWIN_ROOT%%\bin"
-	echo bash "%%CYGWIN_ROOT%%\portable-init.sh"
-	echo.
-) >"%Start_cmd_begin%" || goto :fail
-
-set Start_cmd=%INSTALL_ROOT%CygWin-ConEmu.cmd
+set Launch_conemu=%INSTALL_ROOT%Cygwin-ConEmu.cmd
 if "%INSTALL_CONEMU%" == "yes" (
-	echo Generating ConEmu launcher [%Start_cmd%]...
+	echo Generating ConEmu launcher [%Launch_conemu%]...
 	(
-		type "%Start_cmd_begin%"
+		echo @echo off
+		echo :: %CONCYGSYS_INFO%
+		echo call "%Concygsys_settings_name%" launcherheader
+		echo :: to be in win home dir if running cmd from conemu
+		echo %%HOMEDRIVE%%
+		echo cd %%HOMEPATH%%
 		echo if "%%PROCESSOR_ARCHITEW6432%%" == "AMD64" (
 		echo 	start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
 		echo ^) else (
@@ -429,146 +476,44 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 		start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
 		echo 	^)
 		echo ^)
-	) >"%Start_cmd%" || goto :fail
+		echo :: not to leave this launcher open if called from another batch file
+		echo exit /b 0
+	) >"%Launch_conemu%" || goto :fail
 )
 
-set Start_cmd_cmd=%INSTALL_ROOT%CygWin-Cmd.cmd
-echo Generating cmd launcher [%Start_cmd_cmd%]...
+set Launch_cmd=%INSTALL_ROOT%Cygwin-Cmd.cmd
+echo Generating cmd launcher [%Launch_cmd%]...
 (
-	type "%Start_cmd_begin%"
+	echo @echo off
+	echo :: %CONCYGSYS_INFO%
+	echo call "%Concygsys_settings_name%" launcherheader
 	echo if "%%1" == "" (
-	echo 	bash --login -i
+	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -i
 	echo ^) else (
-	echo 	bash --login -c %%*
+	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -c %%*
 	echo ^)
-) >"%Start_cmd_cmd%" || goto :fail
+) >"%Launch_cmd%" || goto :fail
 
-set Start_cmd_mintty=%INSTALL_ROOT%CygWin-MinTTY.cmd
-echo Generating MinTTy launcher [%Start_cmd_mintty%]...
+set Launch_mintty=%INSTALL_ROOT%Cygwin-MinTTY.cmd
+echo Generating MinTTy launcher [%Launch_mintty%]...
 (
-	type "%Start_cmd_begin%"
-	echo mintty --Title ConCygSys -
-) >"%Start_cmd_mintty%" || goto :fail
+	echo @echo off
+	echo :: %CONCYGSYS_INFO%
+	echo call "%Concygsys_settings_name%" launcherheader
+	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" --Title ConCygSys -
+	echo :: not to leave this launcher open if called from another batch file
+	echo exit /b 0
+) >"%Launch_mintty%" || goto :fail
 
-:: generating install launcher
-set Start_cmd_install=%INSTALL_ROOT%ConCygSys_install.cmd
-(
-	echo set CWD=%%cd%%
-	type "%Start_cmd_begin%"
-	echo bash "%%CYGWIN_ROOT%%\portable-install.sh"
-	echo if "%%1" == "" (
-	echo 	bash --login -i
-	echo ^) else (
-	echo 	bash --login -c %%*
-	echo ^)
-	echo.
-	echo cd "%%CWD%%"
-) >"%Start_cmd_install%" || goto :fail
 
+echo.
 echo Launching bash once to initialize user home dir...
-call "%Start_cmd_install%" whoami
-:: deleting temp files
-del "%Install_sh%"
-del "%Start_cmd_install%"
+call "%Launch_cmd%" whoami || goto :fail
 
 
-set conemu_config=%INSTALL_ROOT%conemu\ConEmu.xml
-if "%INSTALL_CONEMU%" == "yes" (
-	echo Replacing ConEmu config...
-	(
-		echo ^<?xml version="1.0" encoding="utf-8"?^>
-		echo ^<!--
-		echo Custom ConEmu config specially for CygWin+ConEmu portable build:
-		echo https://github.com/zhubanRuban/ConCygSys
-		echo ConCygSys version %CONCYGSYS_VERSION%
-		echo --^>
-		echo ^<key name="Software"^>
-		echo 	^<key name="ConEmu"^>
-		echo 		^<key name=".Vanilla"^>
-		echo 			^<value name="StartTasksName" type="string" data="{CygWin::MinTTY}"/^>
-		echo 			^<value name="WindowMode" type="dword" data="00000520"/^>
-		echo 			^<value name="ShowScrollbar" type="hex" data="01"/^>
-		echo 			^<value name="QuakeStyle" type="hex" data="01"/^>
-		echo 			^<value name="QuakeAnimation" type="ulong" data="50"/^>
-		echo 			^<value name="Min2Tray" type="hex" data="01"/^>
-		echo 			^<value name="TryToCenter" type="hex" data="01"/^>
-		echo 			^<value name="TabFontHeight" type="long" data="12"/^>
-		echo 			^<value name="TabsLocation" type="hex" data="01"/^>
-		echo 			^<value name="TabFontFace" type="string" data="Arial Black"/^>
-		echo 			^<value name="TabConsole" type="string" data="%%m⬛ m%%s"/^>
-		echo 			^<value name="TabModifiedSuffix" type="string" data="*"/^>
-		echo 			^<value name="TabDblClick" type="ulong" data="3"/^>
-		echo 			^<value name="AlphaValue" type="hex" data="dd"/^>
-		echo 			^<value name="StatusBar.Show" type="hex" data="00"/^>
-		echo 			^<value name="CTS.IntelligentExceptions" type="string" data="far"/^>
-		echo 			^<value name="CTS.ResetOnRelease" type="hex" data="01"/^>
-		echo 			^<value name="KeyboardHooks" type="hex" data="01"/^>
-		echo 			^<value name="UseInjects" type="hex" data="01"/^>
-		echo 			^<value name="Update.CheckOnStartup" type="hex" data="01"/^>
-		echo 			^<value name="Update.UseBuilds" type="hex" data="02"/^>
-		echo 			^<value name="FontUseUnits" type="hex" data="01"/^>
-		echo 			^<value name="FontSize" type="ulong" data="14"/^>
-		echo 			^<value name="StatusFontHeight" type="long" data="12"/^>
-		echo 			^<value name="KillSshAgent" type="hex" data="00"/^>
-		echo 			^<key name="HotKeys"^>
-		echo 				^<value name="MinimizeRestore" type="dword" data="000011c0"/^>
-		echo 				^<value name="Multi.NewSplitV" type="dword" data="00a05b4f"/^>
-		echo 				^<value name="Multi.NewSplitH" type="dword" data="00a05b45"/^>
-		echo 			^</key^>
-		echo 			^<key name="Tasks"^>
-		echo 				^<value name="Count" type="long" data="4"/^>
-		echo 				^<key name="Task1"^>
-		echo 					^<value name="Name" type="string" data="{CygWin::Connector}"/^>
-		echo 					^<value name="Flags" type="dword" data="00000004"/^>
-		echo 					^<value name="Hotkey" type="dword" data="00005b54"/^>
-		echo 					^<value name="GuiArgs" type="string" data=""/^>
-		rem Removed path to icon to get more space for tabs
-		rem Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
-		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-			echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuBaseDirShort%%\conemu-cyg-64.exe&quot; -t cygwin -new_console:p1 -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
-		)
-		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-			echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuBaseDirShort%%\conemu-cyg-32.exe&quot; -t cygwin -new_console:p1 -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
-		)
-		echo 					^<value name="Active" type="long" data="0"/^>
-		echo 					^<value name="Count" type="long" data="1"/^>
-		echo 				^</key^>
-		echo 				^<key name="Task2"^>
-		echo 					^<value name="Name" type="string" data="{CygWin::Cmd}"/^>
-		echo 					^<value name="Flags" type="dword" data="00000004"/^>
-		echo 					^<value name="Hotkey" type="dword" data="00005b42"/^>
-		echo 					^<value name="GuiArgs" type="string" data=""/^>
-		echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuDir%%\..\cygwin\bin\bash.exe&quot; --login -i -new_console:p1 -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
-		echo 					^<value name="Active" type="long" data="0"/^>
-		echo 					^<value name="Count" type="long" data="1"/^>
-		echo 				^</key^>
-		echo 				^<key name="Task3"^>
-		echo 					^<value name="Name" type="string" data="{CygWin::MinTTY}"/^>
-		echo 					^<value name="Flags" type="dword" data="00000005"/^>
-		echo 					^<value name="Hotkey" type="dword" data="00005b4d"/^>
-		echo 					^<value name="GuiArgs" type="string" data="/icon &quot; &quot;"/^>
-		echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuDir%%\..\cygwin\bin\mintty.exe&quot; %MINTTY_OPTIONS% - -new_console:P:&quot;&lt;xterm&gt;&quot;"/^>
-		echo 					^<value name="Active" type="long" data="0"/^>
-		echo 					^<value name="Count" type="long" data="1"/^>
-		echo 				^</key^>
-		echo 				^<key name="Task4"^>
-		echo 					^<value name="Name" type="string" data="{WSL}"/^>
-		echo 					^<value name="Flags" type="dword" data="00000004"/^>
-		echo 					^<value name="Hotkey" type="dword" data="00005b55"/^>
-		echo 					^<value name="GuiArgs" type="string" data="-icon &quot;%%USERPROFILE%%\AppData\Local\lxss\bash.ico&quot;"/^>
-		echo 					^<value name="Cmd1" type="string" data="set &quot;PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%&quot; &amp; &quot;%%ConEmuBaseDirShort%%\wsl\wslbridge.exe&quot; -cur_console:pm:/mnt"/^>
-		echo 					^<value name="Active" type="long" data="0"/^>
-		echo 					^<value name="Count" type="long" data="1"/^>
-		echo 				^</key^>
-		echo 			^</key^>
-		echo 		^</key^>
-		echo 	^</key^>
-		echo ^</key^>
-	)> "%conemu_config%" || goto :fail
-)
-
-
-set PostInstall_sh=%CYGWIN_ROOT%\post-install.sh
+set Post_install=%CYGWIN_ROOT%\post-install.sh
+echo.
+echo Generating post-install script [%Post_install%]...
 (
 	echo echo #!/usr/bin/env bash
 	echo mkdir -p /opt
@@ -639,55 +584,145 @@ set PostInstall_sh=%CYGWIN_ROOT%\post-install.sh
 		echo rm -f /opt/ssh-agent-tweak
 		echo sed -i '/ssh-agent-tweak/d' "${HOME}/.bashrc"
 	)
-) > "%PostInstall_sh%" || goto :fail
+) > "%Post_install%" || goto :fail
 
-:: converting postinstall script to unix format
-"%CYGWIN_ROOT%\bin\dos2unix" "%PostInstall_sh%" || goto :fail
+"%CYGWIN_ROOT%\bin\dos2unix" "%Post_install%" || goto :fail
 
-:: generating post install launcher
-set Start_cmd_postinstall=%INSTALL_ROOT%ConCygSys_postinstall.cmd
-(
-	echo set CWD=%%cd%%
-	type "%Start_cmd_begin%"
-	echo bash "%%CYGWIN_ROOT%%\post-install.sh"
-	echo cd "%%CWD%%"
-) >"%Start_cmd_postinstall%" || goto :fail
-
-echo Launching post install script...
-call "%Start_cmd_postinstall%"
-
-:: deleting temp files
-del "%Start_cmd_begin%"
-del "%Start_cmd_postinstall%"
-del "%PostInstall_sh%"
+echo Launching post-install script...
+"%CYGWIN_ROOT%\bin\bash" "%Post_install%" || goto :fail
+del "%Post_install%" >NUL 2>&1
 
 
-:: cleaning up
-:: deleting data folder if left from previous ConCygSys versions
+set Conemu_config=%INSTALL_ROOT%conemu\ConEmu.xml
+if "%INSTALL_CONEMU%" == "yes" (
+	echo.
+	echo Replacing ConEmu config...
+	(
+		echo ^<?xml version="1.0" encoding="utf-8"?^>
+		echo ^<!--
+		echo %CONCYGSYS_INFO%
+		echo --^>
+		echo ^<key name="Software"^>
+		echo 	^<key name="ConEmu"^>
+		echo 		^<key name=".Vanilla"^>
+		echo 			^<value name="StartTasksName" type="string" data="{CygWin::MinTTY}"/^>
+		echo 			^<value name="WindowMode" type="dword" data="00000520"/^>
+		echo 			^<value name="ShowScrollbar" type="hex" data="01"/^>
+		echo 			^<value name="QuakeStyle" type="hex" data="01"/^>
+		echo 			^<value name="QuakeAnimation" type="ulong" data="50"/^>
+		echo 			^<value name="Min2Tray" type="hex" data="01"/^>
+		echo 			^<value name="TryToCenter" type="hex" data="01"/^>
+		echo 			^<value name="TabFontHeight" type="long" data="12"/^>
+		echo 			^<value name="TabsLocation" type="hex" data="01"/^>
+		echo 			^<value name="TabFontFace" type="string" data="Arial Black"/^>
+		echo 			^<value name="TabConsole" type="string" data="%%m⬛ m%%s"/^>
+		echo 			^<value name="TabModifiedSuffix" type="string" data="*"/^>
+		echo 			^<value name="TabDblClick" type="ulong" data="3"/^>
+		echo 			^<value name="AlphaValue" type="hex" data="dd"/^>
+		echo 			^<value name="StatusBar.Show" type="hex" data="00"/^>
+		echo 			^<value name="CTS.IntelligentExceptions" type="string" data="far"/^>
+		echo 			^<value name="CTS.ResetOnRelease" type="hex" data="01"/^>
+		echo 			^<value name="KeyboardHooks" type="hex" data="01"/^>
+		echo 			^<value name="UseInjects" type="hex" data="01"/^>
+		echo 			^<value name="Update.CheckOnStartup" type="hex" data="01"/^>
+		echo 			^<value name="Update.UseBuilds" type="hex" data="02"/^>
+		echo 			^<value name="FontUseUnits" type="hex" data="01"/^>
+		echo 			^<value name="FontSize" type="ulong" data="14"/^>
+		echo 			^<value name="StatusFontHeight" type="long" data="12"/^>
+		echo 			^<value name="KillSshAgent" type="hex" data="00"/^>
+		echo 			^<key name="HotKeys"^>
+		echo 				^<value name="MinimizeRestore" type="dword" data="000011c0"/^>
+		echo 				^<value name="Multi.NewSplitV" type="dword" data="00a05b4f"/^>
+		echo 				^<value name="Multi.NewSplitH" type="dword" data="00a05b45"/^>
+		echo 			^</key^>
+		echo 			^<key name="Tasks"^>
+		echo 				^<value name="Count" type="long" data="4"/^>
+		echo 				^<key name="Task1"^>
+		echo 					^<value name="Name" type="string" data="{CygWin::Connector}"/^>
+		echo 					^<value name="Flags" type="dword" data="00000004"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00005b54"/^>
+		echo 					^<value name="GuiArgs" type="string" data=""/^>
+		rem Removed path to icon to get more space for tabs
+		rem Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
+		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
+			echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuBaseDirShort%%\conemu-cyg-64.exe&quot; -new_console:p -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
+		)
+		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
+			echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuBaseDirShort%%\conemu-cyg-32.exe&quot; -new_console:p -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
+		)
+		echo 					^<value name="Active" type="long" data="0"/^>
+		echo 					^<value name="Count" type="long" data="1"/^>
+		echo 				^</key^>
+		echo 				^<key name="Task2"^>
+		echo 					^<value name="Name" type="string" data="{CygWin::Cmd}"/^>
+		echo 					^<value name="Flags" type="dword" data="00000004"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00005b42"/^>
+		echo 					^<value name="GuiArgs" type="string" data=""/^>
+		echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuDir%%\..\cygwin\bin\bash.exe&quot; --login -i -new_console:p -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
+		echo 					^<value name="Active" type="long" data="0"/^>
+		echo 					^<value name="Count" type="long" data="1"/^>
+		echo 				^</key^>
+		echo 				^<key name="Task3"^>
+		echo 					^<value name="Name" type="string" data="{CygWin::MinTTY}"/^>
+		echo 					^<value name="Flags" type="dword" data="00000005"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00005b4d"/^>
+		echo 					^<value name="GuiArgs" type="string" data="/icon &quot; &quot;"/^>
+		echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuDir%%\..\cygwin\bin\mintty.exe&quot; %MINTTY_OPTIONS% - -new_console:pm:/mnt -new_console:P:&quot;&lt;xterm&gt;&quot;"/^>
+		echo 					^<value name="Active" type="long" data="0"/^>
+		echo 					^<value name="Count" type="long" data="1"/^>
+		echo 				^</key^>
+		echo 				^<key name="Task4"^>
+		echo 					^<value name="Name" type="string" data="{WSL}"/^>
+		echo 					^<value name="Flags" type="dword" data="00000004"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00005b55"/^>
+		echo 					^<value name="GuiArgs" type="string" data="-icon &quot;%%USERPROFILE%%\AppData\Local\lxss\bash.ico&quot;"/^>
+		echo 					^<value name="Cmd1" type="string" data="&quot;%%SystemRoot%%\system32\bash.exe&quot; ~ -new_console:pm:/mnt -new_console:P:&quot;&lt;ubuntu&gt;&quot; -new_console:h5000"/^>
+		echo 					^<value name="Active" type="long" data="0"/^>
+		echo 					^<value name="Count" type="long" data="1"/^>
+		echo 				^</key^>
+		echo 			^</key^>
+		echo 		^</key^>
+		echo 	^</key^>
+		echo ^</key^>
+	)> "%Conemu_config%" || goto :fail
+)
+
+
+echo.
+echo Cleaning up...
+:: deleting obsolete files used by previous concygsys versions
 rd /s /q "%INSTALL_ROOT%data" >NUL 2>&1
+del "%CYGWIN_ROOT%\updater.cmd" >NUL 2>&1
+del "%CYGWIN_ROOT%\cygwin-settings.cmd" >NUL 2>&1
+del "%CYGWIN_ROOT%\cygwin-install-options.cmd" >NUL 2>&1
 :: delting readme and licence files
 del "%INSTALL_ROOT%LICENSE" >NUL 2>&1
 del "%INSTALL_ROOT%README.md" >NUL 2>&1
-:: deleting VB script that can download files
-del "%DOWNLOADER%"
+:aftercygwinupdate
+
 
 echo.
-echo ###########################################################
-echo # Installation succeeded.
-echo ###########################################################
+if "%UPDATEMODE%" == "yes" (
+	echo                   [102;30mUpgrade SUCCEEDED![0m
+) else (
+	echo                 [102;30mInstallation SUCCEEDED![0m
+)
 echo.
-echo Use launchers in [%INSTALL_ROOT%] to run CygWin Portable.
+echo  Use launchers in [%INSTALL_ROOT%] to run CygWin Portable.
 echo.
 pause
 :: deleting installer and old launchers
 del "%INSTALL_ROOT%ConCygSys*" >NUL 2>&1
-goto :eof
+exit /b 0
+
 
 :fail
-	echo.
-	echo ###########################################################
-	echo #Installation FAILED!
-	echo ###########################################################
-	echo.
-	pause
-	exit /b 1
+echo.
+if "%UPDATEMODE%" == "yes" (
+	echo                       [101;30mUpdate FAILED![0m
+) else (
+	echo                    [101;30mInstallation FAILED![0m
+)
+echo.
+pause
+exit /b 1
