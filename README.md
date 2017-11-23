@@ -11,20 +11,20 @@
 
 ## Description
 
-**ConCygSys** is a tool that installs portable [CygWin](https://www.cygwin.com/) Unix-like environment and connects to portable [ConEmu](https://conemu.github.io/) console emulator. All required software in one folder.
+**ConCygSys** is a tool that installs portable [Cygwin](https://www.cygwin.com/) Unix-like environment and connects to portable [ConEmu](https://conemu.github.io/) console emulator. All required software in one folder.
 
 This is an independent fork of amazing [cygwin-portable-installer](https://github.com/vegardit/cygwin-portable-installer) project. At first minimally modified for sysadmin purposes, later on filled with improvements and new features.
 
 ## Features
 
-- downloads and installs the latest [CygWin](https://www.cygwin.com/) and makes it **fully portable**, so you can:
+- downloads and installs the latest [Cygwin](https://www.cygwin.com/) and makes it **fully portable**, so you can:
   - move it to a different directory at any time
   - duplicate it by copying its folder
   - rename the folder
   - run from USB or network drive
   - use it in folders with spaces
 - downloads and installs the latest portable [ConEmu](https://conemu.github.io/)
-- only pure base with a couple of config files to make the installtion portable, no hacks with CygWin/ConEmu code
+- only pure base with a couple of config files to make the installtion portable, no hacks with [Cygwin](https://www.cygwin.com/)/[ConEmu](https://conemu.github.io/) code
 - the installer is flexible, you can customize the installation process per your requirements
 - can upgrade itself and its components
 
@@ -40,52 +40,46 @@ This is an independent fork of amazing [cygwin-portable-installer](https://githu
 
 > If Windows complains with a **Windows protected your PC** popup, you may need to click **Run anyway** to proceed with the installation.
 
-- Once the installation is finished, you can run CygWin via one of the following launchers:
-  - <img align="middle" height="50" src="http://i1-win.softpedia-static.com/screenshots/Cygwin_2.png?1350904296"> **`CygWin-Cmd`** to run CygWin in standard Windows console
-  - <img align="middle" height="50" src="https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg"> **`CygWin-ConEmu`** to run CygWin via ConEmu - multitab quake-style console **(RECOMMENDED)**
-  - <img align="middle" height="50" src="https://www.howtogeek.com/wp-content/uploads/2011/07/sshot-35.png"> **`CygWin-MinTTY`** to run CygWin via [MinTTY](https://mintty.github.io/) terminal emulator - fully xterm-compatible, but without multitab and quake-style support
+- Once the installation is finished, you can run [Cygwin](https://www.cygwin.com/) via one of the following launchers:
+  - <img align="middle" height="50" src="http://i1-win.softpedia-static.com/screenshots/Cygwin_2.png?1350904296"> **`CygWin-Cmd`** to run [Cygwin](https://www.cygwin.com/) in standard Windows console
+  - <img align="middle" height="50" src="https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg"> **`CygWin-ConEmu`** to run [Cygwin](https://www.cygwin.com/) via [ConEmu](https://conemu.github.io/) - multitab quake-style console **(RECOMMENDED)**
+  - <img align="middle" height="50" src="https://www.howtogeek.com/wp-content/uploads/2011/07/sshot-35.png"> **`CygWin-MinTTY`** to run [Cygwin](https://www.cygwin.com/) via [Mintty](https://mintty.github.io/) terminal emulator - fully xterm-compatible, but without multitab and quake-style support
   
 > You can try the launchers one-by-one to find the most suitable option
 
 ## Usage
 
-Default behaviour of CygWin console:
+Default behaviour of [Cygwin](https://www.cygwin.com/) console:
 
 - **Select by Left Click and release** - copy
 - **Right click** - paste
 
-Shortcuts if using CygWin via ConEmu console:
+Shortcuts if using [Cygwin](https://www.cygwin.com/) via [ConEmu](https://conemu.github.io/) console:
 
 - **Ctrl+\`** - open/hide console (quake style)
 - **Double click on Tab** - rename a tab
 - **Double click on Tab Panel** - open a new tab
 - **Win+LShift+E** - split tab to right 50/50
 - **Win+LShift+O** - split tab to bottom 50/50
-- **Win+T** - open CygWin via [Connector](https://conemu.github.io/en/CygwinMsysConnector.html)
-- **Win+B** - open CygWin via standard command line
-- **Win+M** - open CygWin via MinTTY (default task)
+- **Win+T** - open [Cygwin](https://www.cygwin.com/) via [Connector](https://conemu.github.io/en/CygwinMsysConnector.html)
+- **Win+B** - open [Cygwin](https://www.cygwin.com/) via standard command line
+- **Win+M** - open [Cygwin](https://www.cygwin.com/) via [Mintty](https://mintty.github.io/) (default task)
 - **Win+U** - open [WSL](https://msdn.microsoft.com/en-us/commandline/wsl/about) if installed
 
 ## Update
 
 > ConCygSys consists of:
-> - [CygWin](https://www.cygwin.com/): Unix-like environment itself
-> - [ConEmu](https://conemu.github.io/): multitab console you open this Unix-like environment from
-> - ConCygSys core: configuration files and settings keeping the installation portable
+> - **[CygWin](https://www.cygwin.com/):** Unix-like environment itself
+> - **[ConEmu](https://conemu.github.io/):** multitab console you open this Unix-like environment from
+> - **ConCygSys core:** configuration files and settings keeping the installation portable
 
 Use **`update`** launcher in the root of your ConCygSys directory to update the installation.
 
-You will be able either to update **Cygwin only** or to perform a **full update**: CygWin + ConCygSys core. ConEmu is already set to check its updates on startup and can update itself independently.
+You will be able either to update **[Cygwin](https://www.cygwin.com/) only** or to perform a **full update**: [Cygwin](https://www.cygwin.com/) + ConCygSys core. [ConEmu](https://conemu.github.io/) is already set to check its updates on startup and can update itself independently.
 
-<details><summary><strong>If you cannot find <code>update</code> launcher</strong></summary><p>
-
-> This means that you are updating one of the earliest stable/beta releases, therefore you need to perfrom the update manually:
-
-- Download **`ConCygSys-installer.cmd`** from [this link](https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
-
-- Launch **`ConCygSys-installer`**
-
-</p></details>
+> If you cannot find **`update`** launcher, this means that you are updating one of the earliest stable/beta releases, therefore you need to perfrom the update manually:
+> - Download **`ConCygSys-installer.cmd`** from [this link](https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
+> - Launch **`ConCygSys-installer`**
 
 ## Customization
 
@@ -95,17 +89,17 @@ If you have existing ConCygSys installation and would like to add/remove some co
 
 ## FAQ
 
-- **What is the path to Windows drives when I'm in CygWin console?**
+- **What is the path to Windows drives when I'm in [Cygwin](https://www.cygwin.com/) console?**
 
 `/mnt/DRIVE`
 
-BTW, different Windows files are symlinked in CygWin environment. For instance, `/etc/hosts` file in CygWin is linked to `%WINDIR%\System32\drivers\etc\hosts`. If you go to `/proc/registry` folder, you will see Windows registry structure. Many Windows programs can be executed from CygWin as well, for instance:
+BTW, different Windows files are symlinked in [Cygwin](https://www.cygwin.com/) environment. For instance, `/etc/hosts` file in [Cygwin](https://www.cygwin.com/) is linked to `%WINDIR%\System32\drivers\etc\hosts`. If you go to `/proc/registry` folder, you will see Windows registry structure. Many Windows programs can be executed from [Cygwin](https://www.cygwin.com/) as well, for instance:
 
 `ipconfig /flushdns` - to flush your local DNS cache
 
-- **Can I change CygWin username after installation?**
+- **Can I change [Cygwin](https://www.cygwin.com/) username after installation?**
 
-No problem, just edit `CYGWIN_USERNAME=` line in **:cygwinsettings** section of **`update`** launcher in your ConCygSys directory. Restart CygWin.
+No problem, just edit `CYGWIN_USERNAME=` line in **:cygwinsettings** section of **`update`** launcher in your ConCygSys directory. Restart [Cygwin](https://www.cygwin.com/).
 
 - **Сan I install a package from command line?**
 
@@ -117,7 +111,7 @@ apt-cyg install nano
 
 [More info about apt-cyg usage](https://github.com/transcode-open/apt-cyg) | [Available packages](https://cygwin.com/packages/package_list.html)
 
-- **I cannot find a desired package in CygWin repository, what should I do?**
+- **I cannot find a desired package in [Cygwin](https://www.cygwin.com/) repository, what should I do?**
 
 This can happen. Fortunately, the packages can still be built from source. `install <package> cygwin` search query will give you the right answer in most cases.
 Below are some examples for the reference:
