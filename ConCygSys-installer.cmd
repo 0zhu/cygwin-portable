@@ -370,7 +370,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo set INSTALLER=ConCygSys-installer.cmd
 	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
 	echo start "" "%%INSTALLER%%" ^|^| goto :fail
-	echo exit /b 0
+	echo exit 0
 	echo :fail
 	echo del "%%DOWNLOADER%%" ^>NUL 2^>^&1
 	echo echo.
@@ -378,7 +378,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo echo Try uploading installer manually from %CONCYGSYS_LINK%
 	echo echo.
 	echo pause
-	echo exit /b 1
+	echo exit 1
 ) >"%Concygsys_settings%" || goto :fail
 
 echo Launching init script...
@@ -481,7 +481,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 	^)
 		echo ^)
 		echo :: not to leave this launcher open if called from another batch file
-		echo exit /b 0
+		echo exit 0
 	) >"%Launch_conemu%" || goto :fail
 )
 
@@ -506,7 +506,7 @@ echo Generating Mintty launcher [%Launch_mintty%]...
 	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
 	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" --Title ConCygSys -
 	echo :: not to leave this launcher open if called from another batch file
-	echo exit /b 0
+	echo exit 0
 ) >"%Launch_mintty%" || goto :fail
 
 
@@ -717,7 +717,7 @@ echo.
 pause
 :: deleting installer and old launchers
 del "%INSTALL_ROOT%ConCygSys*" >NUL 2>&1
-exit /b 0
+exit 0
 
 
 :fail
@@ -730,4 +730,4 @@ if "%UPDATEMODE%" == "yes" (
 )
 echo.
 pause
-exit /b 1
+exit 1
