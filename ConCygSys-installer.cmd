@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=171123b
+set CONCYGSYS_VERSION=180617b2
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -23,9 +23,6 @@ set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 
 :: select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
 set CYGWIN_PACKAGES=bind-utils,curl,inetutils,openssh,openssl,vim,whois
-
-:: select command line language: https://docs.oracle.com/cd/E23824_01/html/E26033/glset.html , leave empty for autodetect
-set LOCALE=
 
 :: Cygwin uses ACLs to implement real Unix permissions which are not supported by Windows: https://cygwin.com/cygwin-ug-net/using-filemodes.html
 :: However, if you move installation to different directory or PC, ACLs will be broken and will have troubles running Cygwin binaries
@@ -303,7 +300,6 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo :: %CONCYGSYS_LINK%#customization
 	echo set CYGWIN_USERNAME=%CYGWIN_USERNAME%
 	echo set HOME_FOLDER=%HOME_FOLDER%
-	echo set LOCALE=%LOCALE%
 	echo exit /b 0
 	echo.
 	echo :installoptions
