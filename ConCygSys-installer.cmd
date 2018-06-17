@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=171123
+set CONCYGSYS_VERSION=171123b
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -85,7 +85,7 @@ set MINTTY_OPTIONS=--nopin ^
 echo.
 set CONCYGSYS_LINK=https://github.com/zhubanRuban/ConCygSys
 set CONCYGSYS_INFO=ConCygSys v.%CONCYGSYS_VERSION% %CONCYGSYS_LINK%
-echo [7;96m%CONCYGSYS_INFO%[0m
+echo [ %CONCYGSYS_INFO% ]
 echo.
 
 :: %~dp0 means current directory with backslash at the end
@@ -110,7 +110,7 @@ if not exist "%CYGWIN_ROOT%" (
 	rem https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
-		echo [7;91mActive Cygwin processes detected, please close them and re-run update[0m
+		echo !!! Active Cygwin processes detected, please close them and re-run update !!!
 		wmic process get ExecutablePath | find /I "%CYGWIN_ROOT%"
 		goto :fail
 	) else (
@@ -121,10 +121,10 @@ if not exist "%CYGWIN_ROOT%" (
 			set UPDATEFROMOLD=yes
 		)
 		echo.
-		set /p UPDATECYGWINONLY=[0m [1;7m 1 [0m update Cygwin only   [1;7m ENTER [0m update everything 
+		set /p UPDATECYGWINONLY=   [ 1 and ENTER] - update Cygwin only   [ ENTER ] - update everything 
 		if not "!UPDATECYGWINONLY!" == "" goto :updatecygwinonly
 		echo.
-		echo [7;93mBefore you proceed with update...[0m
+		echo !!! Before you proceed with update... !!!
 		if "!UPDATEFROMOLD!" == "yes" (
 			echo It seems that you are upgrading from one of the oldest ConCygSys releases
 			echo Please BACKUP your personal records in .bashrc
@@ -343,7 +343,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo exit /b 0
 	echo.
 	echo :update
-	echo echo [96m%CONCYGSYS_INFO%[0m
+	echo echo [ %CONCYGSYS_INFO% ]
 	echo set INSTALL_ROOT=%%~dp0
 	echo set DOWNLOADER=%%INSTALL_ROOT%%downloader.vbs
 	echo echo Creating a script that can download files [%%DOWNLOADER%%]...
@@ -374,7 +374,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo :fail
 	echo del "%%DOWNLOADER%%" ^>NUL 2^>^&1
 	echo echo.
-	echo echo                       [101;30mUpdate FAILED![0m
+	echo echo                       !!! Update FAILED !!!
 	echo echo Try uploading installer manually from %CONCYGSYS_LINK%
 	echo echo.
 	echo pause
@@ -707,9 +707,9 @@ del "%INSTALL_ROOT%README.md" >NUL 2>&1
 
 echo.
 if "%UPDATEMODE%" == "yes" (
-	echo                   [102;30mUpdate SUCCEEDED![0m
+	echo                    [ Update SUCCEEDED! ]
 ) else (
-	echo                 [102;30mInstallation SUCCEEDED![0m
+	echo                 [ Installation SUCCEEDED! ]
 )
 echo.
 echo  Use launchers in [%INSTALL_ROOT%] to run Cygwin Portable.
@@ -723,10 +723,10 @@ exit 0
 :fail
 echo.
 if "%UPDATEMODE%" == "yes" (
-	echo                       [101;30mUpdate FAILED![0m
+	echo                       !!! Update FAILED !!!
 	echo Try uploading installer manually from %CONCYGSYS_LINK%
 ) else (
-	echo                    [101;30mInstallation FAILED![0m
+	echo                    !!! Installation FAILED !!!
 )
 echo.
 pause
