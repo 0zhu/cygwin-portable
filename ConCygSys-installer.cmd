@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180624b2
+set CONCYGSYS_VERSION=180624b3
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -55,9 +55,6 @@ set INSTALL_BASHRC_CUSTOMS=yes
 set INSTALL_CONEMU=yes
 :: https://conemu.github.io/en/ConEmuArgs.html
 set CONEMU_OPTIONS=-Title ConCygSys
-
-:: paths where to look for binaries, add more path if required, but at the cost of runtime performance
-set CYGWIN_PATH=%%SystemRoot%%\system32;%%SystemRoot%%;%%CYGWIN_ROOT%%\bin;%%CYGWIN_ROOT%%\usr\sbin;%%CYGWIN_ROOT%%\usr\local\sbin
 
 :: set proxy if required (unfortunately Cygwin setup.exe does not have commandline options to specify proxy user credentials)
 set PROXY_HOST=
@@ -261,6 +258,8 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 	echo #!/usr/bin/env bash
 	echo # %CONCYGSYS_INFO%
 	echo.
+	echo PATH=/usr/local/bin:/usr/bin
+	echo.
 	echo # Setting custom Cygwin username
 	echo (
 	echo mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USERNAME\"; \$6=\"$HOME\"; print}"
@@ -320,7 +319,6 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo :launcherheader
 	echo set CYGWIN_ROOT=%%~dp0cygwin
 	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
-	echo set PATH=%CYGWIN_PATH%
 	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%\ProgramData
 	echo set ProgramData=%%ALLUSERSPROFILE%%
 	echo if not "%%CYGWIN_USERNAME%%" == "" (
@@ -382,7 +380,7 @@ echo.
 echo Creating script to install required software [%Pre_install%]...
 (
 	echo #!/usr/bin/env bash
-	echo.
+	echo PATH=/usr/local/bin:/usr/bin
 	if not "%PROXY_HOST%" == "" (
 		echo if [[ $HOSTNAME == "%COMPUTERNAME%" ]]; then
 		echo 	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
@@ -522,7 +520,8 @@ set Post_install=%CYGWIN_ROOT%\post-install.sh
 echo.
 echo Generating post-install script [%Post_install%]...
 (
-	echo echo #!/usr/bin/env bash
+	echo #!/usr/bin/env bash
+	echo PATH=/usr/local/bin:/usr/bin
 	echo mkdir -p /opt
 	:: delete messy bashrc if updating from earliest ConCygSys versions
 	if "%UPDATEFROMOLD%" == "yes" (
