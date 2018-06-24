@@ -1,4 +1,4 @@
-# ConCygSys <a href="https://github.com/zhubanRuban/ConCygSys/"><img height="30" src="http://iconshow.me/media/images/ui/ios7-icons/png/128/social-github.png"></a> <a href="https://mintty.github.io/" target="_blank"><img align="right" height="40" src="https://pbs.twimg.com/profile_images/1938877716/terminal-256.png"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
+# ConCygSys <a href="https://github.com/zhubanRuban/ConCygSys/"><img height="30" src="https://iconshow.me/media/images/ui/ios7-icons/png/128/social-github.png"></a> <a href="https://mintty.github.io/" target="_blank"><img align="right" height="40" src="https://pbs.twimg.com/profile_images/1938877716/terminal-256.png"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
 
 - [Description](#description)
 - [Features](#features)
@@ -41,7 +41,7 @@ This is an independent fork of amazing [cygwin-portable-installer](https://githu
 > If Windows complains with a **Windows protected your PC** popup, you may need to click **Run anyway** to proceed with the installation.
 
 - Once the installation is finished, you can run [Cygwin](https://www.cygwin.com/) via one of the following launchers:
-  - <img align="middle" height="50" src="http://i1-win.softpedia-static.com/screenshots/Cygwin_2.png?1350904296"> **`CygWin-Cmd`** to run [Cygwin](https://www.cygwin.com/) in standard Windows console
+  - <img align="middle" height="50" src="https://www.petri.com/images/03-Cygwin-ls.JPG"> **`CygWin-Cmd`** to run [Cygwin](https://www.cygwin.com/) in standard Windows console
   - <img align="middle" height="50" src="https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg"> **`CygWin-ConEmu`** to run [Cygwin](https://www.cygwin.com/) via [ConEmu](https://conemu.github.io/) - multitab quake-style console **(RECOMMENDED)**
   - <img align="middle" height="50" src="https://www.howtogeek.com/wp-content/uploads/2011/07/sshot-35.png"> **`CygWin-MinTTY`** to run [Cygwin](https://www.cygwin.com/) via [Mintty](https://mintty.github.io/) terminal emulator - fully xterm-compatible, but without multitab and quake-style support
   
@@ -59,12 +59,6 @@ Shortcuts if using [Cygwin](https://www.cygwin.com/) via [ConEmu](https://conemu
 - **Ctrl+\`** - open/hide console (quake style)
 - **Double click on Tab** - rename a tab
 - **Double click on Tab Panel** - open a new tab
-- **Win+LShift+E** - split tab to right 50/50
-- **Win+LShift+O** - split tab to bottom 50/50
-- **Win+T** - open [Cygwin](https://www.cygwin.com/) via [Connector](https://conemu.github.io/en/CygwinMsysConnector.html)
-- **Win+B** - open [Cygwin](https://www.cygwin.com/) via standard command line
-- **Win+M** - open [Cygwin](https://www.cygwin.com/) via [Mintty](https://mintty.github.io/) (default task)
-- **Win+U** - open [WSL](https://msdn.microsoft.com/en-us/commandline/wsl/about) if installed
 
 ## Update
 
@@ -119,6 +113,16 @@ Below are some examples for the reference:
 [MTR](https://github.com/traviscross/mtr)
 
 [ipmitool](https://stackoverflow.com/questions/12907005/ipmitool-for-windows)
+
+- **Can I try beta version?**
+
+No problem. There is [beta tree](https://github.com/zhubanRuban/ConCygSys/tree/beta)
+- Download **`ConCygSys-installer.cmd`** from [this link](https://github.com/zhubanRuban/ConCygSys/raw/beta/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
+- Launch **`ConCygSys-installer`**
+
+- **Where can I report an issue or get a support?**
+
+[Here](https://github.com/zhubanRuban/ConCygSys/issues)
 
 ## License
 
