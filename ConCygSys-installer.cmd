@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180617b2
+set CONCYGSYS_VERSION=180624b2
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -501,6 +501,16 @@ echo Generating Mintty launcher [%Launch_mintty%]...
 	echo :: not to leave this launcher open if called from another batch file
 	echo exit 0
 ) >"%Launch_mintty%" || goto :fail
+
+set Launch_wsltty=%INSTALL_ROOT%Cygwin-WSLtty.cmd
+echo Generating WSLtty launcher [%Launch_wsltty%]...
+(
+	echo @echo off
+	echo :: %CONCYGSYS_INFO%
+	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" --Title ConCygSys --WSL=  -~
+	echo :: not to leave this launcher open if called from another batch file
+	echo exit 0
+) >"%Launch_wsltty%" || goto :fail
 
 
 echo.
