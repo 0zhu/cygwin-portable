@@ -117,8 +117,8 @@ Below are some examples for the reference:
 - **Can I try beta version?**
 
 No problem. There is [beta tree](https://github.com/zhubanRuban/ConCygSys/tree/beta)
-- Download **`ConCygSys-installer.cmd`** from [this link](https://github.com/zhubanRuban/ConCygSys/raw/beta/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
-- Launch **`ConCygSys-installer`**
+> - Download **`ConCygSys-installer.cmd`** from [this link](https://github.com/zhubanRuban/ConCygSys/raw/beta/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
+> - Launch **`ConCygSys-installer`**
 
 - **Where can I report an issue or get a support?**
 
