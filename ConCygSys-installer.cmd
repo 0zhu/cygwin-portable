@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180624b3
+set CONCYGSYS_VERSION=180624b4
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -615,7 +615,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 			^<value name="WindowMode" type="dword" data="00000520"/^>
 		echo 			^<value name="ShowScrollbar" type="hex" data="01"/^>
 		echo 			^<value name="QuakeStyle" type="hex" data="01"/^>
-		echo 			^<value name="QuakeAnimation" type="ulong" data="50"/^>
+		echo 			^<value name="QuakeAnimation" type="ulong" data="0"/^>
 		echo 			^<value name="Min2Tray" type="hex" data="01"/^>
 		echo 			^<value name="TryToCenter" type="hex" data="01"/^>
 		echo 			^<value name="TabFontHeight" type="long" data="12"/^>
@@ -638,8 +638,6 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 			^<value name="KillSshAgent" type="hex" data="00"/^>
 		echo 			^<key name="HotKeys"^>
 		echo 				^<value name="MinimizeRestore" type="dword" data="000011c0"/^>
-		echo 				^<value name="Multi.NewSplitV" type="dword" data="00a05b4f"/^>
-		echo 				^<value name="Multi.NewSplitH" type="dword" data="00a05b45"/^>
 		echo 			^</key^>
 		echo 			^<key name="Tasks"^>
 		echo 				^<value name="Count" type="long" data="6"/^>
