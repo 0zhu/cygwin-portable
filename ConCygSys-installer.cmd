@@ -65,10 +65,7 @@ set PROXY_PORT=8080
 
 :: set Mintty options used in ConEmu task: https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
 :: the main goal is to set options (they will overwrite whatyou configured in main Mintty window) to make Mintty working properly with ConEmu
-set MINTTY_OPTIONS=--nopin ^
---Border frame ^
--o BellType=5 ^
--o FontHeight=10 ^
+set MINTTY_OPTIONS=-o FontHeight=10 ^
 -o BoldAsFont=yes ^
 -o AllowBlinking=yes ^
 -o CopyOnSelect=yes ^
@@ -636,47 +633,70 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 				^<value name="Multi.NewSplitH" type="dword" data="00a05b45"/^>
 		echo 			^</key^>
 		echo 			^<key name="Tasks"^>
-		echo 				^<value name="Count" type="long" data="4"/^>
+		echo 				^<value name="Count" type="long" data="6"/^>
 		echo 				^<key name="Task1"^>
-		echo 					^<value name="Name" type="string" data="{Cygwin::Connector}"/^>
+		echo 					^<value name="Name" type="string" data="{Cygwin::Cmd}"/^>
 		echo 					^<value name="Flags" type="dword" data="00000004"/^>
-		echo 					^<value name="Hotkey" type="dword" data="00005b54"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 		echo 					^<value name="GuiArgs" type="string" data=""/^>
-		rem Removed path to icon to get more space for tabs
-		rem Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
-		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-			echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuBaseDirShort%%\conemu-cyg-64.exe&quot; -new_console:p -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
-		)
-		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-			echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuBaseDirShort%%\conemu-cyg-32.exe&quot; -new_console:p -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
-		)
+		echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
 		echo 				^</key^>
 		echo 				^<key name="Task2"^>
-		echo 					^<value name="Name" type="string" data="{Cygwin::Cmd}"/^>
+		echo 					^<value name="Name" type="string" data="{Cygwin::Connector}"/^>
 		echo 					^<value name="Flags" type="dword" data="00000004"/^>
-		echo 					^<value name="Hotkey" type="dword" data="00005b42"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 		echo 					^<value name="GuiArgs" type="string" data=""/^>
-		echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuDir%%\..\cygwin\bin\bash.exe&quot; --login -i -new_console:p -new_console:P:&quot;&lt;xterm&gt;&quot; -new_console:h5000"/^>
+		rem Removed path to icon to get more space for tabs
+		rem Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
+		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" &amp; "%%ConEmuBaseDirShort%%\conemu-cyg-64.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
+		)
+		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" &amp; "%%ConEmuBaseDirShort%%\conemu-cyg-32.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
+		)
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
 		echo 				^</key^>
 		echo 				^<key name="Task3"^>
 		echo 					^<value name="Name" type="string" data="{Cygwin::Mintty}"/^>
 		echo 					^<value name="Flags" type="dword" data="00000005"/^>
-		echo 					^<value name="Hotkey" type="dword" data="00005b4d"/^>
-		echo 					^<value name="GuiArgs" type="string" data="/icon &quot; &quot;"/^>
-		echo 					^<value name="Cmd1" type="string" data="&quot;%%ConEmuDir%%\..\cygwin\bin\mintty.exe&quot; %MINTTY_OPTIONS% - -new_console:pm:/mnt -new_console:P:&quot;&lt;xterm&gt;&quot;"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
+		echo 					^<value name="GuiArgs" type="string" data='/icon " "'/^>
+		echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\mintty.exe" %MINTTY_OPTIONS% - -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
 		echo 				^</key^>
 		echo 				^<key name="Task4"^>
-		echo 					^<value name="Name" type="string" data="{WSL}"/^>
+		echo 					^<value name="Name" type="string" data="{WSL::Cmd}"/^>
 		echo 					^<value name="Flags" type="dword" data="00000004"/^>
-		echo 					^<value name="Hotkey" type="dword" data="00005b55"/^>
-		echo 					^<value name="GuiArgs" type="string" data="-icon &quot;%%USERPROFILE%%\AppData\Local\lxss\bash.ico&quot;"/^>
-		echo 					^<value name="Cmd1" type="string" data="&quot;%%SystemRoot%%\system32\bash.exe&quot; ~ -new_console:pm:/mnt -new_console:P:&quot;&lt;ubuntu&gt;&quot; -new_console:h5000"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
+		echo 					^<value name="GuiArgs" type="string" data=""/^>
+		echo 					^<value name="Cmd1" type="string" data='"%%SystemRoot%%\system32\bash.exe" ~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
+		echo 					^<value name="Active" type="long" data="0"/^>
+		echo 					^<value name="Count" type="long" data="1"/^>
+		echo 				^</key^>
+		echo 				^<key name="Task5"^>
+		echo 					^<value name="Name" type="string" data="{WSL::Connector}"/^>
+		echo 					^<value name="Flags" type="dword" data="00000004"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
+		echo 					^<value name="GuiArgs" type="string" data=""/^>
+		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" &amp; "%%ConEmuBaseDirShort%%\conemu-cyg-64.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
+		)
+		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" &amp; "%%ConEmuBaseDirShort%%\conemu-cyg-32.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
+		)
+		echo 					^<value name="Active" type="long" data="0"/^>
+		echo 					^<value name="Count" type="long" data="1"/^>
+		echo 				^</key^>
+		echo 				^<key name="Task6"^>
+		echo 					^<value name="Name" type="string" data="{WSL::WSLtty}"/^>
+		echo 					^<value name="Flags" type="dword" data="00000004"/^>
+		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
+		echo 					^<value name="GuiArgs" type="string" data='/icon " "'/^>
+		echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\mintty.exe" %MINTTY_OPTIONS% --WSL=  -~ -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
 		echo 				^</key^>
