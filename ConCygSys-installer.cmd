@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180624b4
+set CONCYGSYS_VERSION=180625b5
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -395,7 +395,8 @@ echo Creating script to install required software [%Pre_install%]...
 		echo 	echo "Download URL=$conemu_url" ^&^& \
 		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" "$conemu_url" ^&^& \
 		echo 	mkdir -p "$conemu_dir" ^&^& \
-		echo 	bsdtar -xvf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
+		echo	echo "Extracting ConEmu from archive..." ^&^& \
+		echo 	bsdtar -xf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
 		echo 	rm -f "${conemu_dir}.7z"
 		echo fi
 		echo echo %CONCYGSYS_INFO% ^> "$CYGWIN_ROOT/../conemu/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
