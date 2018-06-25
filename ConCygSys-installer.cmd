@@ -382,21 +382,21 @@ echo Creating script to install required software [%Pre_install%]...
 	echo #!/usr/bin/env bash
 	echo PATH=/usr/local/bin:/usr/bin
 	if not "%PROXY_HOST%" == "" (
-		echo if [[ $HOSTNAME == "%COMPUTERNAME%" ]]; then
+		echo if [ "${HOSTNAME^^}" == "%COMPUTERNAME%" ]; then
 		echo 	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
 		echo 	export https_proxy=$http_proxy
 		echo fi
 	)
 	if "%INSTALL_CONEMU%" == "yes" (
 		echo conemu_dir=$(cygpath -w "$CYGWIN_ROOT/../conemu"^)
-		echo if [[ ! -e $conemu_dir ]]; then
+		echo if [ ! -e "$conemu_dir" ]; then
 		echo 	echo "Installing ConEmu..."
-		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)"
-		echo 	echo "Download URL=$conemu_url"
-		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" $conemu_url
-		echo 	mkdir "$conemu_dir"
-		echo 	bsdtar -xvf "${conemu_dir}.7z" -C "$conemu_dir"
-		echo 	rm "${conemu_dir}.7z"
+		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)" ^&^& \
+		echo 	echo "Download URL=$conemu_url" ^&^& \
+		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" "$conemu_url" ^&^& \
+		echo 	mkdir -p "$conemu_dir" ^&^& \
+		echo 	bsdtar -xvf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
+		echo 	rm -f "${conemu_dir}.7z"
 		echo fi
 		echo echo %CONCYGSYS_INFO% ^> "$CYGWIN_ROOT/../conemu/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
 	) else (
@@ -424,8 +424,8 @@ echo Creating script to install required software [%Pre_install%]...
 		echo rm -f /usr/local/bin/pscp
 	)
 	if "%INSTALL_BASH_FUNK%" == "yes" (
-		echo if [[ ! -e /opt ]]; then mkdir /opt; fi
-		echo if [[ ! -e /opt/bash-funk/bash-funk.sh ]]; then
+		echo mkdir -p /opt
+		echo if [ ! -e "/opt/bash-funk/bash-funk.sh" ]; then
 		echo 	echo Installing [bash-funk]...
 		echo 	if hash git ^&^>/dev/null; then
 		echo 		git clone https://github.com/vegardit/bash-funk --branch master --single-branch /opt/bash-funk
@@ -525,19 +525,19 @@ echo Generating post-install script [%Post_install%]...
 	echo mkdir -p /opt
 	:: delete messy bashrc if updating from earliest ConCygSys versions
 	if "%UPDATEFROMOLD%" == "yes" (
-		echo cat /etc/skel/.bashrc ^> ${HOME}/.bashrc
+		echo cat /etc/skel/.bashrc ^> "${HOME}/.bashrc"
 	)
 	:: inserting proxy settings to .bashrc
 	if not "%PROXY_HOST%" == "" (
 		echo echo Adding proxy settings for host [%COMPUTERNAME%] to [${HOME}/.bashrc]...
 		echo (
-		echo echo if [[ $HOSTNAME == "%COMPUTERNAME%" ]]; then
+		echo echo if [ \"\${HOSTNAME^^}\" == \"%COMPUTERNAME%\" ]\; then
 		echo echo	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
-		echo echo	export https_proxy=$http_proxy
+		echo echo	export https_proxy=\$http_proxy
 		echo echo	export no_proxy="::1,127.0.0.1,localhost,169.254.169.254,%COMPUTERNAME%,*.%USERDNSDOMAIN%"
-		echo echo	export HTTP_PROXY=$http_proxy
-		echo echo	export HTTPS_PROXY=$http_proxy
-		echo echo	export NO_PROXY=$no_proxy
+		echo echo	export HTTP_PROXY=\$http_proxy
+		echo echo	export HTTPS_PROXY=\$http_proxy
+		echo echo	export NO_PROXY=\$no_proxy
 		echo echo fi
 		echo ^) ^> /opt/bash_proxy
 		echo if grep -q '/opt/bash_proxy' "${HOME}/.bashrc"; then
