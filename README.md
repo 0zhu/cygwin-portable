@@ -11,7 +11,7 @@
 
 ## Description
 
-**ConCygSys** is a tool that installs portable [Cygwin](https://www.cygwin.com/) Unix-like environment and connects to portable [ConEmu](https://conemu.github.io/) console emulator. All required software in one folder.
+**ConCygSys** is a tool that installs portable [Cygwin](https://www.cygwin.com/) Unix-like environment and connects to portable [ConEmu](https://conemu.github.io/) console emulator. All required software in one folder. Now also with [WSLtty](https://github.com/mintty/wsltty) support!
 
 This is an independent fork of amazing [cygwin-portable-installer](https://github.com/vegardit/cygwin-portable-installer) project. At first minimally modified for sysadmin purposes, later on filled with improvements and new features.
 
@@ -44,6 +44,7 @@ This is an independent fork of amazing [cygwin-portable-installer](https://githu
   - <img align="middle" height="50" src="https://www.petri.com/images/03-Cygwin-ls.JPG"> **`CygWin-Cmd`** to run [Cygwin](https://www.cygwin.com/) in standard Windows console
   - <img align="middle" height="50" src="https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg"> **`CygWin-ConEmu`** to run [Cygwin](https://www.cygwin.com/) via [ConEmu](https://conemu.github.io/) - multitab quake-style console **(RECOMMENDED)**
   - <img align="middle" height="50" src="https://www.howtogeek.com/wp-content/uploads/2011/07/sshot-35.png"> **`CygWin-MinTTY`** to run [Cygwin](https://www.cygwin.com/) via [Mintty](https://mintty.github.io/) terminal emulator - fully xterm-compatible, but without multitab and quake-style support
+  - <img align="middle" height="50" src="https://pbs.twimg.com/media/CuMUQhZWYAA8yDc.jpg"> **`CygWin-WSLtty`** to run [WSL](https://docs.microsoft.com/en-us/windows/wsl/about) via [Mintty](https://mintty.github.io/) terminal emulator
   
 > You can try the launchers one-by-one to find the most suitable option
 
@@ -59,6 +60,7 @@ Shortcuts if using [Cygwin](https://www.cygwin.com/) via [ConEmu](https://conemu
 - **Ctrl+\`** - open/hide console (quake style)
 - **Double click on Tab** - rename a tab
 - **Double click on Tab Panel** - open a new tab
+- **Win+X** - open a new tab with standard Windows console
 
 ## Update
 
@@ -90,6 +92,10 @@ If you have existing ConCygSys installation and would like to add/remove some co
 BTW, different Windows files are symlinked in [Cygwin](https://www.cygwin.com/) environment. For instance, `/etc/hosts` file in [Cygwin](https://www.cygwin.com/) is linked to `%WINDIR%\System32\drivers\etc\hosts`. If you go to `/proc/registry` folder, you will see Windows registry structure. Many Windows programs can be executed from [Cygwin](https://www.cygwin.com/) as well, for instance:
 
 `ipconfig /flushdns` - to flush your local DNS cache
+
+- **How to change default task for new tab in [ConEmu](https://conemu.github.io/)?**
+
+ConEmu settings>> Startup>> Tasks>> choose a desired task>> tick "Default task for new console">> Save settings
 
 - **Can I change [Cygwin](https://www.cygwin.com/) username after installation?**
 
