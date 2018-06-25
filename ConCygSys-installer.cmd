@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180625b5
+set CONCYGSYS_VERSION=180625b6
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -659,10 +659,10 @@ if "%INSTALL_CONEMU%" == "yes" (
 		rem Removed path to icon to get more space for tabs
 		rem Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
 		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" &amp; "%%ConEmuBaseDirShort%%\conemu-cyg-64.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-64.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
 		)
 		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" &amp; "%%ConEmuBaseDirShort%%\conemu-cyg-32.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-32.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
 		)
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
@@ -691,10 +691,10 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 		echo 					^<value name="GuiArgs" type="string" data=""/^>
 		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" &amp; "%%ConEmuBaseDirShort%%\conemu-cyg-64.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-64.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
 		)
 		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" &amp; "%%ConEmuBaseDirShort%%\conemu-cyg-32.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-32.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
 		)
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
