@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180625b8
+set CONCYGSYS_VERSION=180625b9
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -104,7 +104,7 @@ if not exist "%CYGWIN_ROOT%" (
 	rem https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
-		echo !!! Active Cygwin processes detected, please close them and re-run update !!!
+		echo ^^!^^!^^! Active Cygwin processes detected, please close them and re-run update ^^!^^!^^!
 		wmic process get ExecutablePath | find /I "%CYGWIN_ROOT%"
 		goto :fail
 	) else (
@@ -118,7 +118,7 @@ if not exist "%CYGWIN_ROOT%" (
 		set /p UPDATECYGWINONLY=   [ 1 and ENTER] - update Cygwin only   [ ENTER ] - update everything 
 		if not "!UPDATECYGWINONLY!" == "" goto :updatecygwinonly
 		echo.
-		echo !!! Before you proceed with update... !!!
+		echo ^^!^^!^^! Before you proceed with update... ^^!^^!^^!
 		if "!UPDATEFROMOLD!" == "yes" (
 			echo It seems that you are upgrading from one of the oldest ConCygSys releases
 			echo Please BACKUP your personal records in .bashrc
