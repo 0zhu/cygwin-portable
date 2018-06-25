@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180625b10
+set CONCYGSYS_VERSION=180625b11
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -285,7 +285,6 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 	echo sed -i '/^^last-cache/!b;n;c\\t'"${pkg_cache_dir//\\/\\\\}"'' /etc/setup/setup.rc
 ) >"%Portable_init%" || goto :fail
 
-:: converting script to unix format as it was created via Windows command line
 "%CYGWIN_ROOT%\bin\dos2unix" "%Portable_init%" || goto :fail
 
 echo Generating one-file settings and updater file [%Concygsys_settings%]...
@@ -378,104 +377,22 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo exit 1
 ) >"%Concygsys_settings%" || goto :fail
 
-echo Launching init script...
-call "%Concygsys_settings%" launcherheader || goto :fail
-	
-set Pre_install=%CYGWIN_ROOT%\pre-install.sh
-echo.
-echo Creating script to install required software [%Pre_install%]...
-(
-	echo #!/usr/bin/env bash
-	echo PATH=/usr/local/bin:/usr/bin
-	if not "%PROXY_HOST%" == "" (
-		echo if [ "${HOSTNAME^^}" == "%COMPUTERNAME%" ]; then
-		echo 	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
-		echo 	export https_proxy=$http_proxy
-		echo fi
-	)
-	if "%INSTALL_CONEMU%" == "yes" (
-		echo conemu_dir=$(cygpath -w "$CYGWIN_ROOT/../conemu"^)
-		echo if [ ! -e "$conemu_dir" ]; then
-		echo 	echo "Installing ConEmu..."
-		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)" ^&^& \
-		echo 	echo "Download URL=$conemu_url" ^&^& \
-		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" "$conemu_url" ^&^& \
-		echo 	mkdir -p "$conemu_dir" ^&^& \
-		echo 	echo "Extracting ConEmu from archive..." ^&^& \
-		echo 	bsdtar -xf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
-		echo 	rm -f "${conemu_dir}.7z"
-		echo fi
-		echo echo %CONCYGSYS_INFO% ^> "$CYGWIN_ROOT/../conemu/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
-	) else (
-		echo echo "Removing ConEmu..."
-		echo rm -rf $(cygpath -w "$CYGWIN_ROOT/../conemu"^)
-	)
-	if "%INSTALL_WSLBRIDGE%" == "yes" (
-		echo echo "Installing WSLbridge..."
-		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-			echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin64.tar.gz' -o)"
-		)
-		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-			echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin32.tar.gz' -o)"
-		)
-		echo echo "Download URL=$wslbridge_url" ^&^& \
-		echo wget -nv --show-progress -O "${CYGWIN_ROOT}.tar.gz" "$wslbridge_url" ^&^& \
-		echo echo "Extracting WSLbridge from archive..." ^&^& \
-		echo bsdtar -xf "${CYGWIN_ROOT}.tar.gz" --strip-components=1 -C "${CYGWIN_ROOT}/bin/" '*/wslbridge*' ^&^& \
-		echo rm -f "${CYGWIN_ROOT}.tar.gz"
-	) else (
-		echo echo "Removing WSLbridge..."
-		echo rm -f "${CYGWIN_ROOT}/bin/wslbridge"*
-	)
-	if "%INSTALL_APT_CYG%" == "yes" (
-		echo echo "Installing/updating apt-cyg..."
-		echo wget -nv --show-progress -O /usr/local/bin/apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
-		echo chmod +x /usr/local/bin/apt-cyg
-	) else (
-		echo rm -f /usr/local/bin/apt-cyg
-	)
-	if "%INSTALL_PSSH%" == "yes" (
-		echo echo "Installing/updating parallel ssh tool..."
-		echo wget -nv --show-progress -O /usr/local/bin/pssh https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/pssh
-		echo chmod +x /usr/local/bin/pssh
-	) else (
-		echo rm -f /usr/local/bin/pssh
-	)
-	if "%INSTALL_PSCP%" == "yes" (
-		echo echo "Installing parallel scp tool..."
-		echo wget -nv --show-progress -O /usr/local/bin/pscp https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/pscp
-		echo chmod +x /usr/local/bin/pscp
-	) else (
-		echo rm -f /usr/local/bin/pscp
-	)
-	if "%INSTALL_BASH_FUNK%" == "yes" (
-		echo mkdir -p /opt
-		echo if [ ! -e "/opt/bash-funk/bash-funk.sh" ]; then
-		echo 	echo Installing [bash-funk]...
-		echo 	if hash git ^&^>/dev/null; then
-		echo 		git clone https://github.com/vegardit/bash-funk --branch master --single-branch /opt/bash-funk
-		echo 		elif hash svn ^&^>/dev/null; then
-		echo 			svn checkout https://github.com/vegardit/bash-funk/trunk /opt/bash-funk
-		echo 	else
-		echo 		mkdir /opt/bash-funk ^&^& \
-		echo 		cd /opt/bash-funk ^&^& \
-		echo 		wget -qO- --show-progress https://github.com/vegardit/bash-funk/tarball/master ^| tar -xzv --strip-components 1
-		echo 	fi
-		echo fi
-	) else (
-		echo rm -rf /opt/bash-funk
-	)
-) >"%Pre_install%" || goto :fail
-
-"%CYGWIN_ROOT%\bin\dos2unix" "%Pre_install%" || goto :fail
-
-echo Launching pre-install script...
-"%CYGWIN_ROOT%\bin\bash" "%Pre_install%" || goto :fail
-del "%Pre_install%" >NUL 2>&1
-
 
 echo.
 echo Generating main launchers...
+
+set Launch_cmd=%INSTALL_ROOT%Cygwin-Cmd.cmd
+echo Generating cmd launcher [%Launch_cmd%]...
+(
+	echo @echo off
+	echo :: %CONCYGSYS_INFO%
+	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
+	echo if "%%1" == "" (
+	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -i
+	echo ^) else (
+	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -c %%*
+	echo ^)
+) >"%Launch_cmd%" || goto :fail
 
 set Launch_conemu=%INSTALL_ROOT%Cygwin-ConEmu.cmd
 if "%INSTALL_CONEMU%" == "yes" (
@@ -496,26 +413,12 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 		start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
 		echo 	^)
 		echo ^)
-		echo :: not to leave this launcher open if called from another batch file
 		echo exit 0
 	) >"%Launch_conemu%" || goto :fail
 ) else (
 	echo Removing ConEmu launcher [%Launch_conemu%]...
 	del "%Launch_conemu%" >NUL 2>&1
 )
-
-set Launch_cmd=%INSTALL_ROOT%Cygwin-Cmd.cmd
-echo Generating cmd launcher [%Launch_cmd%]...
-(
-	echo @echo off
-	echo :: %CONCYGSYS_INFO%
-	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
-	echo if "%%1" == "" (
-	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -i
-	echo ^) else (
-	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -c %%*
-	echo ^)
-) >"%Launch_cmd%" || goto :fail
 
 set Launch_mintty=%INSTALL_ROOT%Cygwin-Mintty.cmd
 echo Generating Mintty launcher [%Launch_mintty%]...
@@ -524,7 +427,6 @@ echo Generating Mintty launcher [%Launch_mintty%]...
 	echo :: %CONCYGSYS_INFO%
 	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
 	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" --Title ConCygSys -
-	echo :: not to leave this launcher open if called from another batch file
 	echo exit 0
 ) >"%Launch_mintty%" || goto :fail
 
@@ -542,7 +444,6 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 	del "%Launch_wsltty%" >NUL 2>&1
 )
 
-
 echo.
 echo Launching bash once to initialize user home dir...
 call "%Launch_cmd%" whoami || goto :fail
@@ -550,18 +451,23 @@ call "%Launch_cmd%" whoami || goto :fail
 
 set Post_install=%CYGWIN_ROOT%\post-install.sh
 echo.
-echo Generating post-install script [%Post_install%]...
+echo Creating script to install required and additional software [%Post_install%]...
 (
 	echo #!/usr/bin/env bash
 	echo PATH=/usr/local/bin:/usr/bin
+	echo bashrc_f=${HOME}/.bashrc
 	echo mkdir -p /opt
 	:: delete messy bashrc if updating from earliest ConCygSys versions
 	if "%UPDATEFROMOLD%" == "yes" (
-		echo cat /etc/skel/.bashrc ^> "${HOME}/.bashrc"
+		echo cat /etc/skel/.bashrc ^> "$bashrc_f"
 	)
-	:: inserting proxy settings to .bashrc
 	if not "%PROXY_HOST%" == "" (
-		echo echo Adding proxy settings for host [%COMPUTERNAME%] to [${HOME}/.bashrc]...
+		echo if [ "${HOSTNAME^^}" == "%COMPUTERNAME%" ]; then
+		echo 	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
+		echo 	export https_proxy=$http_proxy
+		echo fi
+		echo echo
+		echo echo Adding proxy settings for host [%COMPUTERNAME%] to [$bashrc_f]...
 		echo (
 		echo echo if [ \"\${HOSTNAME^^}\" == \"%COMPUTERNAME%\" ]\; then
 		echo echo	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
@@ -572,57 +478,126 @@ echo Generating post-install script [%Post_install%]...
 		echo echo	export NO_PROXY=\$no_proxy
 		echo echo fi
 		echo ^) ^> /opt/bash_proxy
-		echo if grep -q '/opt/bash_proxy' "${HOME}/.bashrc"; then
-		echo 	sed -i '/bash_proxy/c\if [ -f "/opt/bash_proxy" ]; then source "/opt/bash_proxy"; fi' "${HOME}/.bashrc"
+		echo if grep -q '/opt/bash_proxy' "$bashrc_f"; then
+		echo 	sed -i '/bash_proxy/c\if [ -f "/opt/bash_proxy" ]; then source "/opt/bash_proxy"; fi' "$bashrc_f"
 		echo else
-		echo 	echo 'if [ -f "/opt/bash_proxy" ]; then source "/opt/bash_proxy"; fi' ^>^> "${HOME}/.bashrc"
+		echo 	echo 'if [ -f "/opt/bash_proxy" ]; then source "/opt/bash_proxy"; fi' ^>^> "$bashrc_f"
 		echo fi
 	) else (
 		echo rm -f /opt/bash_proxy
-		echo sed -i '/bash_proxy/d' "${HOME}/.bashrc"
+		echo sed -i '/bash_proxy/d' "$bashrc_f"
 	)
-	:: inserting soursing bash-funk in .bashrc if one is selected to install
+	echo conemu_dir=$(cygpath -w "$CYGWIN_ROOT/../conemu"^)
+	if "%INSTALL_CONEMU%" == "yes" (
+		echo if [ ! -e "$conemu_dir" ]; then
+		echo 	echo
+		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)" ^&^& \
+		echo 	echo "Installing ConEmu from $conemu_url" ^&^& \
+		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" "$conemu_url" ^&^& \
+		echo 	mkdir -p "$conemu_dir" ^&^& \
+		echo 	echo "Extracting ConEmu from archive..." ^&^& \
+		echo 	bsdtar -xf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
+		echo 	rm -f "${conemu_dir}.7z"
+		echo fi
+		echo echo %CONCYGSYS_INFO% ^> "$CYGWIN_ROOT/../conemu/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
+	) else (
+		echo rm -rf "$conemu_dir"
+	)
+	if "%INSTALL_WSLBRIDGE%" == "yes" (
+		echo echo
+		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
+			echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin64.tar.gz' -o)"
+		)
+		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
+			echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin32.tar.gz' -o)"
+		)
+		echo echo "Installing WSLbridge from $wslbridge_url" ^&^& \
+		echo wget -nv --show-progress -O "${CYGWIN_ROOT}.tar.gz" "$wslbridge_url" ^&^& \
+		echo echo "Extracting WSLbridge from archive..." ^&^& \
+		echo bsdtar -xf "${CYGWIN_ROOT}.tar.gz" --strip-components=1 -C "${CYGWIN_ROOT}/bin/" '*/wslbridge*' ^&^& \
+		echo rm -f "${CYGWIN_ROOT}.tar.gz"
+	) else (
+		echo rm -f "${CYGWIN_ROOT}/bin/wslbridge"*
+	)
+	if "%INSTALL_APT_CYG%" == "yes" (
+		echo echo
+		echo echo "Installing/updating apt-cyg..."
+		echo wget -nv --show-progress -O /usr/local/bin/apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
+		echo chmod +x /usr/local/bin/apt-cyg
+	) else (
+		echo rm -f /usr/local/bin/apt-cyg
+	)
+	if "%INSTALL_PSSH%" == "yes" (
+		echo echo
+		echo echo "Installing/updating parallel ssh tool..."
+		echo wget -nv --show-progress -O /usr/local/bin/pssh https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/pssh
+		echo chmod +x /usr/local/bin/pssh
+	) else (
+		echo rm -f /usr/local/bin/pssh
+	)
+	if "%INSTALL_PSCP%" == "yes" (
+		echo echo
+		echo echo "Installing/updating parallel scp tool..."
+		echo wget -nv --show-progress -O /usr/local/bin/pscp https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/pscp
+		echo chmod +x /usr/local/bin/pscp
+	) else (
+		echo rm -f /usr/local/bin/pscp
+	)
 	if "%INSTALL_BASH_FUNK%" == "yes" (
-		echo echo Adding bash-funk to [${HOME}/.bashrc]...
-		echo if grep -q '/opt/bash-funk/bash-funk.sh' "${HOME}/.bashrc"; then
-		echo 	sed -i '/bash-funk.sh/c\if [ -f "/opt/bash-funk/bash-funk.sh" ]; then source "/opt/bash-funk/bash-funk.sh"; fi' "${HOME}/.bashrc"
+		echo if [ ! -e "/opt/bash-funk/bash-funk.sh" ]; then
+		echo 	echo
+		echo 	echo Installing [bash-funk]...
+		echo 	if hash git ^&^>/dev/null; then
+		echo 		git clone https://github.com/vegardit/bash-funk --branch master --single-branch /opt/bash-funk
+		echo 		elif hash svn ^&^>/dev/null; then
+		echo 			svn checkout https://github.com/vegardit/bash-funk/trunk /opt/bash-funk
+		echo 	else
+		echo 		mkdir /opt/bash-funk ^&^& \
+		echo 		cd /opt/bash-funk ^&^& \
+		echo 		wget -qO- --show-progress https://github.com/vegardit/bash-funk/tarball/master ^| tar -xzv --strip-components 1
+		echo 	fi
+		echo fi
+		echo echo Adding bash-funk to [$bashrc_f]...
+		echo if grep -q '/opt/bash-funk/bash-funk.sh' "$bashrc_f"; then
+		echo 	sed -i '/bash-funk.sh/c\if [ -f "/opt/bash-funk/bash-funk.sh" ]; then source "/opt/bash-funk/bash-funk.sh"; fi' "$bashrc_f"
 		echo else
-		echo 	echo 'if [ -f "/opt/bash-funk/bash-funk.sh" ]; then source "/opt/bash-funk/bash-funk.sh"; fi' ^>^> "${HOME}/.bashrc"
+		echo 	echo 'if [ -f "/opt/bash-funk/bash-funk.sh" ]; then source "/opt/bash-funk/bash-funk.sh"; fi' ^>^> "$bashrc_f"
 		echo fi
 	) else (
-		echo sed -i '/bash-funk.sh/d' "${HOME}/.bashrc"
+		echo sed -i '/bash-funk.sh/d' "$bashrc_f"
+		echo rm -rf /opt/bash-funk
 	)
-	:: inserting custom .bashrc settings
 	if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
-		echo echo Adding .bashrc customizations to [${HOME}/.bashrc] and [${HOME}/.inputrc]...
+		echo echo
+		echo echo Adding customizations to [$bashrc_f] and [${HOME}/.inputrc]...
 		echo wget -nv --show-progress -O /opt/bashrc_custom https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/bashrc_custom
-		echo if grep -q '/opt/bashrc_custom' "${HOME}/.bashrc"; then
-		echo 	sed -i '/bashrc_custom/c\if [ -f "/opt/bashrc_custom" ]; then source "/opt/bashrc_custom"; fi' "${HOME}/.bashrc"
+		echo if grep -q '/opt/bashrc_custom' "$bashrc_f"; then
+		echo 	sed -i '/bashrc_custom/c\if [ -f "/opt/bashrc_custom" ]; then source "/opt/bashrc_custom"; fi' "$bashrc_f"
 		echo else
-		echo 	echo 'if [ -f "/opt/bashrc_custom" ]; then source "/opt/bashrc_custom"; fi' ^>^> "${HOME}/.bashrc"
+		echo 	echo 'if [ -f "/opt/bashrc_custom" ]; then source "/opt/bashrc_custom"; fi' ^>^> "$bashrc_f"
 		echo fi
 		echo cat /etc/skel/.inputrc ^> "${HOME}/.inputrc"
 		echo wget -nv --show-progress https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/inputrc_custom -O- ^>^> "${HOME}/.inputrc"
 	) else (
 		echo rm -f /opt/bashrc_custom
-		echo sed -i '/bashrc_custom/d' "${HOME}/.bashrc"
+		echo sed -i '/bashrc_custom/d' "$bashrc_f"
 		echo cat /etc/skel/.inputrc ^> "${HOME}/.inputrc"
 	)
-	:: inserting ssh-agent settings
 	set ssh_agent_config=%INSTALL_ROOT%ssh_agent_config
 	if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
-		echo echo Adding SSH agent tweak to [${HOME}/.bashrc]...
+		echo echo
+		echo echo Adding SSH agent tweak to [$bashrc_f]...
 		echo wget -nv --show-progress -O /opt/ssh-agent-tweak https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/ssh-agent-tweak
-		echo if grep -q '/opt/ssh-agent-tweak' "${HOME}/.bashrc"; then
-		echo 	sed -i '/ssh-agent-tweak/c\if [ -f "/opt/ssh-agent-tweak" ]; then source "/opt/ssh-agent-tweak"; fi' "${HOME}/.bashrc"
+		echo if grep -q '/opt/ssh-agent-tweak' "$bashrc_f"; then
+		echo 	sed -i '/ssh-agent-tweak/c\if [ -f "/opt/ssh-agent-tweak" ]; then source "/opt/ssh-agent-tweak"; fi' "$bashrc_f"
 		echo else
-		echo 	echo 'if [ -f "/opt/ssh-agent-tweak" ]; then source "/opt/ssh-agent-tweak"; fi' ^>^> "${HOME}/.bashrc"
+		echo 	echo 'if [ -f "/opt/ssh-agent-tweak" ]; then source "/opt/ssh-agent-tweak"; fi' ^>^> "$bashrc_f"
 		echo fi
 	) else (
 		echo rm -f /opt/ssh-agent-tweak
-		echo sed -i '/ssh-agent-tweak/d' "${HOME}/.bashrc"
+		echo sed -i '/ssh-agent-tweak/d' "$bashrc_f"
 	)
-) > "%Post_install%" || goto :fail
+) >"%Post_install%" || goto :fail
 
 "%CYGWIN_ROOT%\bin\dos2unix" "%Post_install%" || goto :fail
 
@@ -673,7 +648,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 			^</key^>
 		echo			^<key name="Colors"^>
 		echo				^<value name="Count" type="long" data="0"/^>
-		echo			</key>
+		echo			^</key^>
 		echo 			^<key name="Tasks"^>
 		echo 				^<value name="Count" type="long" data="6"/^>
 		echo 				^<key name="Task1"^>
@@ -760,6 +735,10 @@ del "%CYGWIN_ROOT%\cygwin-install-options.cmd" >NUL 2>&1
 :: delting readme and licence files
 del "%INSTALL_ROOT%LICENSE" >NUL 2>&1
 del "%INSTALL_ROOT%README.md" >NUL 2>&1
+(
+	echo Project page and Documentation:
+	echo %CONCYGSYS_LINK%
+)> "%INSTALL_ROOT%README.txt" || goto :fail
 :aftercygwinupdate
 
 
@@ -781,10 +760,10 @@ exit 0
 :fail
 echo.
 if "%UPDATEMODE%" == "yes" (
-	echo                       !!! Update FAILED !!!
+	echo                         [ Update FAILED! ]
 	echo Try uploading installer manually from %CONCYGSYS_LINK%
 ) else (
-	echo                    !!! Installation FAILED !!!
+	echo                      [ Installation FAILED! ]
 )
 echo.
 pause
