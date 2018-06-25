@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180625b9
+set CONCYGSYS_VERSION=180625b10
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -208,6 +208,9 @@ if "%PROXY_HOST%" == "" (
 
 :: adding required packages for special software
 if "%INSTALL_CONEMU%" == "yes" (
+	set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%
+)
+if "%INSTALL_WSLBRIDGE%" == "yes" (
 	set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%
 )
 if "%INSTALL_APT_CYG%" == "yes" (
@@ -668,6 +671,9 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 			^<key name="HotKeys"^>
 		echo 				^<value name="MinimizeRestore" type="dword" data="000011c0"/^>
 		echo 			^</key^>
+		echo			^<key name="Colors"^>
+		echo				^<value name="Count" type="long" data="0"/^>
+		echo			</key>
 		echo 			^<key name="Tasks"^>
 		echo 				^<value name="Count" type="long" data="6"/^>
 		echo 				^<key name="Task1"^>
