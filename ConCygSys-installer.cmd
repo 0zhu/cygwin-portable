@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180625b7
+set CONCYGSYS_VERSION=180625b8
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -50,6 +50,9 @@ set INSTALL_SSH_AGENT_TWEAK=yes
 :: install custom bashrc rules for better experience https://github.com/zhubanRuban/cygwin-extras#custom-bashrc
 :: if set to 'yes', will disable bash-funk adaptive Bash prompt (see INSTALL_BASH_FUNK) to prevent conflicts
 set INSTALL_BASHRC_CUSTOMS=yes
+
+:: install WSLbridge to allowing to access WSL via Mintty https://github.com/rprichard/wslbridge
+set INSTALL_WSLBRIDGE=yes
 
 :: install multitab terminal https://conemu.github.io/
 set INSTALL_CONEMU=yes
@@ -395,13 +398,31 @@ echo Creating script to install required software [%Pre_install%]...
 		echo 	echo "Download URL=$conemu_url" ^&^& \
 		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" "$conemu_url" ^&^& \
 		echo 	mkdir -p "$conemu_dir" ^&^& \
-		echo	echo "Extracting ConEmu from archive..." ^&^& \
+		echo 	echo "Extracting ConEmu from archive..." ^&^& \
 		echo 	bsdtar -xf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
 		echo 	rm -f "${conemu_dir}.7z"
 		echo fi
 		echo echo %CONCYGSYS_INFO% ^> "$CYGWIN_ROOT/../conemu/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
 	) else (
+		echo echo "Removing ConEmu..."
 		echo rm -rf $(cygpath -w "$CYGWIN_ROOT/../conemu"^)
+	)
+	if "%INSTALL_WSLBRIDGE%" == "yes" (
+		echo echo "Installing WSLbridge..."
+		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
+			echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin64.tar.gz' -o)"
+		)
+		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
+			echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin32.tar.gz' -o)"
+		)
+		echo echo "Download URL=$wslbridge_url" ^&^& \
+		echo wget -nv --show-progress -O "${CYGWIN_ROOT}.tar.gz" "$wslbridge_url" ^&^& \
+		echo echo "Extracting WSLbridge from archive..." ^&^& \
+		echo bsdtar -xf "${CYGWIN_ROOT}.tar.gz" --strip-components=1 -C "${CYGWIN_ROOT}/bin/" '*/wslbridge*' ^&^& \
+		echo rm -f "${CYGWIN_ROOT}.tar.gz"
+	) else (
+		echo echo "Removing WSLbridge..."
+		echo rm -f "${CYGWIN_ROOT}/bin/wslbridge"*
 	)
 	if "%INSTALL_APT_CYG%" == "yes" (
 		echo echo "Installing/updating apt-cyg..."
@@ -475,6 +496,9 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo :: not to leave this launcher open if called from another batch file
 		echo exit 0
 	) >"%Launch_conemu%" || goto :fail
+) else (
+	echo Removing ConEmu launcher [%Launch_conemu%]...
+	del "%Launch_conemu%" >NUL 2>&1
 )
 
 set Launch_cmd=%INSTALL_ROOT%Cygwin-Cmd.cmd
@@ -500,6 +524,20 @@ echo Generating Mintty launcher [%Launch_mintty%]...
 	echo :: not to leave this launcher open if called from another batch file
 	echo exit 0
 ) >"%Launch_mintty%" || goto :fail
+
+set Launch_wsltty=%INSTALL_ROOT%Cygwin-WSLtty.cmd
+if "%INSTALL_WSLBRIDGE%" == "yes" (
+	echo Generating WSLtty launcher [%Launch_wsltty%]...
+	(
+		echo @echo off
+		echo :: %CONCYGSYS_INFO%
+		echo start "" "%%~dp0cygwin\bin\mintty.exe" --Title ConCygSysWSL --WSL=  -~
+		echo exit 0
+	) >"%Launch_wsltty%" || goto :fail
+) else (
+	echo Removing WSLtty launcher [%Launch_wsltty%]...
+	del "%Launch_wsltty%" >NUL 2>&1
+)
 
 
 echo.
