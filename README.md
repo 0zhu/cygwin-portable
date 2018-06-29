@@ -17,16 +17,17 @@ This is an independent fork of amazing [cygwin-portable-installer](https://githu
 
 ## Features
 
-- downloads and installs the latest [Cygwin](https://www.cygwin.com/) and makes it **fully portable**, so you can:
+- Downloads and installs the latest [Cygwin](https://www.cygwin.com/) and makes it **fully portable**, so you can:
   - move it to a different directory at any time
   - duplicate it by copying its folder
   - rename the folder
   - run from USB or network drive
   - use it in folders with spaces
-- downloads and installs the latest portable [ConEmu](https://conemu.github.io/)
-- only pure base with a couple of config files to make the installtion portable, no hacks with [Cygwin](https://www.cygwin.com/)/[ConEmu](https://conemu.github.io/) code
-- the installer is flexible, you can customize the installation process per your requirements
-- can upgrade itself and its components
+- Downloads and installs the latest portable [ConEmu](https://conemu.github.io/)
+- Only pure base with a couple of config files to make the installtion portable, no hacks with [Cygwin](https://www.cygwin.com/)/[ConEmu](https://conemu.github.io/) code
+- The installer is flexible, you can customize the installation process per your requirements
+- Being portable, the script can also **upgrade** itself and its components
+- Windows 7+ supported
 
 ## Installation
 
@@ -79,7 +80,7 @@ You will be able either to update **[Cygwin](https://www.cygwin.com/) only** or 
 
 ## Customization
 
-Edit **`ConCygSys-installer`** on your PC before installation to get a control over the installation process. Available options will be in **SCRIPT SETTINGS** section. All settings are accompanied with description. [Preview](https://github.com/zhubanRuban/ConCygSys/blob/master/ConCygSys-installer.cmd)
+Open **`ConCygSys-installer`** with text editor on your PC before installation to get a control over the installation process. Available options will be in **SCRIPT SETTINGS** section. All settings are accompanied with description. [Preview](https://github.com/zhubanRuban/ConCygSys/blob/8a60a599a4ad8bff3d28bd0e9370370621a2668d/ConCygSys-installer.cmd#L9-L76)
 
 If you have existing ConCygSys installation and would like to add/remove some components during next update, edit **:installoptions** section of **`update`** launcher.
 
@@ -129,6 +130,12 @@ No problem. There is [beta tree](https://github.com/zhubanRuban/ConCygSys/tree/b
 - **Where can I report an issue or get a support?**
 
 [Here](https://github.com/zhubanRuban/ConCygSys/issues)
+
+- **How to check ConCygSys version?**
+
+The version can be found at the beginning of:
+- README.txt file
+- any launcher file
 
 ## License
 
