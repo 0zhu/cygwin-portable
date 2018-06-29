@@ -1,4 +1,4 @@
-# ConCygSys <a href="https://github.com/zhubanRuban/ConCygSys/"><img height="30" src="http://iconshow.me/media/images/ui/ios7-icons/png/128/social-github.png"></a> <a href="https://mintty.github.io/" target="_blank"><img align="right" height="40" src="https://pbs.twimg.com/profile_images/1938877716/terminal-256.png"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
+# ConCygSys <a href="https://github.com/zhubanRuban/ConCygSys/"><img height="30" src="https://iconshow.me/media/images/ui/ios7-icons/png/128/social-github.png"></a> <a href="https://mintty.github.io/" target="_blank"><img align="right" height="40" src="https://pbs.twimg.com/profile_images/1938877716/terminal-256.png"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
 
 - [Description](#description)
 - [Features](#features)
@@ -11,22 +11,23 @@
 
 ## Description
 
-**ConCygSys** is a tool that installs portable [Cygwin](https://www.cygwin.com/) Unix-like environment and connects to portable [ConEmu](https://conemu.github.io/) console emulator. All required software in one folder.
+**ConCygSys** is a tool that installs portable [Cygwin](https://www.cygwin.com/) Unix-like environment and connects to portable [ConEmu](https://conemu.github.io/) console emulator. All required software in one folder. Now also with [WSLtty](https://github.com/mintty/wsltty) support!
 
 This is an independent fork of amazing [cygwin-portable-installer](https://github.com/vegardit/cygwin-portable-installer) project. At first minimally modified for sysadmin purposes, later on filled with improvements and new features.
 
 ## Features
 
-- downloads and installs the latest [Cygwin](https://www.cygwin.com/) and makes it **fully portable**, so you can:
+- Downloads and installs the latest [Cygwin](https://www.cygwin.com/) and makes it **fully portable**, so you can:
   - move it to a different directory at any time
   - duplicate it by copying its folder
   - rename the folder
   - run from USB or network drive
   - use it in folders with spaces
-- downloads and installs the latest portable [ConEmu](https://conemu.github.io/)
-- only pure base with a couple of config files to make the installtion portable, no hacks with [Cygwin](https://www.cygwin.com/)/[ConEmu](https://conemu.github.io/) code
-- the installer is flexible, you can customize the installation process per your requirements
-- can upgrade itself and its components
+- Downloads and installs the latest portable [ConEmu](https://conemu.github.io/)
+- Only pure base with a couple of config files to make the installtion portable, no hacks with [Cygwin](https://www.cygwin.com/)/[ConEmu](https://conemu.github.io/) code
+- The installer is flexible, you can customize the installation process per your requirements
+- Being portable, the script can also **upgrade** itself and its components
+- Windows 7+ supported
 
 ## Installation
 
@@ -41,9 +42,10 @@ This is an independent fork of amazing [cygwin-portable-installer](https://githu
 > If Windows complains with a **Windows protected your PC** popup, you may need to click **Run anyway** to proceed with the installation.
 
 - Once the installation is finished, you can run [Cygwin](https://www.cygwin.com/) via one of the following launchers:
-  - <img align="middle" height="50" src="http://i1-win.softpedia-static.com/screenshots/Cygwin_2.png?1350904296"> **`CygWin-Cmd`** to run [Cygwin](https://www.cygwin.com/) in standard Windows console
+  - <img align="middle" height="50" src="https://www.petri.com/images/03-Cygwin-ls.JPG"> **`CygWin-Cmd`** to run [Cygwin](https://www.cygwin.com/) in standard Windows console
   - <img align="middle" height="50" src="https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg"> **`CygWin-ConEmu`** to run [Cygwin](https://www.cygwin.com/) via [ConEmu](https://conemu.github.io/) - multitab quake-style console **(RECOMMENDED)**
   - <img align="middle" height="50" src="https://www.howtogeek.com/wp-content/uploads/2011/07/sshot-35.png"> **`CygWin-MinTTY`** to run [Cygwin](https://www.cygwin.com/) via [Mintty](https://mintty.github.io/) terminal emulator - fully xterm-compatible, but without multitab and quake-style support
+  - <img align="middle" height="50" src="https://pbs.twimg.com/media/CuMUQhZWYAA8yDc.jpg"> **`CygWin-WSLtty`** to run [WSL](https://docs.microsoft.com/en-us/windows/wsl/about) via [Mintty](https://mintty.github.io/) terminal emulator
   
 > You can try the launchers one-by-one to find the most suitable option
 
@@ -59,12 +61,7 @@ Shortcuts if using [Cygwin](https://www.cygwin.com/) via [ConEmu](https://conemu
 - **Ctrl+\`** - open/hide console (quake style)
 - **Double click on Tab** - rename a tab
 - **Double click on Tab Panel** - open a new tab
-- **Win+LShift+E** - split tab to right 50/50
-- **Win+LShift+O** - split tab to bottom 50/50
-- **Win+T** - open [Cygwin](https://www.cygwin.com/) via [Connector](https://conemu.github.io/en/CygwinMsysConnector.html)
-- **Win+B** - open [Cygwin](https://www.cygwin.com/) via standard command line
-- **Win+M** - open [Cygwin](https://www.cygwin.com/) via [Mintty](https://mintty.github.io/) (default task)
-- **Win+U** - open [WSL](https://msdn.microsoft.com/en-us/commandline/wsl/about) if installed
+- **Win+X** - open a new tab with standard Windows console
 
 ## Update
 
@@ -83,7 +80,7 @@ You will be able either to update **[Cygwin](https://www.cygwin.com/) only** or 
 
 ## Customization
 
-Edit **`ConCygSys-installer`** on your PC before installation to get a control over the installation process. Available options will be in **SCRIPT SETTINGS** section. All settings are accompanied with description. [Preview](https://github.com/zhubanRuban/ConCygSys/blob/master/ConCygSys-installer.cmd)
+Open **`ConCygSys-installer`** with text editor on your PC before installation to get a control over the installation process. Available options will be in **SCRIPT SETTINGS** section. All settings are accompanied with description. [Preview](https://github.com/zhubanRuban/ConCygSys/blob/8a60a599a4ad8bff3d28bd0e9370370621a2668d/ConCygSys-installer.cmd#L9-L76)
 
 If you have existing ConCygSys installation and would like to add/remove some components during next update, edit **:installoptions** section of **`update`** launcher.
 
@@ -96,6 +93,10 @@ If you have existing ConCygSys installation and would like to add/remove some co
 BTW, different Windows files are symlinked in [Cygwin](https://www.cygwin.com/) environment. For instance, `/etc/hosts` file in [Cygwin](https://www.cygwin.com/) is linked to `%WINDIR%\System32\drivers\etc\hosts`. If you go to `/proc/registry` folder, you will see Windows registry structure. Many Windows programs can be executed from [Cygwin](https://www.cygwin.com/) as well, for instance:
 
 `ipconfig /flushdns` - to flush your local DNS cache
+
+- **How to change default task for new tab in [ConEmu](https://conemu.github.io/)?**
+
+ConEmu settings>> Startup>> Tasks>> choose a desired task>> tick "Default task for new console">> Save settings
 
 - **Can I change [Cygwin](https://www.cygwin.com/) username after installation?**
 
@@ -119,6 +120,22 @@ Below are some examples for the reference:
 [MTR](https://github.com/traviscross/mtr)
 
 [ipmitool](https://stackoverflow.com/questions/12907005/ipmitool-for-windows)
+
+- **Can I try beta version?**
+
+No problem. There is [beta tree](https://github.com/zhubanRuban/ConCygSys/tree/beta)
+> - Download **`ConCygSys-installer.cmd`** from [this link](https://github.com/zhubanRuban/ConCygSys/raw/beta/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
+> - Launch **`ConCygSys-installer`**
+
+- **Where can I report an issue or get a support?**
+
+[Here](https://github.com/zhubanRuban/ConCygSys/issues)
+
+- **How to check ConCygSys version?**
+
+The version can be found at the beginning of:
+- README.txt file
+- any launcher file
 
 ## License
 
