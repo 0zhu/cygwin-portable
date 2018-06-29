@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180625b11
+set CONCYGSYS_VERSION=180629
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -736,6 +736,7 @@ del "%CYGWIN_ROOT%\cygwin-install-options.cmd" >NUL 2>&1
 del "%INSTALL_ROOT%LICENSE" >NUL 2>&1
 del "%INSTALL_ROOT%README.md" >NUL 2>&1
 (
+	echo %CONCYGSYS_INFO%
 	echo Project page and Documentation:
 	echo %CONCYGSYS_LINK%
 )> "%INSTALL_ROOT%README.txt" || goto :fail
