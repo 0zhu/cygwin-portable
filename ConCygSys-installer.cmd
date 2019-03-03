@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=180629
+set CONCYGSYS_VERSION=190303b
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -35,21 +35,8 @@ set INSTALL_ACL=no
 :: install apt-cyg command line package manager: https://github.com/transcode-open/apt-cyg
 set INSTALL_APT_CYG=yes
 
-:: install bash-funk adaptive Bash prompt: https://github.com/vegardit/bash-funk
-set INSTALL_BASH_FUNK=yes
-
-:: install parallel ssh tool: https://github.com/zhubanRuban/cygwin-extras#pssh-parallelssh
-set INSTALL_PSSH=yes
-
-:: install parallel scp tool: https://github.com/zhubanRuban/cygwin-extras#pscp-parallelscp
-set INSTALL_PSCP=yes
-
 :: install SSH agent tweak https://github.com/zhubanRuban/cygwin-extras#ssh-agent-tweak
 set INSTALL_SSH_AGENT_TWEAK=yes
-
-:: install custom bashrc rules for better experience https://github.com/zhubanRuban/cygwin-extras#custom-bashrc
-:: if set to 'yes', will disable bash-funk adaptive Bash prompt (see INSTALL_BASH_FUNK) to prevent conflicts
-set INSTALL_BASHRC_CUSTOMS=yes
 
 :: install WSLbridge to allowing to access WSL via Mintty https://github.com/rprichard/wslbridge
 set INSTALL_WSLBRIDGE=yes
@@ -216,18 +203,6 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 if "%INSTALL_APT_CYG%" == "yes" (
 	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
 )
-if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
-	set INSTALL_BASH_FUNK=no
-)
-if "%INSTALL_BASH_FUNK%" == "yes" (
-	set CYGWIN_PACKAGES=git,git-svn,subversion,%CYGWIN_PACKAGES%
-)
-if "%INSTALL_PSSH%" == "yes" (
-	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
-)
-if "%INSTALL_PSCP%" == "yes" (
-	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
-)
 if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 	set CYGWIN_PACKAGES=openssh,%CYGWIN_PACKAGES%
 )
@@ -311,11 +286,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo set CYGWIN_PACKAGES=
 	echo set INSTALL_ACL=%INSTALL_ACL%
 	echo set INSTALL_APT_CYG=%INSTALL_APT_CYG%
-	echo set INSTALL_BASH_FUNK=%INSTALL_BASH_FUNK%
-	echo set INSTALL_PSSH=%INSTALL_PSSH%
-	echo set INSTALL_PSCP=%INSTALL_PSCP%
 	echo set INSTALL_SSH_AGENT_TWEAK=%INSTALL_SSH_AGENT_TWEAK%
-	echo set INSTALL_BASHRC_CUSTOMS=%INSTALL_BASHRC_CUSTOMS%
 	echo set INSTALL_CONEMU=%INSTALL_CONEMU%
 	echo set PROXY_HOST=%PROXY_HOST%
 	echo set PROXY_PORT=%PROXY_PORT%
@@ -364,7 +335,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo 	echo.
 	echo ^) ^>"%%DOWNLOADER%%" ^|^| goto :fail
 	echo set INSTALLER=ConCygSys-installer.cmd
-	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys/master/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
+	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys/beta/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
 	echo start "" "%%INSTALLER%%" ^|^| goto :fail
 	echo exit 0
 	echo :fail
@@ -527,63 +498,6 @@ echo Creating script to install required and additional software [%Post_install%
 	) else (
 		echo rm -f /usr/local/bin/apt-cyg
 	)
-	if "%INSTALL_PSSH%" == "yes" (
-		echo echo
-		echo echo "Installing/updating parallel ssh tool..."
-		echo wget -nv --show-progress -O /usr/local/bin/pssh https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/pssh
-		echo chmod +x /usr/local/bin/pssh
-	) else (
-		echo rm -f /usr/local/bin/pssh
-	)
-	if "%INSTALL_PSCP%" == "yes" (
-		echo echo
-		echo echo "Installing/updating parallel scp tool..."
-		echo wget -nv --show-progress -O /usr/local/bin/pscp https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/pscp
-		echo chmod +x /usr/local/bin/pscp
-	) else (
-		echo rm -f /usr/local/bin/pscp
-	)
-	if "%INSTALL_BASH_FUNK%" == "yes" (
-		echo if [ ! -e "/opt/bash-funk/bash-funk.sh" ]; then
-		echo 	echo
-		echo 	echo Installing [bash-funk]...
-		echo 	if hash git ^&^>/dev/null; then
-		echo 		git clone https://github.com/vegardit/bash-funk --branch master --single-branch /opt/bash-funk
-		echo 		elif hash svn ^&^>/dev/null; then
-		echo 			svn checkout https://github.com/vegardit/bash-funk/trunk /opt/bash-funk
-		echo 	else
-		echo 		mkdir /opt/bash-funk ^&^& \
-		echo 		cd /opt/bash-funk ^&^& \
-		echo 		wget -qO- --show-progress https://github.com/vegardit/bash-funk/tarball/master ^| tar -xzv --strip-components 1
-		echo 	fi
-		echo fi
-		echo echo Adding bash-funk to [$bashrc_f]...
-		echo if grep -q '/opt/bash-funk/bash-funk.sh' "$bashrc_f"; then
-		echo 	sed -i '/bash-funk.sh/c\if [ -f "/opt/bash-funk/bash-funk.sh" ]; then source "/opt/bash-funk/bash-funk.sh"; fi' "$bashrc_f"
-		echo else
-		echo 	echo 'if [ -f "/opt/bash-funk/bash-funk.sh" ]; then source "/opt/bash-funk/bash-funk.sh"; fi' ^>^> "$bashrc_f"
-		echo fi
-	) else (
-		echo sed -i '/bash-funk.sh/d' "$bashrc_f"
-		echo rm -rf /opt/bash-funk
-	)
-	if "%INSTALL_BASHRC_CUSTOMS%" == "yes" (
-		echo echo
-		echo echo Adding customizations to [$bashrc_f] and [${HOME}/.inputrc]...
-		echo wget -nv --show-progress -O /opt/bashrc_custom https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/bashrc_custom
-		echo if grep -q '/opt/bashrc_custom' "$bashrc_f"; then
-		echo 	sed -i '/bashrc_custom/c\if [ -f "/opt/bashrc_custom" ]; then source "/opt/bashrc_custom"; fi' "$bashrc_f"
-		echo else
-		echo 	echo 'if [ -f "/opt/bashrc_custom" ]; then source "/opt/bashrc_custom"; fi' ^>^> "$bashrc_f"
-		echo fi
-		echo cat /etc/skel/.inputrc ^> "${HOME}/.inputrc"
-		echo wget -nv --show-progress https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/inputrc_custom -O- ^>^> "${HOME}/.inputrc"
-	) else (
-		echo rm -f /opt/bashrc_custom
-		echo sed -i '/bashrc_custom/d' "$bashrc_f"
-		echo cat /etc/skel/.inputrc ^> "${HOME}/.inputrc"
-	)
-	set ssh_agent_config=%INSTALL_ROOT%ssh_agent_config
 	if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 		echo echo
 		echo echo Adding SSH agent tweak to [$bashrc_f]...
