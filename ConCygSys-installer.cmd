@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190303b
+set CONCYGSYS_VERSION=190309b
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -182,7 +182,7 @@ del "%CYGWIN_ROOT%\%CYGWIN_SETUP%" >NUL 2>&1
 
 :: downloading Cygwin installer
 echo.
-cscript //Nologo "%DOWNLOADER%" http://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
+cscript //Nologo "%DOWNLOADER%" https://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
 del "%DOWNLOADER%" >NUL 2>&1
 
 :: Cygwin command line options: https://cygwin.com/faq/faq.html#faq.setup.cli
