@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190309b
+set CONCYGSYS_VERSION=190309b2
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -501,7 +501,7 @@ echo Creating script to install required and additional software [%Post_install%
 	if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 		echo echo
 		echo echo Adding SSH agent tweak...
-		echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) >> /etc/profile.d/sshtweak.sh || goto :fail
+		echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) ^> /etc/profile.d/sshtweak.sh || goto :fail
 	) else (
 		echo rm -f /etc/profile.d/sshtweak.sh
 	)
