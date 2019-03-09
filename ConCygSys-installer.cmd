@@ -35,7 +35,7 @@ set INSTALL_ACL=no
 :: install apt-cyg command line package manager: https://github.com/transcode-open/apt-cyg
 set INSTALL_APT_CYG=yes
 
-:: install SSH agent tweak https://github.com/zhubanRuban/cygwin-extras#ssh-agent-tweak
+:: install SSH agent tweak https://github.com/cuviper/ssh-pageant
 set INSTALL_SSH_AGENT_TWEAK=yes
 
 :: install WSLbridge to allowing to access WSL via Mintty https://github.com/rprichard/wslbridge
@@ -204,7 +204,7 @@ if "%INSTALL_APT_CYG%" == "yes" (
 	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
 )
 if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
-	set CYGWIN_PACKAGES=openssh,%CYGWIN_PACKAGES%
+	set CYGWIN_PACKAGES=openssh,ssh-pageant,%CYGWIN_PACKAGES%
 )
 
 :: all Cygwin installer commandline options: https://www.cygwin.com/faq/faq.html#faq.setup.cli
@@ -500,16 +500,10 @@ echo Creating script to install required and additional software [%Post_install%
 	)
 	if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 		echo echo
-		echo echo Adding SSH agent tweak to [$bashrc_f]...
-		echo wget -nv --show-progress -O /opt/ssh-agent-tweak https://raw.githubusercontent.com/zhubanRuban/cygwin-extras/master/ssh-agent-tweak
-		echo if grep -q '/opt/ssh-agent-tweak' "$bashrc_f"; then
-		echo 	sed -i '/ssh-agent-tweak/c\if [ -f "/opt/ssh-agent-tweak" ]; then source "/opt/ssh-agent-tweak"; fi' "$bashrc_f"
-		echo else
-		echo 	echo 'if [ -f "/opt/ssh-agent-tweak" ]; then source "/opt/ssh-agent-tweak"; fi' ^>^> "$bashrc_f"
-		echo fi
+		echo echo Adding SSH agent tweak...
+		echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) >> /etc/profile.d/sshtweak.sh || goto :fail
 	) else (
-		echo rm -f /opt/ssh-agent-tweak
-		echo sed -i '/ssh-agent-tweak/d' "$bashrc_f"
+		echo rm -f /etc/profile.d/sshtweak.sh
 	)
 ) >"%Post_install%" || goto :fail
 
