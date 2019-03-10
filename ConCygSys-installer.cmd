@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190309b2
+set CONCYGSYS_VERSION=190310b
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -15,8 +15,8 @@ set CYGWIN_USERNAME=
 :: home folder name e.g. /home/HOME_FOLDER, leave empty to use default one - concygsys
 set HOME_FOLDER=
 
-:: override processor architecture: setup-x86.exe for 32bit or setup-x86_64.exe for 64bit system, leave empty for autodetect
-set CYGWIN_SETUP=
+:: override OS architecture: "32" bit or "64" bit system, leave empty for autodetect
+set CYGWIN_ARCH=
 
 :: change the URL to the closest mirror: https://cygwin.com/mirrors.html
 set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
@@ -163,25 +163,23 @@ if "%PROXY_HOST%" == "" (
 
 echo.
 echo Choosing correct version of Cygwin installer...
-if "%CYGWIN_SETUP%" == "" (
-echo CYGWIN_SETUP setting is empty, autodetecting...
-	if "%PROCESSOR_ARCHITEW6432%" == "AMD64" (
-		set CYGWIN_SETUP=setup-x86_64.exe
-	) else (
-		if "%PROCESSOR_ARCHITECTURE%" == "x86" (
-			set CYGWIN_SETUP=setup-x86.exe
+if "%CYGWIN_ARCH%" == "" (
+	echo CYGWIN_ARCH setting is empty, autodetecting...
+	if "%PROCESSOR_ARCHITECTURE%" == "x86" (
+		if defined PROCESSOR_ARCHITEW6432 (
+            		set CYGWIN_ARCH=64 & CYGWIN_SETUP=setup-x86_64.exe
 		) else (
-			set CYGWIN_SETUP=setup-x86_64.exe
+			set CYGWIN_ARCH=32 & CYGWIN_SETUP=setup-x86.exe
 		)
+	) else (
+		set CYGWIN_ARCH=64 & CYGWIN_SETUP=setup-x86_64.exe
 	)
 )
 echo Chosen installer: %CYGWIN_SETUP%
 
-:: Removing existing setup.exe
-del "%CYGWIN_ROOT%\%CYGWIN_SETUP%" >NUL 2>&1
-
 :: downloading Cygwin installer
 echo.
+del "%CYGWIN_ROOT%\%CYGWIN_SETUP%" >NUL 2>&1
 cscript //Nologo "%DOWNLOADER%" https://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
 del "%DOWNLOADER%" >NUL 2>&1
 
@@ -280,7 +278,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo.
 	echo :installoptions
 	echo :: %CONCYGSYS_LINK%#customization
-	echo set CYGWIN_SETUP=%CYGWIN_SETUP%
+	echo set CYGWIN_ARCH=%CYGWIN_ARCH%
 	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
 	echo :: fill only if new packages should be installed during next update
 	echo set CYGWIN_PACKAGES=
@@ -375,15 +373,11 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo :: to be in win home dir if running cmd from conemu
 		echo %%HOMEDRIVE%%
 		echo cd %%HOMEPATH%%
-		echo if "%%PROCESSOR_ARCHITEW6432%%" == "AMD64" (
-		echo 	start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
-		echo ^) else (
-		echo 	if "%%PROCESSOR_ARCHITECTURE%%" == "x86" (
-		echo 		start "" "%%~dp0conemu\ConEmu.exe" %CONEMU_OPTIONS%
-		echo 	^) else (
-		echo 		start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
-		echo 	^)
-		echo ^)
+		if "%CYGWIN_ARCH%" == "64" (
+			echo start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
+		^) else (
+			echo start "" "%%~dp0conemu\ConEmu.exe" %CONEMU_OPTIONS%
+		^)
 		echo exit 0
 	) >"%Launch_conemu%" || goto :fail
 ) else (
@@ -476,12 +470,7 @@ echo Creating script to install required and additional software [%Post_install%
 	)
 	if "%INSTALL_WSLBRIDGE%" == "yes" (
 		echo echo
-		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-			echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin64.tar.gz' -o)"
-		)
-		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-			echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin32.tar.gz' -o)"
-		)
+		echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin${CYGWIN_ARCH}.tar.gz' -o)"
 		echo echo "Installing WSLbridge from $wslbridge_url" ^&^& \
 		echo wget -nv --show-progress -O "${CYGWIN_ROOT}.tar.gz" "$wslbridge_url" ^&^& \
 		echo echo "Extracting WSLbridge from archive..." ^&^& \
@@ -573,14 +562,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 					^<value name="Flags" type="dword" data="00000004"/^>
 		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 		echo 					^<value name="GuiArgs" type="string" data=""/^>
-		rem Removed path to icon to get more space for tabs
-		rem Terminal changed to cygwin instead of xterm-256color to prevent issues in screen session over SSH
-		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-64.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
-		)
-		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-32.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
-		)
+		echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-%CYGWIN_ARCH%.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" --login -i -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
 		echo 				^</key^>
@@ -607,12 +589,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 					^<value name="Flags" type="dword" data="00000004"/^>
 		echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 		echo 					^<value name="GuiArgs" type="string" data=""/^>
-		if "%CYGWIN_SETUP%" == "setup-x86_64.exe" (
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-64.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
-		)
-		if "%CYGWIN_SETUP%" == "setup-x86.exe" (
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-32.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
-		)
+		echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-%CYGWIN_ARCH%.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
 		echo 					^<value name="Active" type="long" data="0"/^>
 		echo 					^<value name="Count" type="long" data="1"/^>
 		echo 				^</key^>
