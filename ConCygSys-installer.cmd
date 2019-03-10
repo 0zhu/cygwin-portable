@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190310b
+set CONCYGSYS_VERSION=190310b2
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -167,12 +167,12 @@ if "%CYGWIN_ARCH%" == "" (
 	echo CYGWIN_ARCH setting is empty, autodetecting...
 	if "%PROCESSOR_ARCHITECTURE%" == "x86" (
 		if defined PROCESSOR_ARCHITEW6432 (
-            		set CYGWIN_ARCH=64 & CYGWIN_SETUP=setup-x86_64.exe
+            		set CYGWIN_ARCH=64 & set CYGWIN_SETUP=setup-x86_64.exe
 		) else (
-			set CYGWIN_ARCH=32 & CYGWIN_SETUP=setup-x86.exe
+			set CYGWIN_ARCH=32 & set CYGWIN_SETUP=setup-x86.exe
 		)
 	) else (
-		set CYGWIN_ARCH=64 & CYGWIN_SETUP=setup-x86_64.exe
+		set CYGWIN_ARCH=64 & set CYGWIN_SETUP=setup-x86_64.exe
 	)
 )
 echo Chosen installer: %CYGWIN_SETUP%
