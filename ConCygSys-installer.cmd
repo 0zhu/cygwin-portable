@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190329
+set CONCYGSYS_VERSION=190329b2
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -380,9 +380,9 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo cd %%HOMEPATH%%
 		if "%CYGWIN_ARCH%" == "64" (
 			echo start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
-		^) else (
+		) else (
 			echo start "" "%%~dp0conemu\ConEmu.exe" %CONEMU_OPTIONS%
-		^)
+		)
 		echo exit 0
 	) >"%Launch_conemu%" || goto :fail
 ) else (
