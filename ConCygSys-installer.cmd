@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190828b4
+set CONCYGSYS_VERSION=190828b5
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -234,7 +234,7 @@ echo Running Cygwin setup...
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --upgrade-also || goto :fail
 
-:: deleting standard Cygwin launcher
+:: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% >"%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
@@ -307,10 +307,11 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo exit /b 0
 	echo.
 	echo :launcherheader
+	echo setlocal enableextensions
+	echo set TERM=
 	echo set CYGWIN_ROOT=%%~dp0cygwin
+	echo cd /d "%%CYGWIN_ROOT%%\bin"
 	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
-	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%\ProgramData
-	echo set ProgramData=%%ALLUSERSPROFILE%%
 	echo if not "%%HOME_FOLDER%%" == "" (
 	echo 	set HOME=%%HOME_FOLDER%%
 	echo ^) else (
@@ -373,7 +374,7 @@ echo Generating cmd launcher [%Launch_cmd%]...
 	echo if "%%1" == "" (
 	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -i
 	echo ^) else (
-	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -c %%*
+	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -c "%%*"
 	echo ^)
 ) >"%Launch_cmd%" || goto :fail
 
@@ -384,9 +385,6 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo @echo off
 		echo :: %CONCYGSYS_INFO%
 		echo call "%%~dp0%Concygsys_settings_name%" launcherheader
-		echo :: to be in win home dir if running cmd from conemu
-		echo %%HOMEDRIVE%%
-		echo cd %%HOMEPATH%%
 		if "%CYGWIN_ARCH%" == "64" (
 			echo start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
 		) else (
@@ -405,7 +403,7 @@ echo Generating Mintty launcher [%Launch_mintty%]...
 	echo @echo off
 	echo :: %CONCYGSYS_INFO%
 	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
-	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" --Title ConCygSys -
+	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" -
 	echo exit 0
 ) >"%Launch_mintty%" || goto :fail
 
@@ -415,7 +413,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 	(
 		echo @echo off
 		echo :: %CONCYGSYS_INFO%
-		echo start "" "%%~dp0cygwin\bin\mintty.exe" --Title ConCygSysWSL --WSL=  -~
+		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
 		echo exit 0
 	) >"%Launch_wsltty%" || goto :fail
 ) else (
