@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190828b2
+set CONCYGSYS_VERSION=190828b3
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -230,7 +230,6 @@ echo Running Cygwin setup...
 --packages dos2unix,wget,%CYGWIN_PACKAGES% || goto :fail
 
 :: deleting standard Cygwin launcher
-del "%CYGWIN_ROOT%\Cygwin.bat" >NUL 2>&1
 echo %CONCYGSYS_INFO% >"%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
