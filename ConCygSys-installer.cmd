@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190828b3
+set CONCYGSYS_VERSION=190828b4
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -23,6 +23,7 @@ set HOME_FOLDER=
 set CYGWIN_ARCH=
 
 :: change the URL to the closest mirror: https://cygwin.com/mirrors.html
+:: do not leave empty
 set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 
 :: select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
@@ -48,7 +49,7 @@ set INSTALL_WSLBRIDGE=yes
 :: install multitab terminal https://conemu.github.io/
 set INSTALL_CONEMU=yes
 :: https://conemu.github.io/en/ConEmuArgs.html
-set CONEMU_OPTIONS=-Title ConCygSys
+set CONEMU_OPTIONS=
 
 :: set proxy if required (unfortunately Cygwin setup.exe does not have commandline options to specify proxy user credentials)
 set PROXY_HOST=
@@ -56,7 +57,8 @@ set PROXY_PORT=8080
 
 :: set Mintty options used in ConEmu task: https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
 :: the main goal is to set options (they will overwrite whatyou configured in main Mintty window) to make Mintty working properly with ConEmu
-set MINTTY_OPTIONS=-o FontHeight=10 ^
+set MINTTY_OPTIONS= ^
+-o FontHeight=10 ^
 -o BoldAsFont=yes ^
 -o AllowBlinking=yes ^
 -o CopyOnSelect=yes ^
@@ -217,17 +219,20 @@ if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 :: all Cygwin installer commandline options: https://www.cygwin.com/faq/faq.html#faq.setup.cli
 echo.
 echo Running Cygwin setup...
-"%CYGWIN_ROOT%\%CYGWIN_SETUP%" --no-admin ^
---site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
---root "%CYGWIN_ROOT%" ^
---local-package-dir "%CYGWIN_ROOT%\pkg-cache" ^
---no-shortcuts ^
---no-desktop ^
+"%CYGWIN_ROOT%\%CYGWIN_SETUP%" ^
+--allow-unsupported-windows ^
 --delete-orphans ^
---upgrade-also ^
+--local-package-dir "%CYGWIN_ROOT%\pkg-cache" ^
+--no-admin ^
+--no-desktop ^
 --no-replaceonreboot ^
+--no-shortcuts ^
+--no-startmenu ^
+--packages dos2unix,wget,%CYGWIN_PACKAGES% ^
 --quiet-mode ^
---packages dos2unix,wget,%CYGWIN_PACKAGES% || goto :fail
+--root "%CYGWIN_ROOT%" ^
+--site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
+--upgrade-also || goto :fail
 
 :: deleting standard Cygwin launcher
 echo %CONCYGSYS_INFO% >"%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
