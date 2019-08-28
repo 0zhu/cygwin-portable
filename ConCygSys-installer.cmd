@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190329b2
+set CONCYGSYS_VERSION=190828b
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -12,7 +12,11 @@ set CONCYGSYS_VERSION=190329b2
 :: choose a user name under Cygwin, leave empty to use your Windows username
 set CYGWIN_USERNAME=
 
-:: home folder name e.g. /home/HOME_FOLDER, leave empty to use default one - concygsys
+:: custom home folder path (!) without quotes ' ", leave empty to use default one - /home/concygsys
+:: examples:
+:: C:\cygwinhome
+:: C:\Users\yourusername\Documents\cygwinhome
+:: %USERPROFILE%\Documents\cygwinhome
 set HOME_FOLDER=
 
 :: override OS architecture: "32" bit or "64" bit system, leave empty for autodetect
@@ -244,10 +248,13 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 	echo.
 	echo PATH=/usr/local/bin:/usr/bin
 	echo.
-	echo # Setting custom Cygwin username
-	echo (
-	echo mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USERNAME\"; \$6=\"$HOME\"; print}"
-	echo ^) ^>/etc/passwd
+	echo if [ ! -z "$CYGWIN_USERNAME" ]; then
+	echo 	(
+	echo 	mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$CYGWIN_USERNAME\"; \$6=\"$(cygpath -u "$HOME"^)\"; print}"
+	echo 	^) ^>/etc/passwd
+	echo else
+	echo 	rm -f /etc/passwd
+	echo fi
 	echo.
 	echo (
 	if not "%INSTALL_ACL%" == "yes" (
@@ -300,13 +307,11 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
 	echo set ALLUSERSPROFILE=%%CYGWIN_ROOT%%\ProgramData
 	echo set ProgramData=%%ALLUSERSPROFILE%%
-	echo if not "%%CYGWIN_USERNAME%%" == "" (
-	echo 	set USERNAME=%%CYGWIN_USERNAME%%
+	echo if not "%%HOME_FOLDER%%" == "" (
+	echo 	set HOME=%%HOME_FOLDER%%
+	echo ^) else (
+	echo 	set HOME=/home/concygsys
 	echo ^)
-	echo if "%%HOME_FOLDER%%" == "" (
-	echo 	set HOME_FOLDER=concygsys
-	echo ^)
-	echo set HOME=/home/%%HOME_FOLDER%%
 	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache" 2^>NUL
 	echo type NUL ^>"%%CYGWIN_ROOT%%\etc\fstab"
 	echo "%%CYGWIN_ROOT%%\bin\bash" "%%CYGWIN_ROOT%%\%Portable_init_name%"
