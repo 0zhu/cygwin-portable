@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190828b
+set CONCYGSYS_VERSION=190828b2
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -258,11 +258,11 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 	echo.
 	echo (
 	if not "%INSTALL_ACL%" == "yes" (
-		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/bin /usr/bin none binary,auto,noacl 0 0
-		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/lib /usr/lib none binary,auto,noacl 0 0
-		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^) / none override,binary,auto,noacl 0 0
+		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/bin	/usr/bin	none	noacl		0 0
+		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/lib	/usr/lib	none	noacl		0 0
+		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)	/		none	override,noacl	0 0
 	)
-	echo echo none /mnt cygdrive binary,noacl,posix=0,user 0 0
+	echo echo none	/mnt	cygdrive	noacl,user	0 0
 	echo ^) ^>/etc/fstab
 	echo.
 	echo # adjust Cygwin packages cache path
