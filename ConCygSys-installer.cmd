@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190829b2
+set CONCYGSYS_VERSION=190829b3
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -86,6 +86,7 @@ set Concygsys_settings=%INSTALL_ROOT%%Concygsys_settings_name%
 :: to use 'set' in full in 'if' loop below: https://ss64.com/nt/delayedexpansion.html
 setlocal EnableDelayedExpansion
 
+:retryupdate
 if not exist "%CYGWIN_ROOT%" (
 	echo Creating Cygwin folder [%CYGWIN_ROOT%]...
 	md "%CYGWIN_ROOT%"
@@ -98,38 +99,34 @@ if not exist "%CYGWIN_ROOT%" (
 	rem https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
-		echo ^^!^^!^^! Active Cygwin processes detected, please close them and re-run update ^^!^^!^^!
+		echo ^^!^^!^^! Active Cygwin processes detected, please close them and hit [ ENTER ] ^^!^^!^^!
 		wmic process get ExecutablePath | find /I "%CYGWIN_ROOT%"
-		goto :fail
+		pause
+		goto :retryupdate
 	) else (
 		if exist "%Concygsys_settings%" (
 			call "%Concygsys_settings%" cygwinsettings
 			call "%Concygsys_settings%" installoptions
-			set PROXY_HOST=%PROXY_HOST%:%PROXY_PORT%
-		) else (
-			set UPDATEFROMOLD=yes
+			if not "!PROXY_PORT!" == "" (
+				set PROXY_HOST=%PROXY_HOST%:%PROXY_PORT%
+			)
 		)
 		echo.
-		set /p UPDATECYGWINONLY=   [ 1 and ENTER] - update Cygwin only   [ ENTER ] - update everything 
+		set /p UPDATECYGWINONLY=   [ 1 then ENTER] - update Cygwin only   [ ENTER ] - update everything 
 		if not "!UPDATECYGWINONLY!" == "" goto :updatecygwinonly
 		echo.
 		echo ^^!^^!^^! Before you proceed with update... ^^!^^!^^!
-		if "!UPDATEFROMOLD!" == "yes" (
-			echo It seems that you are upgrading from one of the oldest ConCygSys releases
-			echo Please BACKUP your personal records in .bashrc
-			echo Hit ENTER when done
-			echo.
-			pause
-		) else (
-			echo To customize update process:
-			echo - close this window
-			echo - modify :installoptions section of [%Concygsys_settings%] file accordingly
-			echo - re-run update
-			echo.
-			echo If you are good with existing setup, just hit ENTER
-			echo.
-			pause
-		)
+		echo.
+		echo Please backup your cygwin home directory just in case
+		echo.
+		echo To customize update process:
+		echo - close this window
+		echo - modify :installoptions section of [%Concygsys_settings%] file
+		echo - re-run update
+		echo.
+		echo If you are good with existing setup, just hit [ ENTER ] to start update
+		echo.
+		pause
 	)
 )
 :: not needed anymore and to prevent issues in bash script generation down below (they conatin ! which should have been escaped by ^^)
@@ -433,11 +430,11 @@ echo Creating script to install required and additional software [%Post_install%
 	echo #!/usr/bin/env bash
 	echo PATH=/usr/local/bin:/usr/bin
 	echo bashrc_f=${HOME}/.bashrc
-	echo mkdir -p /opt
-	:: delete messy bashrc if updating from earliest ConCygSys versions
-	if "%UPDATEFROMOLD%" == "yes" (
-		echo cat /etc/skel/.bashrc ^> "$bashrc_f"
-	)
+	echo # https://github.com/zhubanRuban/cygwin-extras/blob/master/inputrc_custom_bind
+	echo (
+	echo echo bind \'\"\\e[1\;5C\": forward-word\'    \# ctrl + right
+	echo echo bind \'\"\\e[1\;5D\": backward-word\'   \# ctrl + left
+	echo ^) ^> /etc/profile.d/inputrctweak.sh
 	if not "%PROXY_HOST%" == "" (
 		echo export http_proxy="http://%PROXY_HOST%"
 		echo export https_proxy="https://%PROXY_HOST%"
