@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190829b
+set CONCYGSYS_VERSION=190829b2
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -51,9 +51,10 @@ set INSTALL_CONEMU=yes
 :: https://conemu.github.io/en/ConEmuArgs.html
 set CONEMU_OPTIONS=
 
-:: set proxy if required (unfortunately Cygwin setup.exe does not have commandline options to specify proxy user credentials)
+:: set proxy if required, in the following formats:
+:: proxy:port
+:: username:password@proxy:port
 set PROXY_HOST=
-set PROXY_PORT=8080
 
 :: set Mintty options used in ConEmu task: https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
 :: the main goal is to set options (they will overwrite whatyou configured in main Mintty window) to make Mintty working properly with ConEmu
@@ -93,7 +94,7 @@ if not exist "%CYGWIN_ROOT%" (
 	set UPDATEMODE=yes
 	wmic process get ExecutablePath 2>NUL | find /I "%CYGWIN_ROOT%">NUL
 	:: rem is used below instead of :: for commenting as loops produce "system cannot find disk" warning when using :: in miltiple lines
-	rem for those wondering why I didn't use if "%ERRORLEVEL%"=="0"
+	rem why I didn't use if "%ERRORLEVEL%"=="0"
 	rem https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
@@ -104,6 +105,7 @@ if not exist "%CYGWIN_ROOT%" (
 		if exist "%Concygsys_settings%" (
 			call "%Concygsys_settings%" cygwinsettings
 			call "%Concygsys_settings%" installoptions
+			set PROXY_HOST=%PROXY_HOST%:%PROXY_PORT%
 		) else (
 			set UPDATEFROMOLD=yes
 		)
@@ -143,7 +145,7 @@ echo Creating script that can download files [%DOWNLOADER%]...
 if "%PROXY_HOST%" == "" (
 	set DOWNLOADER_PROXY=.
 ) else (
-	set DOWNLOADER_PROXY= req.SetProxy 2, "%PROXY_HOST%:%PROXY_PORT%", ""
+	set DOWNLOADER_PROXY= req.SetProxy 2, "%PROXY_HOST%", ""
 )
 (
 	echo url = Wscript.Arguments(0^)
@@ -198,7 +200,7 @@ del "%DOWNLOADER%" >NUL 2>&1
 if "%PROXY_HOST%" == "" (
 	set CYGWIN_PROXY=
 ) else (
-	set CYGWIN_PROXY=--proxy "%PROXY_HOST%:%PROXY_PORT%"
+	set CYGWIN_PROXY=--proxy "%PROXY_HOST%"
 )
 
 
@@ -249,9 +251,9 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 (
 	echo #!/usr/bin/env bash
 	echo # %CONCYGSYS_INFO%
-	echo.
+	echo # setting path variable as it is not defined at this point
 	echo PATH=/usr/local/bin:/usr/bin
-	echo.
+	echo # setting custom cygwin username in passwd file, if not empty
 	echo if [ ! -z "$CYGWIN_USERNAME" ]; then
 	echo 	(
 	echo 	mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$CYGWIN_USERNAME\"; \$6=\"$(cygpath -u "$HOME"^)\"; print}"
@@ -259,7 +261,7 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 	echo else
 	echo 	rm -f /etc/passwd
 	echo fi
-	echo.
+	echo # generating custom fstab in case ACL is set to no
 	echo (
 	if not "%INSTALL_ACL%" == "yes" (
 		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/bin	/usr/bin	none	noacl		0 0
@@ -268,7 +270,6 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 	)
 	echo echo none	/mnt	cygdrive	noacl,user	0 0
 	echo ^) ^>/etc/fstab
-	echo.
 	echo # adjust Cygwin packages cache path
 	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/pkg-cache"^)
 	echo sed -i '/^^last-cache/!b;n;c\\t'"${pkg_cache_dir//\\/\\\\}"'' /etc/setup/setup.rc
@@ -303,7 +304,6 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo set INSTALL_SSH_AGENT_TWEAK=%INSTALL_SSH_AGENT_TWEAK%
 	echo set INSTALL_CONEMU=%INSTALL_CONEMU%
 	echo set PROXY_HOST=%PROXY_HOST%
-	echo set PROXY_PORT=%PROXY_PORT%
 	echo exit /b 0
 	echo.
 	echo :launcherheader
@@ -439,29 +439,22 @@ echo Creating script to install required and additional software [%Post_install%
 		echo cat /etc/skel/.bashrc ^> "$bashrc_f"
 	)
 	if not "%PROXY_HOST%" == "" (
-		echo if [ "${HOSTNAME^^}" == "%COMPUTERNAME%" ]; then
-		echo 	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
-		echo 	export https_proxy=$http_proxy
-		echo fi
-		echo echo Adding proxy settings for host [%COMPUTERNAME%] to [$bashrc_f]...
-		echo (
-		echo echo if [ \"\${HOSTNAME^^}\" == \"%COMPUTERNAME%\" ]\; then
-		echo echo	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
-		echo echo	export https_proxy=\$http_proxy
-		echo echo	export no_proxy="::1,127.0.0.1,localhost,169.254.169.254,%COMPUTERNAME%,*.%USERDNSDOMAIN%"
-		echo echo	export HTTP_PROXY=\$http_proxy
-		echo echo	export HTTPS_PROXY=\$http_proxy
-		echo echo	export NO_PROXY=\$no_proxy
-		echo echo fi
-		echo ^) ^> /opt/bash_proxy
-		echo if grep -q '/opt/bash_proxy' "$bashrc_f"; then
-		echo 	sed -i '/bash_proxy/c\if [ -f "/opt/bash_proxy" ]; then source "/opt/bash_proxy"; fi' "$bashrc_f"
-		echo else
-		echo 	echo 'if [ -f "/opt/bash_proxy" ]; then source "/opt/bash_proxy"; fi' ^>^> "$bashrc_f"
-		echo fi
-	) else (
+		echo export http_proxy="http://%PROXY_HOST%"
+		echo export https_proxy="https://%PROXY_HOST%"
+		echo export ftp_proxy="ftp://%PROXY_HOST%"
+		echo export no_proxy="127.0.0.1,localhost,$HOSTNAME,$COMPUTERNAME"
+		echo # removing old proxy implementation
 		echo rm -f /opt/bash_proxy
 		echo sed -i '/bash_proxy/d' "$bashrc_f"
+		echo echo Adding proxy settings...
+		echo (
+		echo echo export http_proxy=\"http://%PROXY_HOST%\"
+		echo echo export https_proxy=\"https://%PROXY_HOST%\"
+		echo echo export ftp_proxy=\"ftp://%PROXY_HOST%\"
+		echo echo export no_proxy=\"127.0.0.1,localhost,\$HOSTNAME,\$COMPUTERNAME\"
+		echo ^) ^> /etc/profile.d/proxytweak.sh
+	) else (
+		echo rm -f /etc/profile.d/proxytweak.sh
 	)
 	echo conemu_dir=$(cygpath -w "$CYGWIN_ROOT/../conemu"^)
 	if "%INSTALL_CONEMU%" == "yes" (
@@ -496,10 +489,13 @@ echo Creating script to install required and additional software [%Post_install%
 		echo rm -f /usr/local/bin/apt-cyg
 	)
 	if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
+		echo # removing old ssh agent tweak implementation
+		echo rm -f /opt/ssh-agent-tweak
+		echo sed -i '/ssh-agent-tweak/d' "$bashrc_f"
 		echo echo Adding SSH agent tweak...
-		echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) ^> /etc/profile.d/sshtweak.sh || goto :fail
+		echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) ^> /etc/profile.d/sshagenttweak.sh || goto :fail
 	) else (
-		echo rm -f /etc/profile.d/sshtweak.sh
+		echo rm -f /etc/profile.d/sshagenttweak.sh
 	)
 ) >"%Post_install%" || goto :fail
 
