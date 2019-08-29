@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190829b4
+set CONCYGSYS_VERSION=190829b5
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -93,14 +93,14 @@ if not exist "%CYGWIN_ROOT%" (
 ) else (
 	echo Existing Cygwin folder detected [%CYGWIN_ROOT%], entering update mode...
 	set UPDATEMODE=yes
-	wmic process get ExecutablePath 2>NUL | find /I "%CYGWIN_ROOT%">NUL
+	%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath 2>NUL | find /I "%CYGWIN_ROOT%">NUL
 	:: rem is used below instead of :: for commenting as loops produce "system cannot find disk" warning when using :: in miltiple lines
 	rem why I didn't use if "%ERRORLEVEL%"=="0"
 	rem https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
 		echo ^^!^^!^^! Active Cygwin processes detected, please close them and hit [ ENTER ] ^^!^^!^^!
-		wmic process get ExecutablePath | find /I "%CYGWIN_ROOT%"
+		%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | find /I "%CYGWIN_ROOT%"
 		pause
 		goto :retryupdate
 	) else (
@@ -108,7 +108,9 @@ if not exist "%CYGWIN_ROOT%" (
 			call "%Concygsys_settings%" cygwinsettings
 			call "%Concygsys_settings%" installoptions
 			if not "!PROXY_PORT!" == "" (
-				set PROXY_HOST=%PROXY_HOST%:%PROXY_PORT%
+				if not "!PROXY_HOST!" == "" (
+					set PROXY_HOST=%PROXY_HOST%:%PROXY_PORT%
+				)
 			)
 		)
 		echo.
@@ -149,7 +151,6 @@ if "%PROXY_HOST%" == "" (
 	echo target = Wscript.Arguments(1^)
 	echo WScript.Echo "Downloading '" ^& url ^& "' to '" ^& target ^& "'..."
 	echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^)
-	echo%DOWNLOADER_PROXY%
 	echo req.Open "GET", url, False
 	echo req.Send
 	echo If req.Status ^<^> 200 Then
