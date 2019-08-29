@@ -1,9 +1,9 @@
 @echo off
 
-:: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
+:: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190829b3
+set CONCYGSYS_VERSION=190829b4
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -71,7 +71,7 @@ set MINTTY_OPTIONS= ^
 
 
 echo.
-set CONCYGSYS_LINK=https://github.com/zhubanRuban/ConCygSys
+set CONCYGSYS_LINK=https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 set CONCYGSYS_INFO=ConCygSys v.%CONCYGSYS_VERSION% %CONCYGSYS_LINK%
 echo [ %CONCYGSYS_INFO% ]
 echo.
@@ -345,7 +345,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo 	echo.
 	echo ^) ^>"%%DOWNLOADER%%" ^|^| goto :fail
 	echo set INSTALLER=ConCygSys-installer.cmd
-	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys/beta/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
+	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys-cygwin-portable/beta/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
 	echo start "" "%%INSTALLER%%" ^|^| goto :fail
 	echo exit 0
 	echo :fail
