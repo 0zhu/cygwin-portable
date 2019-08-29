@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190828b5
+set CONCYGSYS_VERSION=190829b
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -27,7 +27,7 @@ set CYGWIN_ARCH=
 set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 
 :: select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
-set CYGWIN_PACKAGES=bind-utils,curl,inetutils,openssh,openssl,vim,whois
+set CYGWIN_PACKAGES=bind-utils,inetutils,openssh,vim,whois
 
 :: Cygwin uses ACLs to implement real Unix permissions which are not supported by Windows: https://cygwin.com/cygwin-ug-net/using-filemodes.html
 :: However, if you move installation to different directory or PC, ACLs will be broken and will have troubles running Cygwin binaries
@@ -228,7 +228,7 @@ echo Running Cygwin setup...
 --no-replaceonreboot ^
 --no-shortcuts ^
 --no-startmenu ^
---packages dos2unix,wget,%CYGWIN_PACKAGES% ^
+--packages dos2unix,%CYGWIN_PACKAGES% ^
 --quiet-mode ^
 --root "%CYGWIN_ROOT%" ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
@@ -443,7 +443,6 @@ echo Creating script to install required and additional software [%Post_install%
 		echo 	export http_proxy=http://%PROXY_HOST%:%PROXY_PORT%
 		echo 	export https_proxy=$http_proxy
 		echo fi
-		echo echo
 		echo echo Adding proxy settings for host [%COMPUTERNAME%] to [$bashrc_f]...
 		echo (
 		echo echo if [ \"\${HOSTNAME^^}\" == \"%COMPUTERNAME%\" ]\; then
@@ -467,23 +466,21 @@ echo Creating script to install required and additional software [%Post_install%
 	echo conemu_dir=$(cygpath -w "$CYGWIN_ROOT/../conemu"^)
 	if "%INSTALL_CONEMU%" == "yes" (
 		echo if [ ! -e "$conemu_dir" ]; then
-		echo 	echo
-		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)" ^&^& \
-		echo 	echo "Installing ConEmu from $conemu_url" ^&^& \
+		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)"
+		echo 	echo "Installing ConEmu from $conemu_url"
 		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" "$conemu_url" ^&^& \
 		echo 	mkdir -p "$conemu_dir" ^&^& \
 		echo 	echo "Extracting ConEmu from archive..." ^&^& \
 		echo 	bsdtar -xf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
 		echo 	rm -f "${conemu_dir}.7z"
 		echo fi
-		echo echo %CONCYGSYS_INFO% ^> "$CYGWIN_ROOT/../conemu/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
+		echo echo %CONCYGSYS_INFO% ^> "$conemu_dir/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
 	) else (
 		echo rm -rf "$conemu_dir"
 	)
 	if "%INSTALL_WSLBRIDGE%" == "yes" (
-		echo echo
 		echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin${CYGWIN_ARCH}.tar.gz' -o)"
-		echo echo "Installing WSLbridge from $wslbridge_url" ^&^& \
+		echo echo "Installing WSLbridge from $wslbridge_url"
 		echo wget -nv --show-progress -O "${CYGWIN_ROOT}.tar.gz" "$wslbridge_url" ^&^& \
 		echo echo "Extracting WSLbridge from archive..." ^&^& \
 		echo bsdtar -xf "${CYGWIN_ROOT}.tar.gz" --strip-components=1 -C "${CYGWIN_ROOT}/bin/" '*/wslbridge*' ^&^& \
@@ -492,7 +489,6 @@ echo Creating script to install required and additional software [%Post_install%
 		echo rm -f "${CYGWIN_ROOT}/bin/wslbridge"*
 	)
 	if "%INSTALL_APT_CYG%" == "yes" (
-		echo echo
 		echo echo "Installing/updating apt-cyg..."
 		echo wget -nv --show-progress -O /usr/local/bin/apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
 		echo chmod +x /usr/local/bin/apt-cyg
@@ -500,7 +496,6 @@ echo Creating script to install required and additional software [%Post_install%
 		echo rm -f /usr/local/bin/apt-cyg
 	)
 	if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
-		echo echo
 		echo echo Adding SSH agent tweak...
 		echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) ^> /etc/profile.d/sshtweak.sh || goto :fail
 	) else (
