@@ -1,10 +1,9 @@
 # ConCygSys <a href="../.."><img height="30" src="https://camo.githubusercontent.com/7710b43d0476b6f6d4b4b2865e35c108f69991f3/68747470733a2f2f7777772e69636f6e66696e6465722e636f6d2f646174612f69636f6e732f6f637469636f6e732f313032342f6d61726b2d6769746875622d3235362e706e67"></a> <a href="https://mintty.github.io/" target="_blank"><img align="right" height="40" src="https://pbs.twimg.com/profile_images/1938877716/terminal-256.png"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/zhubanRuban/ConCygSys?style=flat-square)](../../releases)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/zhubanRuban/ConCygSys?style=flat-square)
-[![GitHub All Releases](https://img.shields.io/github/downloads/zhubanRuban/ConCygSys/total?style=flat-square)]((../../releases))
-![HitCount](http://hits.dwyl.io/zhubanRuban/ConCygSys.svg)
-[![GitHub](https://img.shields.io/github/license/zhubanRuban/ConCygSys?style=flat-square)](LICENSE)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square)](../../releases)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square)
+![HitCount](http://hits.dwyl.io/zhubanRuban/ConCygSys-cygwin-portable.svg)
+[![GitHub](https://img.shields.io/github/license/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square)](LICENSE)
 
 - [Description](#description)
 - [Features](#features)
@@ -36,7 +35,7 @@
 
 ## Installation
 
-> Disable antivirus software on your PC during installation. [Why it is recommended](https://cygwin.com/faq/faq.html#faq.using.bloda)
+> **Optional:** Disable antivirus software on your PC during installation. [Why it is recommended](https://cygwin.com/faq/faq.html#faq.using.bloda)
 
 - Download the [latest ConCygSys release](../../releases), extract the archive and go to the extracted folder
 
@@ -93,9 +92,11 @@ Open **`ConCygSys-installer`** with text editor on your PC before installation t
 
 If you have existing ConCygSys installation and would like to add/remove some components during next update, edit **:installoptions** section of **`update`** launcher.
 
+Also take a look at [cygwin extras collection](https://github.com/zhubanRuban/cygwin-extras).
+
 ## FAQ
 
-- **What is the path to Windows drives when I'm in Cygwin console?**
+### What is the path to Windows drives when I'm in Cygwin console?
 
 `/mnt/DRIVE`
 
@@ -103,15 +104,15 @@ BTW, different Windows files are symlinked in Cygwin environment. For instance, 
 
 `ipconfig /flushdns` - to flush your local DNS cache
 
-- **How to change default task for new tab in ConEmu?**
+### How to change default task for new tab in ConEmu?
 
-ConEmu settings>> Startup>> Tasks>> choose a desired task>> tick "Default task for new console">> Save settings
+`ConEmu settings>> Startup>> Tasks>> choose a desired task>> tick "Default task for new console">> Save settings`
 
-- **How to change Cygwin username or home folder after installation?**
+### How to change Cygwin username or home folder after installation?
 
 Edit `CYGWIN_USERNAME=` or `HOME_FOLDER=` line in **:cygwinsettings** section of **`update`** launcher in your ConCygSys directory. Restart Cygwin.
 
-- **Сan I install a package from command line?**
+### Сan I install a package from command line?
 
 If you've chosen to install `apt-cyg` *(enabled by default in installer)*, you can istall packages from command line, for instance:
 
@@ -121,7 +122,7 @@ apt-cyg install nano
 
 [More info about apt-cyg usage](https://github.com/transcode-open/apt-cyg) | [Available packages](https://cygwin.com/packages/package_list.html)
 
-- **I cannot find a desired package in Cygwin repository, what should I do?**
+### I cannot find a desired package in Cygwin repository, what should I do?
 
 This can happen. Fortunately, the packages can still be built from source.
 Below are some examples for the reference:
@@ -132,18 +133,12 @@ Pre-built packages:
 
 [MTR](https://github.com/zhubanRuban/mtr-mobaxterm-plugin-cygwin) | [ipmitool](https://github.com/zhubanRuban/ipmitool-mobaxterm-plugin-cygwin)
 
-- **Can I try beta version?**
-
-No problem. There is [beta tree](../../tree/beta)
-> - Download **`ConCygSys-installer.cmd`** from [this link](../../raw/beta/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
-> - Launch **`ConCygSys-installer`**
-
-- **Where can I report an issue or get a support?**
-
-[Here](../../issues)
-
-- **How to check ConCygSys version?**
+### How to check ConCygSys version?
 
 The version can be found at the beginning of:
 - README.txt file
 - any launcher file
+
+### Where can I report an issue or get a support?
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square) ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square) ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](../../issues)
