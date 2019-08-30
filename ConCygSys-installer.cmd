@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190829b5
+set CONCYGSYS_VERSION=190830b
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
@@ -100,6 +100,7 @@ if not exist "%CYGWIN_ROOT%" (
 	if not ErrorLevel 1 (
 		echo.
 		echo ^^!^^!^^! Active Cygwin processes detected, please close them and hit [ ENTER ] ^^!^^!^^!
+		echo =============================================================================
 		%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | find /I "%CYGWIN_ROOT%"
 		pause
 		goto :retryupdate
@@ -118,6 +119,7 @@ if not exist "%CYGWIN_ROOT%" (
 		if not "!UPDATECYGWINONLY!" == "" goto :updatecygwinonly
 		echo.
 		echo ^^!^^!^^! Before you proceed with update... ^^!^^!^^!
+		echo =========================================
 		echo.
 		echo Please backup your cygwin home directory just in case
 		echo.
@@ -127,6 +129,7 @@ if not exist "%CYGWIN_ROOT%" (
 		echo - re-run update
 		echo.
 		echo If you are good with existing setup, just hit [ ENTER ] to start update
+		echo =======================================================================
 		echo.
 		pause
 	)
@@ -252,10 +255,8 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 	echo # setting path variable as it is not defined at this point
 	echo PATH=/usr/local/bin:/usr/bin
 	echo # setting custom cygwin username in passwd file, if not empty
-	echo if [ ! -z "$CYGWIN_USERNAME" ]; then
-	echo 	(
-	echo 	mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$CYGWIN_USERNAME\"; \$6=\"$(cygpath -u "$HOME"^)\"; print}"
-	echo 	^) ^>/etc/passwd
+	echo if [ ! -z "$CYGWIN_USERNAME" -o ! -z "$HOME_FOLDER" ]; then
+	echo 	mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USER\"; \$6=\"$(cygpath -u "$HOME"^)\"; print}" ^>/etc/passwd
 	echo else
 	echo 	rm -f /etc/passwd
 	echo fi
@@ -310,11 +311,8 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo set CYGWIN_ROOT=%%~dp0cygwin
 	echo cd /d "%%CYGWIN_ROOT%%\bin"
 	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
-	echo if not "%%HOME_FOLDER%%" == "" (
-	echo 	set HOME=%%HOME_FOLDER%%
-	echo ^) else (
-	echo 	set HOME=/home/concygsys
-	echo ^)
+	echo if "%%CYGWIN_USERNAME%%" == "" (set USER=%%USERNAME%%^) else (set USER=%%CYGWIN_USERNAME%%^)
+	echo if "%%HOME_FOLDER%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%HOME_FOLDER%%^)
 	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache" 2^>NUL
 	echo type NUL ^>"%%CYGWIN_ROOT%%\etc\fstab"
 	echo "%%CYGWIN_ROOT%%\bin\bash" "%%CYGWIN_ROOT%%\%Portable_init_name%"
@@ -444,7 +442,7 @@ echo Creating script to install required and additional software [%Post_install%
 		echo # removing old proxy implementation
 		echo rm -f /opt/bash_proxy
 		echo sed -i '/bash_proxy/d' "$bashrc_f"
-		echo echo Adding proxy settings...
+		echo echo; echo Adding proxy settings...
 		echo (
 		echo echo export http_proxy=\"http://%PROXY_HOST%\"
 		echo echo export https_proxy=\"https://%PROXY_HOST%\"
@@ -458,7 +456,7 @@ echo Creating script to install required and additional software [%Post_install%
 	if "%INSTALL_CONEMU%" == "yes" (
 		echo if [ ! -e "$conemu_dir" ]; then
 		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)"
-		echo 	echo "Installing ConEmu from $conemu_url"
+		echo 	echo; echo "Installing ConEmu from $conemu_url"
 		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" "$conemu_url" ^&^& \
 		echo 	mkdir -p "$conemu_dir" ^&^& \
 		echo 	echo "Extracting ConEmu from archive..." ^&^& \
@@ -470,8 +468,8 @@ echo Creating script to install required and additional software [%Post_install%
 		echo rm -rf "$conemu_dir"
 	)
 	if "%INSTALL_WSLBRIDGE%" == "yes" (
-		echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin${CYGWIN_ARCH}.tar.gz' -o)"
-		echo echo "Installing WSLbridge from $wslbridge_url"
+		echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin%CYGWIN_ARCH%.tar.gz' -o)"
+		echo echo; echo "Installing WSLbridge from $wslbridge_url"
 		echo wget -nv --show-progress -O "${CYGWIN_ROOT}.tar.gz" "$wslbridge_url" ^&^& \
 		echo echo "Extracting WSLbridge from archive..." ^&^& \
 		echo bsdtar -xf "${CYGWIN_ROOT}.tar.gz" --strip-components=1 -C "${CYGWIN_ROOT}/bin/" '*/wslbridge*' ^&^& \
@@ -480,7 +478,7 @@ echo Creating script to install required and additional software [%Post_install%
 		echo rm -f "${CYGWIN_ROOT}/bin/wslbridge"*
 	)
 	if "%INSTALL_APT_CYG%" == "yes" (
-		echo echo "Installing/updating apt-cyg..."
+		echo echo; echo "Installing/updating apt-cyg..."
 		echo wget -nv --show-progress -O /usr/local/bin/apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
 		echo chmod +x /usr/local/bin/apt-cyg
 	) else (
@@ -490,8 +488,8 @@ echo Creating script to install required and additional software [%Post_install%
 		echo # removing old ssh agent tweak implementation
 		echo rm -f /opt/ssh-agent-tweak
 		echo sed -i '/ssh-agent-tweak/d' "$bashrc_f"
-		echo echo Adding SSH agent tweak...
-		echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) ^> /etc/profile.d/sshagenttweak.sh || goto :fail
+		echo echo; echo Adding SSH agent tweak...
+		echo echo eval \$\(/usr/bin/ssh-pageant -r -a \"/tmp/.ssh-pageant-\$USERNAME\"\^) ^> /etc/profile.d/sshagenttweak.sh || goto :fail
 	) else (
 		echo rm -f /etc/profile.d/sshagenttweak.sh
 	)
@@ -631,9 +629,9 @@ del "%INSTALL_ROOT%README.md" >NUL 2>&1
 
 echo.
 if "%UPDATEMODE%" == "yes" (
-	echo                    [ Update SUCCEEDED! ]
+	echo ====================== [ Update SUCCEEDED! ] =====================
 ) else (
-	echo                 [ Installation SUCCEEDED! ]
+	echo =================== [ Installation SUCCEEDED! ] ==================
 )
 echo.
 echo  Use launchers in [%INSTALL_ROOT%] to run Cygwin Portable.
@@ -647,10 +645,10 @@ exit 0
 :fail
 echo.
 if "%UPDATEMODE%" == "yes" (
-	echo                         [ Update FAILED! ]
+	echo ======================= [ Update FAILED! ] =======================
 	echo Try uploading installer manually from %CONCYGSYS_LINK%
 ) else (
-	echo                      [ Installation FAILED! ]
+	echo ==================== [ Installation FAILED! ] ====================
 )
 echo.
 pause
