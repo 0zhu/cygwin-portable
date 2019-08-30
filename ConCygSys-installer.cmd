@@ -3,30 +3,34 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190830b
+set CONCYGSYS_VERSION=190830b2
 
 
 ::####################### begin SCRIPT SETTINGS #######################::
 :: You can customize the following variables to your needs before running the batch file
 
-:: choose a user name under Cygwin, leave empty to use your Windows username
+:: Custom Cygwin username
+:: Leave empty to use your Windows username
 set CYGWIN_USERNAME=
 
-:: custom home folder path (!) without quotes ' ", leave empty to use default one - /home/concygsys
-:: examples:
+:: Custom home folder path (!) without quotes ' "
+:: Leave empty to use default one - /home/concygsys
+:: Examples:
+:: /home/cygwinhome
 :: C:\cygwinhome
 :: C:\Users\yourusername\Documents\cygwinhome
 :: %USERPROFILE%\Documents\cygwinhome
 set HOME_FOLDER=
 
-:: override OS architecture: "32" bit or "64" bit system, leave empty for autodetect
+:: Override OS architecture, if required: "32" bit or "64" bit system
+:: Leave empty for autodetect
 set CYGWIN_ARCH=
 
-:: change the URL to the closest mirror: https://cygwin.com/mirrors.html
-:: do not leave empty
+:: Change the URL to the closest mirror: https://cygwin.com/mirrors.html
+:: Do not leave empty
 set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
 
-:: select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
+:: Select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
 set CYGWIN_PACKAGES=bind-utils,inetutils,openssh,vim,whois
 
 :: Cygwin uses ACLs to implement real Unix permissions which are not supported by Windows: https://cygwin.com/cygwin-ug-net/using-filemodes.html
@@ -37,27 +41,30 @@ set CYGWIN_PACKAGES=bind-utils,inetutils,openssh,vim,whois
 :: Maximal: "-rw-r--r--" or "644". Files with exe extension or beginning with shebang will automatically have 755 permissions
 set INSTALL_ACL=no
 
-:: install apt-cyg command line package manager: https://github.com/transcode-open/apt-cyg
+:: Install apt-cyg command line package manager: https://github.com/transcode-open/apt-cyg
+:: Why not using https://github.com/kou1okada/apt-cyg?
+:: Cause 1: https://github.com/kou1okada/apt-cyg#requirements
+:: Cause 2: https://github.com/kou1okada/apt-cyg/issues/24
 set INSTALL_APT_CYG=yes
 
-:: install SSH agent tweak https://github.com/cuviper/ssh-pageant
+:: Install SSH agent tweak https://github.com/cuviper/ssh-pageant
 set INSTALL_SSH_AGENT_TWEAK=yes
 
-:: install WSLbridge to allowing to access WSL via Mintty https://github.com/rprichard/wslbridge
+:: Install WSLbridge to allowing to access WSL via Mintty https://github.com/rprichard/wslbridge
 set INSTALL_WSLBRIDGE=yes
 
-:: install multitab terminal https://conemu.github.io/
+:: Install ConEmu quake-style terminal https://conemu.github.io/
 set INSTALL_CONEMU=yes
 :: https://conemu.github.io/en/ConEmuArgs.html
 set CONEMU_OPTIONS=
 
-:: set proxy if required, in the following formats:
+:: Set proxy, if required, in the following formats:
 :: proxy:port
 :: username:password@proxy:port
 set PROXY_HOST=
 
-:: set Mintty options used in ConEmu task: https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
-:: the main goal is to set options (they will overwrite whatyou configured in main Mintty window) to make Mintty working properly with ConEmu
+:: Set Mintty options used in ConEmu task: https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
+:: The main goal is to set options (they will overwrite whatyou configured in main Mintty window) to make Mintty working properly with ConEmu
 set MINTTY_OPTIONS= ^
 -o FontHeight=10 ^
 -o BoldAsFont=yes ^
@@ -250,16 +257,12 @@ set Portable_init_name=portable-init.sh
 set Portable_init=%CYGWIN_ROOT%\%Portable_init_name%
 echo Creating init script to keep the installation portable [%Portable_init%]...
 (
-	echo #!/usr/bin/env bash
+	echo #!/bin/bash
 	echo # %CONCYGSYS_INFO%
 	echo # setting path variable as it is not defined at this point
-	echo PATH=/usr/local/bin:/usr/bin
+	echo PATH=/usr/local/bin:/usr/bin:/bin
 	echo # setting custom cygwin username in passwd file, if not empty
-	echo if [ ! -z "$CYGWIN_USERNAME" -o ! -z "$HOME_FOLDER" ]; then
-	echo 	mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USER\"; \$6=\"$(cygpath -u "$HOME"^)\"; print}" ^>/etc/passwd
-	echo else
-	echo 	rm -f /etc/passwd
-	echo fi
+	echo mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USER\"; \$6=\"$(cygpath -u "$HOME"^)\"; print}" ^>/etc/passwd
 	echo # generating custom fstab in case ACL is set to no
 	echo (
 	if not "%INSTALL_ACL%" == "yes" (
@@ -306,16 +309,14 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo exit /b 0
 	echo.
 	echo :launcherheader
-	echo setlocal enableextensions
-	echo set TERM=
 	echo set CYGWIN_ROOT=%%~dp0cygwin
-	echo cd /d "%%CYGWIN_ROOT%%\bin"
 	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
 	echo if "%%CYGWIN_USERNAME%%" == "" (set USER=%%USERNAME%%^) else (set USER=%%CYGWIN_USERNAME%%^)
 	echo if "%%HOME_FOLDER%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%HOME_FOLDER%%^)
 	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache" 2^>NUL
 	echo type NUL ^>"%%CYGWIN_ROOT%%\etc\fstab"
 	echo "%%CYGWIN_ROOT%%\bin\bash" "%%CYGWIN_ROOT%%\%Portable_init_name%"
+	echo cd /d "%%CYGWIN_ROOT%%\bin"
 	echo exit /b 0
 	echo.
 	echo :update
@@ -426,8 +427,8 @@ set Post_install=%CYGWIN_ROOT%\post-install.sh
 echo.
 echo Creating script to install required and additional software [%Post_install%]...
 (
-	echo #!/usr/bin/env bash
-	echo PATH=/usr/local/bin:/usr/bin
+	echo #!/bin/bash
+	echo PATH=/usr/local/bin:/usr/bin:/bin
 	echo bashrc_f=${HOME}/.bashrc
 	echo # https://github.com/zhubanRuban/cygwin-extras/blob/master/inputrc_custom_bind
 	echo (
