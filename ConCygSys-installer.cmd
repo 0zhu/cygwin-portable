@@ -3,15 +3,10 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190830b2
+set CONCYGSYS_VERSION=190901b1
 
 
-::####################### begin SCRIPT SETTINGS #######################::
-:: You can customize the following variables to your needs before running the batch file
-
-:: Custom Cygwin username
-:: Leave empty to use your Windows username
-set CYGWIN_USERNAME=
+::======================= begin SCRIPT SETTINGS =======================
 
 :: Custom home folder path (!) without quotes ' "
 :: Leave empty to use default one - /home/concygsys
@@ -26,9 +21,8 @@ set HOME_FOLDER=
 :: Leave empty for autodetect
 set CYGWIN_ARCH=
 
-:: Change the URL to the closest mirror: https://cygwin.com/mirrors.html
-:: Do not leave empty
-set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32
+:: You can choose the closest mirror: https://cygwin.com/mirrors.html
+set CYGWIN_MIRROR=
 
 :: Select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
 set CYGWIN_PACKAGES=bind-utils,inetutils,openssh,vim,whois
@@ -74,21 +68,22 @@ set MINTTY_OPTIONS= ^
 -o ScrollbackLines=5000 ^
 -o Transparency=off ^
 -o ConfirmExit=no
-::####################### end SCRIPT SETTINGS #######################::
+
+::======================= end SCRIPT SETTINGS =======================
 
 
 echo.
 set CONCYGSYS_LINK=https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 set CONCYGSYS_INFO=ConCygSys v.%CONCYGSYS_VERSION% %CONCYGSYS_LINK%
-echo [ %CONCYGSYS_INFO% ]
+echo %CONCYGSYS_INFO%
 echo.
 
 :: %~dp0 means current directory with backslash at the end
 set INSTALL_ROOT=%~dp0
-
 set CYGWIN_ROOT=%INSTALL_ROOT%cygwin
 set Concygsys_settings_name=update.cmd
 set Concygsys_settings=%INSTALL_ROOT%%Concygsys_settings_name%
+
 
 :: to use 'set' in full in 'if' loop below: https://ss64.com/nt/delayedexpansion.html
 setlocal EnableDelayedExpansion
@@ -101,28 +96,27 @@ if not exist "%CYGWIN_ROOT%" (
 	echo Existing Cygwin folder detected [%CYGWIN_ROOT%], entering update mode...
 	set UPDATEMODE=yes
 	%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath 2>NUL | find /I "%CYGWIN_ROOT%">NUL
-	:: rem is used below instead of :: for commenting as loops produce "system cannot find disk" warning when using :: in miltiple lines
-	rem why I didn't use if "%ERRORLEVEL%"=="0"
-	rem https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
+	:: multiple :: in if loop causing "system cannot find disk" warning, using rem further
+	rem why not using "%ERRORLEVEL%"=="0": https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
-		echo ^^!^^!^^! Active Cygwin processes detected, please close them and hit [ ENTER ] ^^!^^!^^!
-		echo =============================================================================
+		echo ^^!^^!^^! Active Cygwin processes detected ^^!^^!^^!
+		echo ==========================================
 		%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | find /I "%CYGWIN_ROOT%"
+		echo.
+		echo Would you like me to terminate them? (Close this window to terminate them manually and re-run update)
 		pause
+		for /f "usebackq tokens=2" %i in (`%SystemRoot%\System32\wbem\WMIC.exe process get ProcessId^, ExecutablePath ^| find /I "%CYGWIN_ROOT%"`) do taskkill /f /pid %i
 		goto :retryupdate
 	) else (
 		if exist "%Concygsys_settings%" (
 			call "%Concygsys_settings%" cygwinsettings
 			call "%Concygsys_settings%" installoptions
-			if not "!PROXY_PORT!" == "" (
-				if not "!PROXY_HOST!" == "" (
-					set PROXY_HOST=%PROXY_HOST%:%PROXY_PORT%
-				)
-			)
+			if not "!PROXY_PORT!" == "" (if not "!PROXY_HOST!" == "" (set PROXY_HOST=!PROXY_HOST!:!PROXY_PORT!))
+			if not "!HOME_FOLDER!" == "" (set CYGWIN_HOME=!HOME_FOLDER!)
 		)
 		echo.
-		set /p UPDATECYGWINONLY=   [ 1 then ENTER] - update Cygwin only   [ ENTER ] - update everything 
+		set /p UPDATECYGWINONLY=   [1] then [Enter] : update Cygwin only   [Enter] : update everything 
 		if not "!UPDATECYGWINONLY!" == "" goto :updatecygwinonly
 		echo.
 		echo ^^!^^!^^! Before you proceed with update... ^^!^^!^^!
@@ -135,98 +129,70 @@ if not exist "%CYGWIN_ROOT%" (
 		echo - modify :installoptions section of [%Concygsys_settings%] file
 		echo - re-run update
 		echo.
-		echo If you are good with existing setup, just hit [ ENTER ] to start update
+		echo If you are good with existing setup, just hit [Enter] to start update
 		echo =======================================================================
 		echo.
 		pause
 	)
 )
-:: not needed anymore and to prevent issues in bash script generation down below (they conatin ! which should have been escaped by ^^)
 setlocal DisableDelayedExpansion
 
+
 :updatecygwinonly
-:: There is no true-commandline download tool in Windows
-:: creating VB script that can download files...
-:: not using PowerShell which may be blocked by group policies
-set DOWNLOADER=%INSTALL_ROOT%downloader.vbs
+:: Creating VB script that can download files, not using PowerShell which may be blocked by group policies
+set DOWNLOADER=%INSTALL_ROOT%ConCygSys-downloader.vbs
+set GENDOWNLOADER=%INSTALL_ROOT%ConCygSys-downloader-generator.vbs
 echo.
 echo Creating script that can download files [%DOWNLOADER%]...
-if "%PROXY_HOST%" == "" (
-	set DOWNLOADER_PROXY=.
-) else (
-	set DOWNLOADER_PROXY= req.SetProxy 2, "%PROXY_HOST%", ""
-)
+if "%PROXY_HOST%" == "" (set DOWNLOADER_PROXY=.) else (set DOWNLOADER_PROXY= req.SetProxy 2, "%PROXY_HOST%", "")
 (
-	echo url = Wscript.Arguments(0^)
-	echo target = Wscript.Arguments(1^)
-	echo WScript.Echo "Downloading '" ^& url ^& "' to '" ^& target ^& "'..."
-	echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^)
-	echo req.Open "GET", url, False
-	echo req.Send
-	echo If req.Status ^<^> 200 Then
-	echo    WScript.Echo "FAILED to download: HTTP Status " ^& req.Status
-	echo    WScript.Quit 1
-	echo End If
-	echo Set buff = CreateObject("ADODB.Stream"^)
-	echo buff.Open
-	echo buff.Type = 1
-	echo buff.Write req.ResponseBody
-	echo buff.Position = 0
-	echo buff.SaveToFile target
-	echo buff.Close
-	echo.
-) >"%DOWNLOADER%" || goto :fail
+	echo echo url = Wscript.Arguments(0^)
+	echo echo target = Wscript.Arguments(1^)
+	echo echo WScript.Echo "Downloading '" ^& url ^& "' to '" ^& target ^& "'..."
+	echo echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^)
+	echo echo%DOWNLOADER_PROXY%
+	echo echo req.Open "GET", url, False
+	echo echo req.Send
+	echo echo If req.Status ^<^> 200 Then
+	echo echo 	WScript.Echo "FAILED to download: HTTP Status " ^& req.Status
+	echo echo 	WScript.Quit 1
+	echo echo End If
+	echo echo Set buff = CreateObject("ADODB.Stream"^)
+	echo echo buff.Open
+	echo echo buff.Type = 1
+	echo echo buff.Write req.ResponseBody
+	echo echo buff.Position = 0
+	echo echo buff.SaveToFile target
+	echo echo buff.Close
+	echo echo.
+) > "%GENDOWNLOADER%" || goto :fail
+call "%GENDOWNLOADER%" > "%DOWNLOADER%"
 
 echo.
 if "%CYGWIN_ARCH%" == "" (
 	echo CYGWIN_ARCH setting is empty, autodetecting...
 	if "%PROCESSOR_ARCHITECTURE%" == "x86" (
-		if defined PROCESSOR_ARCHITEW6432 (
-            		set CYGWIN_ARCH=64
-		) else (
-			set CYGWIN_ARCH=32
-		)
-	) else (
-		set CYGWIN_ARCH=64
-	)
+		if defined PROCESSOR_ARCHITEW6432 (set CYGWIN_ARCH=64) else (set CYGWIN_ARCH=32)
+	) else (set CYGWIN_ARCH=64)
 )
 echo Choosing correct version of Cygwin installer...
-if "%CYGWIN_ARCH%" == "64" (
-	set CYGWIN_SETUP=setup-x86_64.exe
-) else (
-	set CYGWIN_SETUP=setup-x86.exe
-)
+if "%CYGWIN_ARCH%" == "64" (set CYGWIN_SETUP=setup-x86_64.exe) else (set CYGWIN_SETUP=setup-x86.exe)
 echo Chosen installer: %CYGWIN_SETUP%
-
-:: downloading Cygwin installer
-echo.
-del "%CYGWIN_ROOT%\%CYGWIN_SETUP%" >NUL 2>&1
+del "%CYGWIN_ROOT%\setup-*.exe" >NUL 2>&1
 cscript //Nologo "%DOWNLOADER%" https://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
-del "%DOWNLOADER%" >NUL 2>&1
 
-:: Cygwin command line options: https://cygwin.com/faq/faq.html#faq.setup.cli
-if "%PROXY_HOST%" == "" (
-	set CYGWIN_PROXY=
-) else (
-	set CYGWIN_PROXY=--proxy "%PROXY_HOST%"
-)
-
+:: https://cygwin.com/faq/faq.html#faq.setup.cli
+if "%CYGWIN_MIRROR%" == ""	(set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32)
+if "%PROXY_HOST%" == ""		(set CYGWIN_PROXY=) else (set CYGWIN_PROXY=--proxy "%PROXY_HOST%")
 
 :: adding required packages for special software
-if "%INSTALL_CONEMU%" == "yes" (
-	set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%
-)
-if "%INSTALL_WSLBRIDGE%" == "yes" (
-	set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%
-)
-if "%INSTALL_APT_CYG%" == "yes" (
-	set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%
-)
-if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
-	set CYGWIN_PACKAGES=openssh,ssh-pageant,%CYGWIN_PACKAGES%
-)
+if "%INSTALL_CONEMU%" == "yes"		(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
+if "%INSTALL_WSLBRIDGE%" == "yes"	(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
+if "%INSTALL_APT_CYG%" == "yes"		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%)
+if "%INSTALL_SSH_AGENT_TWEAK%" == "yes"	(set CYGWIN_PACKAGES=openssh,ssh-pageant,%CYGWIN_PACKAGES%)
+if "%CYGWIN_MIRROR%" == ""		(set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32)
 
-:: all Cygwin installer commandline options: https://www.cygwin.com/faq/faq.html#faq.setup.cli
+:: https://www.cygwin.com/faq/faq.html#faq.setup.cli
 echo.
 echo Running Cygwin setup...
 "%CYGWIN_ROOT%\%CYGWIN_SETUP%" ^
@@ -245,10 +211,11 @@ echo Running Cygwin setup...
 --upgrade-also || goto :fail
 
 :: warning for standard Cygwin launcher
-echo %CONCYGSYS_INFO% >"%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
+echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
-
+set BASH="%CYGWIN_ROOT%\bin\bash" --noprofile --norc -c
+set DOS2UNIX="%CYGWIN_ROOT%\bin\dos2unix"
 
 echo.
 echo Creating portable settings files...
@@ -275,9 +242,9 @@ echo Creating init script to keep the installation portable [%Portable_init%]...
 	echo # adjust Cygwin packages cache path
 	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/pkg-cache"^)
 	echo sed -i '/^^last-cache/!b;n;c\\t'"${pkg_cache_dir//\\/\\\\}"'' /etc/setup/setup.rc
-) >"%Portable_init%" || goto :fail
+) > "%Portable_init%" || goto :fail
 
-"%CYGWIN_ROOT%\bin\dos2unix" "%Portable_init%" || goto :fail
+%DOS2UNIX% "%Portable_init%" || goto :fail
 
 echo Generating one-file settings and updater file [%Concygsys_settings%]...
 (
@@ -314,7 +281,7 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo if "%%CYGWIN_USERNAME%%" == "" (set USER=%%USERNAME%%^) else (set USER=%%CYGWIN_USERNAME%%^)
 	echo if "%%HOME_FOLDER%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%HOME_FOLDER%%^)
 	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache" 2^>NUL
-	echo type NUL ^>"%%CYGWIN_ROOT%%\etc\fstab"
+	echo type NUL ^> "%%CYGWIN_ROOT%%\etc\fstab"
 	echo "%%CYGWIN_ROOT%%\bin\bash" "%%CYGWIN_ROOT%%\%Portable_init_name%"
 	echo cd /d "%%CYGWIN_ROOT%%\bin"
 	echo exit /b 0
@@ -325,25 +292,8 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo set DOWNLOADER=%%INSTALL_ROOT%%downloader.vbs
 	echo echo Creating a script that can download files [%%DOWNLOADER%%]...
 	echo (
-	echo 	echo url = Wscript.Arguments(0^^^)
-	echo 	echo target = Wscript.Arguments(1^^^)
-	echo 	echo WScript.Echo "Downloading '" ^^^& url ^^^& "' to '" ^^^& target ^^^& "'..."
-	echo 	echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^^^)
-	echo 	echo req.Open "GET", url, False
-	echo 	echo req.Send
-	echo 	echo If req.Status ^^^<^^^> 200 Then
-	echo 	echo    WScript.Echo "FAILED to download: HTTP Status " ^^^& req.Status
-	echo 	echo    WScript.Quit 1
-	echo 	echo End If
-	echo 	echo Set buff = CreateObject("ADODB.Stream"^^^)
-	echo 	echo buff.Open
-	echo 	echo buff.Type = 1
-	echo 	echo buff.Write req.ResponseBody
-	echo 	echo buff.Position = 0
-	echo 	echo buff.SaveToFile target
-	echo 	echo buff.Close
-	echo 	echo.
-	echo ^) ^>"%%DOWNLOADER%%" ^|^| goto :fail
+	call "%GENDOWNLOADER%"
+	echo ^) ^> "%%DOWNLOADER%%" ^|^| goto :fail
 	echo set INSTALLER=ConCygSys-installer.cmd
 	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys-cygwin-portable/beta/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
 	echo start "" "%%INSTALLER%%" ^|^| goto :fail
@@ -356,15 +306,14 @@ echo Generating one-file settings and updater file [%Concygsys_settings%]...
 	echo echo.
 	echo pause
 	echo exit 1
-) >"%Concygsys_settings%" || goto :fail
+) > "%Concygsys_settings%" || goto :fail
 
 
 echo.
-echo Generating main launchers...
-
-set Launch_cmd=%INSTALL_ROOT%Cygwin-Cmd.cmd
-echo Generating cmd launcher [%Launch_cmd%]...
+echo Generating launcher...
+::================================================
 (
+
 	echo @echo off
 	echo :: %CONCYGSYS_INFO%
 	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
@@ -373,7 +322,7 @@ echo Generating cmd launcher [%Launch_cmd%]...
 	echo ^) else (
 	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -c "%%*"
 	echo ^)
-) >"%Launch_cmd%" || goto :fail
+) > "%Launch_cmd%" || goto :fail
 
 set Launch_conemu=%INSTALL_ROOT%Cygwin-ConEmu.cmd
 if "%INSTALL_CONEMU%" == "yes" (
@@ -388,7 +337,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo start "" "%%~dp0conemu\ConEmu.exe" %CONEMU_OPTIONS%
 		)
 		echo exit 0
-	) >"%Launch_conemu%" || goto :fail
+	) > "%Launch_conemu%" || goto :fail
 ) else (
 	echo Removing ConEmu launcher [%Launch_conemu%]...
 	del "%Launch_conemu%" >NUL 2>&1
@@ -402,109 +351,92 @@ echo Generating Mintty launcher [%Launch_mintty%]...
 	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
 	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" -
 	echo exit 0
-) >"%Launch_mintty%" || goto :fail
+) > "%Launch_mintty%" || goto :fail
 
 set Launch_wsltty=%INSTALL_ROOT%Cygwin-WSLtty.cmd
 if "%INSTALL_WSLBRIDGE%" == "yes" (
-	echo Generating WSLtty launcher [%Launch_wsltty%]...
 	(
 		echo @echo off
 		echo :: %CONCYGSYS_INFO%
 		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
 		echo exit 0
-	) >"%Launch_wsltty%" || goto :fail
+	) > "%Launch_wsltty%" || goto :fail
 ) else (
 	echo Removing WSLtty launcher [%Launch_wsltty%]...
 	del "%Launch_wsltty%" >NUL 2>&1
 )
 
-echo.
-echo Launching bash once to initialize user home dir...
-call "%Launch_cmd%" whoami || goto :fail
-
-
-set Post_install=%CYGWIN_ROOT%\post-install.sh
-echo.
-echo Creating script to install required and additional software [%Post_install%]...
-(
-	echo #!/bin/bash
-	echo PATH=/usr/local/bin:/usr/bin:/bin
-	echo bashrc_f=${HOME}/.bashrc
-	echo # https://github.com/zhubanRuban/cygwin-extras/blob/master/inputrc_custom_bind
+	echo.
+	echo :update
+	echo echo [ %CONCYGSYS_INFO% ]
+	echo set INSTALL_ROOT=%%~dp0
+	echo set DOWNLOADER=%%INSTALL_ROOT%%downloader.vbs
+	echo echo Creating a script that can download files [%%DOWNLOADER%%]...
 	echo (
-	echo echo bind \'\"\\e[1\;5C\": forward-word\'    \# ctrl + right
-	echo echo bind \'\"\\e[1\;5D\": backward-word\'   \# ctrl + left
-	echo ^) ^> /etc/profile.d/inputrctweak.sh
-	if not "%PROXY_HOST%" == "" (
-		echo export http_proxy="http://%PROXY_HOST%"
-		echo export https_proxy="https://%PROXY_HOST%"
-		echo export ftp_proxy="ftp://%PROXY_HOST%"
-		echo export no_proxy="127.0.0.1,localhost,$HOSTNAME,$COMPUTERNAME"
-		echo # removing old proxy implementation
-		echo rm -f /opt/bash_proxy
-		echo sed -i '/bash_proxy/d' "$bashrc_f"
-		echo echo; echo Adding proxy settings...
-		echo (
-		echo echo export http_proxy=\"http://%PROXY_HOST%\"
-		echo echo export https_proxy=\"https://%PROXY_HOST%\"
-		echo echo export ftp_proxy=\"ftp://%PROXY_HOST%\"
-		echo echo export no_proxy=\"127.0.0.1,localhost,\$HOSTNAME,\$COMPUTERNAME\"
-		echo ^) ^> /etc/profile.d/proxytweak.sh
-	) else (
-		echo rm -f /etc/profile.d/proxytweak.sh
-	)
-	echo conemu_dir=$(cygpath -w "$CYGWIN_ROOT/../conemu"^)
-	if "%INSTALL_CONEMU%" == "yes" (
-		echo if [ ! -e "$conemu_dir" ]; then
-		echo 	conemu_url="https://github.com$(wget https://github.com/Maximus5/ConEmu/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*7z' -o)"
-		echo 	echo; echo "Installing ConEmu from $conemu_url"
-		echo 	wget -nv --show-progress -O "${conemu_dir}.7z" "$conemu_url" ^&^& \
-		echo 	mkdir -p "$conemu_dir" ^&^& \
-		echo 	echo "Extracting ConEmu from archive..." ^&^& \
-		echo 	bsdtar -xf "${conemu_dir}.7z" -C "$conemu_dir" ^&^& \
-		echo 	rm -f "${conemu_dir}.7z"
-		echo fi
-		echo echo %CONCYGSYS_INFO% ^> "$conemu_dir/DO-NOT-LAUNCH-CONEMU-FROM-HERE"
-	) else (
-		echo rm -rf "$conemu_dir"
-	)
-	if "%INSTALL_WSLBRIDGE%" == "yes" (
-		echo wslbridge_url="https://github.com$(wget https://github.com/rprichard/wslbridge/releases/latest -O - 2>/dev/null | egrep '/.*/releases/download/.*/.*cygwin%CYGWIN_ARCH%.tar.gz' -o)"
-		echo echo; echo "Installing WSLbridge from $wslbridge_url"
-		echo wget -nv --show-progress -O "${CYGWIN_ROOT}.tar.gz" "$wslbridge_url" ^&^& \
-		echo echo "Extracting WSLbridge from archive..." ^&^& \
-		echo bsdtar -xf "${CYGWIN_ROOT}.tar.gz" --strip-components=1 -C "${CYGWIN_ROOT}/bin/" '*/wslbridge*' ^&^& \
-		echo rm -f "${CYGWIN_ROOT}.tar.gz"
-	) else (
-		echo rm -f "${CYGWIN_ROOT}/bin/wslbridge"*
-	)
-	if "%INSTALL_APT_CYG%" == "yes" (
-		echo echo; echo "Installing/updating apt-cyg..."
-		echo wget -nv --show-progress -O /usr/local/bin/apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
-		echo chmod +x /usr/local/bin/apt-cyg
-	) else (
-		echo rm -f /usr/local/bin/apt-cyg
-	)
-	if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
-		echo # removing old ssh agent tweak implementation
-		echo rm -f /opt/ssh-agent-tweak
-		echo sed -i '/ssh-agent-tweak/d' "$bashrc_f"
-		echo echo; echo Adding SSH agent tweak...
-		echo echo eval \$\(/usr/bin/ssh-pageant -r -a \"/tmp/.ssh-pageant-\$USERNAME\"\^) ^> /etc/profile.d/sshagenttweak.sh || goto :fail
-	) else (
-		echo rm -f /etc/profile.d/sshagenttweak.sh
-	)
-) >"%Post_install%" || goto :fail
-
-"%CYGWIN_ROOT%\bin\dos2unix" "%Post_install%" || goto :fail
-
-echo Launching post-install script...
-"%CYGWIN_ROOT%\bin\bash" "%Post_install%" || goto :fail
-del "%Post_install%" >NUL 2>&1
+	call "%GENDOWNLOADER%"
+	echo ^) ^> "%%DOWNLOADER%%" ^|^| goto :fail
+	echo set INSTALLER=ConCygSys-installer.cmd
+	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys-cygwin-portable/beta/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
+	echo start "" "%%INSTALLER%%" ^|^| goto :fail
+	echo exit 0
+	echo :fail
+	echo del "%%DOWNLOADER%%" ^>NUL 2^>^&1
+	echo echo.
+	echo echo                       !!! Update FAILED !!!
+	echo echo Try uploading installer manually from %CONCYGSYS_LINK%
+	echo echo.
+	echo pause
+	echo exit 1
+) > "%INSTALL_ROOT%\Cygwin.cmd" || goto :fail
+::================================================
 
 
-set Conemu_config=%INSTALL_ROOT%conemu\ConEmu.xml
+echo.
+echo Adding .inputrc tweak (https://github.com/zhubanRuban/cygwin-extras/blob/master/inputrc_custom_bind) ...
+cscript //Nologo "%DOWNLOADER%" https://github.com/zhubanRuban/cygwin-extras/raw/master/inputrc_custom_bind "%CYGWIN_ROOT%\etc\profile.d\inputrctweak.sh"
+%DOS2UNIX% "%CYGWIN_ROOT%\etc\profile.d\inputrctweak.sh" || goto :fail
+:: removing old proxy implementation
+del "%CYGWIN_ROOT%\opt\bash_proxy" >NUL 2>&1
+%BASH% "/bin/sed -i '/bash_proxy/d' ~/.bashrc"
+
+if "%INSTALL_WSLBRIDGE%" == "yes" (
+	echo.
+	echo Installing WSLbridge...
+	%BASH% "/bin/wget -qO "%CYGWIN_ROOT%\wslbridge.tar.gz" https://github.com$(/bin/wget -qO- https://github.com/rprichard/wslbridge/releases/latest|/bin/grep '/.*/releases/download/.*/.*cygwin%CYGWIN_ARCH%.tar.gz' -o)" || goto :fail
+	%BASH% "/bin/bsdtar -xf "%CYGWIN_ROOT%\wslbridge.tar.gz" --strip-components=1 -C "%CYGWIN_ROOT%\bin\" '*/wslbridge*'" || goto :fail
+	del "%CYGWIN_ROOT%\wslbridge.tar.gz" >NUL 2>&1
+) else (
+	del "%CYGWIN_ROOT%\bin\wslbridge*" >NUL 2>&1
+)
+if "%INSTALL_APT_CYG%" == "yes" (
+	echo.
+	echo Installing apt-cyg...
+	%BASH% "/bin/wget -qO /bin/apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg; chmod +x /bin/apt-cyg"
+) else (
+	del "%CYGWIN_ROOT%\bin\apt-cyg" >NUL 2>&1
+)
+if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
+	echo.
+	echo Adding SSH agent tweak...
+	echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) ^> "%CYGWIN_ROOT%\etc\profile.d\sshagenttweak.sh" || goto :fail
+	%DOS2UNIX% "%CYGWIN_ROOT%\etc\profile.d\sshagenttweak.sh"
+) else (
+	del "%CYGWIN_ROOT%\etc\profile.d\sshagenttweak.sh" >NUL 2>&1
+)
+del "%CYGWIN_ROOT%\opt\ssh-agent-tweak" >NUL 2>&1
+%BASH% "/bin/sed -i '/ssh-agent-tweak/d' ~/.bashrc"
+
+
 if "%INSTALL_CONEMU%" == "yes" (
+if not exist "%CYGWIN_ROOT%\conemu\" (
+	echo.
+	echo Installing ConEmu...
+	%BASH% "/bin/wget -qO "%CYGWIN_ROOT%\conemu.7z" https://github.com$(/bin/wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|/bin/grep '/.*/releases/download/.*/.*7z' -o)" || goto :fail
+	%BASH% "/bin/bsdtar -xf "%CYGWIN_ROOT%\conemu.7z" -C "%CYGWIN_ROOT%\conemu"" || goto :fail
+	echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\conemu\DO-NOT-LAUNCH-CONEMU-FROM-HERE"
+	del "%CYGWIN_ROOT%\conemu.7z" >NUL 2>&1
+)
+if not exist "%INSTALL_ROOT%conemu\ConEmu.xml" (
 	echo.
 	echo Replacing ConEmu config...
 	(
@@ -606,50 +538,47 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo 		^</key^>
 		echo 	^</key^>
 		echo ^</key^>
-	)> "%Conemu_config%" || goto :fail
+	) > "%INSTALL_ROOT%conemu\ConEmu.xml" || goto :fail
+)
+) else (
+	rd /s /q "%CYGWIN_ROOT%\conemu" >NUL 2>&1
 )
 
-
+:==========================================================
 echo.
 echo Cleaning up...
-:: deleting obsolete files used by previous concygsys versions
+:: deleting files left by previous concygsys versions and temp files
 rd /s /q "%INSTALL_ROOT%data" >NUL 2>&1
-del "%CYGWIN_ROOT%\updater.cmd" >NUL 2>&1
-del "%CYGWIN_ROOT%\cygwin-settings.cmd" >NUL 2>&1
-del "%CYGWIN_ROOT%\cygwin-install-options.cmd" >NUL 2>&1
-:: delting readme and licence files
-del "%INSTALL_ROOT%LICENSE" >NUL 2>&1
-del "%INSTALL_ROOT%README.md" >NUL 2>&1
+del "%CYGWIN_ROOT%\updater.cmd" "%CYGWIN_ROOT%\cygwin-*.cmd" "%CYGWIN_ROOT%\portable-init.sh" "%CYGWIN_ROOT%\post-install.sh" >NUL 2>&1
+del "%INSTALL_ROOT%LICENSE" "%INSTALL_ROOT%README.md" >NUL 2>&1
 (
 	echo %CONCYGSYS_INFO%
 	echo Project page and Documentation:
 	echo %CONCYGSYS_LINK%
-)> "%INSTALL_ROOT%README.txt" || goto :fail
+) > "%INSTALL_ROOT%README.txt" || goto :fail
 :aftercygwinupdate
 
 
 echo.
 if "%UPDATEMODE%" == "yes" (
-	echo ====================== [ Update SUCCEEDED! ] =====================
+	echo ======================== Update SUCCEEDED ========================
 ) else (
-	echo =================== [ Installation SUCCEEDED! ] ==================
+	echo ===================== Installation SUCCEEDED =====================
+	echo Cleaning up...
+	del "%INSTALL_ROOT%ConCygSys*" >NUL 2>&1
 )
 echo.
-echo  Use launchers in [%INSTALL_ROOT%] to run Cygwin Portable.
-echo.
 pause
-:: deleting installer and old launchers
-del "%INSTALL_ROOT%ConCygSys*" >NUL 2>&1
 exit 0
 
 
 :fail
 echo.
 if "%UPDATEMODE%" == "yes" (
-	echo ======================= [ Update FAILED! ] =======================
+	echo ========================= Update FAILED ==========================
 	echo Try uploading installer manually from %CONCYGSYS_LINK%
 ) else (
-	echo ==================== [ Installation FAILED! ] ====================
+	echo ====================== Installation FAILED =======================
 )
 echo.
 pause
