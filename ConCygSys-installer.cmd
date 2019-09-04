@@ -3,7 +3,7 @@
 :: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 :: This is the independent fork of https://github.com/vegardit/cygwin-portable-installer project
 
-set CONCYGSYS_VERSION=190901b1
+set CONCYGSYS_VERSION=190904b1
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -15,7 +15,9 @@ set CONCYGSYS_VERSION=190901b1
 :: C:\cygwinhome
 :: C:\Users\yourusername\Documents\cygwinhome
 :: %USERPROFILE%\Documents\cygwinhome
-set HOME_FOLDER=
+set CYGWIN_HOME=
+
+set LAUNCHER_CYGWIN=
 
 :: Override OS architecture, if required: "32" bit or "64" bit system
 :: Leave empty for autodetect
@@ -46,15 +48,24 @@ set INSTALL_SSH_AGENT_TWEAK=yes
 
 :: Install WSLbridge to allowing to access WSL via Mintty https://github.com/rprichard/wslbridge
 set INSTALL_WSLBRIDGE=yes
+set LAUNCHER_WSLBRIDGE=
 
 :: Install ConEmu quake-style terminal https://conemu.github.io/
 set INSTALL_CONEMU=yes
 :: https://conemu.github.io/en/ConEmuArgs.html
 set CONEMU_OPTIONS=
+set CONEMUTASK_DEFAULT=
+
+set CONEMUTASK_CYGWIN_MINTTY=
+set CONEMUTASK_CYGWIN_CONNECTOR=
+set CONEMUTASK_CYGWIN_CMD=
+set CONEMUTASK_WSL_MINTTY=
+set CONEMUTASK_WSL_CONNECTOR=
+set CONEMUTASK_WSL_CMD=
 
 :: Set proxy, if required, in the following formats:
 :: proxy:port
-:: username:password@proxy:port
+:: applies to installation process and to setting of installed cygwin instance
 set PROXY_HOST=
 
 :: Set Mintty options used in ConEmu task: https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
@@ -217,179 +228,123 @@ if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
 set BASH="%CYGWIN_ROOT%\bin\bash" --noprofile --norc -c
 set DOS2UNIX="%CYGWIN_ROOT%\bin\dos2unix"
 
+:==========================================================
+
 echo.
-echo Creating portable settings files...
-
-set Portable_init_name=portable-init.sh
-set Portable_init=%CYGWIN_ROOT%\%Portable_init_name%
-echo Creating init script to keep the installation portable [%Portable_init%]...
+echo Generating the launchers...
+del "%INSTALL_ROOT%*-*.cmd" >NUL 2>&1
+echo Generating Cygwin launcher...
 (
-	echo #!/bin/bash
-	echo # %CONCYGSYS_INFO%
-	echo # setting path variable as it is not defined at this point
-	echo PATH=/usr/local/bin:/usr/bin:/bin
-	echo # setting custom cygwin username in passwd file, if not empty
-	echo mkpasswd -c^|awk -F: -v OFS=: "{\$1=\"$USER\"; \$6=\"$(cygpath -u "$HOME"^)\"; print}" ^>/etc/passwd
-	echo # generating custom fstab in case ACL is set to no
-	echo (
+	echo @echo off
+	echo :: %CONCYGSYS_INFO%
+	echo set CYGWIN_ROOT=%%~dp0cygwin
+	echo "%%CYGWIN_ROOT%%\bin\sed" -i '/^last-cache/!b;n;c\\\t%TEMP:\=\\\%' /etc/setup/setup.rc
+	echo rd /s /q "%%CYGWIN_ROOT%%\*pkg-cache" 2^>NUL
 	if not "%INSTALL_ACL%" == "yes" (
-		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/bin	/usr/bin	none	noacl		0 0
-		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)/lib	/usr/lib	none	noacl		0 0
-		echo echo $(cygpath -m "$CYGWIN_ROOT"^|sed 's/\ /\\040/g'^)	/		none	override,noacl	0 0
-	)
-	echo echo none	/mnt	cygdrive	noacl,user	0 0
-	echo ^) ^>/etc/fstab
-	echo # adjust Cygwin packages cache path
-	echo pkg_cache_dir=$(cygpath -w "$CYGWIN_ROOT/pkg-cache"^)
-	echo sed -i '/^^last-cache/!b;n;c\\t'"${pkg_cache_dir//\\/\\\\}"'' /etc/setup/setup.rc
-) > "%Portable_init%" || goto :fail
+		echo set FSTAB=%%CYGWIN_ROOT:\=/%% ^& set=%%FSTAB: =\040%%
+		echo (
+		echo 	echo %%FSTAB%%/bin /usr/bin none noacl 0 0
+		echo 	echo %%FSTAB%%/lib /usr/lib none noacl 0 0
+		echo 	echo %%FSTAB%% / none override,noacl 0 0
+		echo 	echo none /cygdrive cygdrive noacl,user 0 0
+		echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& "%%CYGWIN_ROOT%%\bin\dos2unix" "%%CYGWIN_ROOT%%\etc\fstab"
+	^) else (
+		del "%CYGWIN_ROOT%\etc\fstab" >NUL 2>&1
+	^)
+	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
+	echo if "%%CYGWIN_HOME%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%CYGWIN_HOME%%^)
+	echo :conemu
+	if "%INSTALL_CONEMU%" == "yes" (
+		if "%CYGWIN_ARCH%" == "64" (
+			echo start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
+		^) else (
+			echo start "" "%%~dp0conemu\ConEmu.exe" %CONEMU_OPTIONS%
+		^)
+		echo exit
+	^)
+	echo :mintty
+	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" -
+	echo exit
+	echo :cmd
+	echo start "" "%%CYGWIN_ROOT%%\bin\bash.exe" --login -i
+	echo exit
+) >"%INSTALL_ROOT%Cygwin-Launcher.cmd" || goto :fail
 
-%DOS2UNIX% "%Portable_init%" || goto :fail
+if "%INSTALL_WSLBRIDGE%" == "yes" (
+	echo Generating WSL launcher...
+	(
+		echo @echo off
+		echo :: %CONCYGSYS_INFO%
+		echo :conemu
+		if "%INSTALL_CONEMU%" == "yes" (
+			if "%CYGWIN_ARCH%" == "64" (
+				echo start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
+			^) else (
+				echo start "" "%%~dp0conemu\ConEmu.exe" %CONEMU_OPTIONS%
+			^)
+			echo exit
+		^)
+		echo :mintty
+		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL=  -~
+		echo exit
+		echo :cmd
+		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL=  -~
+		echo exit
+	) >"%INSTALL_ROOT%WSL-Launcher.cmd" || goto :fail
 
-echo Generating one-file settings and updater file [%Concygsys_settings%]...
+:==========================================================
+
+echo Generating one-file settings and updater file...
 (
 	echo @echo off
 	echo :: %CONCYGSYS_INFO%
 	echo.
 	echo if "%%1" == "cygwinsettings" goto :cygwinsettings
 	echo if "%%1" == "installoptions" goto :installoptions
-	echo if "%%1" == "launcherheader" goto :launcherheader
 	echo goto :update
 	echo.
-	echo :cygwinsettings
 	echo :: %CONCYGSYS_LINK%#customization
+	echo.
+	echo :cygwinsettings
+	echo :: these settings will be applied after you restart cygwin
 	echo set CYGWIN_USERNAME=%CYGWIN_USERNAME%
-	echo set HOME_FOLDER=%HOME_FOLDER%
-	echo exit /b 0
+	echo set CYGWIN_HOME=%CYGWIN_HOME%
+	echo exit /b
 	echo.
 	echo :installoptions
-	echo :: %CONCYGSYS_LINK%#customization
+	echo :: these settings will be applied after you run %Concygsys_settings_name%
 	echo set CYGWIN_ARCH=%CYGWIN_ARCH%
 	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
-	echo :: fill only if new packages should be installed during next update
 	echo set CYGWIN_PACKAGES=
 	echo set INSTALL_ACL=%INSTALL_ACL%
 	echo set INSTALL_APT_CYG=%INSTALL_APT_CYG%
 	echo set INSTALL_SSH_AGENT_TWEAK=%INSTALL_SSH_AGENT_TWEAK%
 	echo set INSTALL_CONEMU=%INSTALL_CONEMU%
 	echo set PROXY_HOST=%PROXY_HOST%
-	echo exit /b 0
-	echo.
-	echo :launcherheader
-	echo set CYGWIN_ROOT=%%~dp0cygwin
-	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
-	echo if "%%CYGWIN_USERNAME%%" == "" (set USER=%%USERNAME%%^) else (set USER=%%CYGWIN_USERNAME%%^)
-	echo if "%%HOME_FOLDER%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%HOME_FOLDER%%^)
-	echo rd /s /q "%%CYGWIN_ROOT%%\pkg-cache" 2^>NUL
-	echo type NUL ^> "%%CYGWIN_ROOT%%\etc\fstab"
-	echo "%%CYGWIN_ROOT%%\bin\bash" "%%CYGWIN_ROOT%%\%Portable_init_name%"
-	echo cd /d "%%CYGWIN_ROOT%%\bin"
-	echo exit /b 0
+	echo exit /b
 	echo.
 	echo :update
 	echo echo [ %CONCYGSYS_INFO% ]
 	echo set INSTALL_ROOT=%%~dp0
 	echo set DOWNLOADER=%%INSTALL_ROOT%%downloader.vbs
-	echo echo Creating a script that can download files [%%DOWNLOADER%%]...
+	echo echo Creating a script that can download files...
 	echo (
 	call "%GENDOWNLOADER%"
 	echo ^) ^> "%%DOWNLOADER%%" ^|^| goto :fail
 	echo set INSTALLER=ConCygSys-installer.cmd
 	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys-cygwin-portable/beta/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
 	echo start "" "%%INSTALLER%%" ^|^| goto :fail
+	echo del "%%INSTALL_ROOT%%ConCygSys*" >NUL 2>&1
 	echo exit 0
 	echo :fail
-	echo del "%%DOWNLOADER%%" ^>NUL 2^>^&1
 	echo echo.
-	echo echo                       !!! Update FAILED !!!
-	echo echo Try uploading installer manually from %CONCYGSYS_LINK%
+	echo echo FAIL. Try uploading installer manually from %CONCYGSYS_LINK%
 	echo echo.
 	echo pause
 	echo exit 1
 ) > "%Concygsys_settings%" || goto :fail
 
-
-echo.
-echo Generating launcher...
-::================================================
-(
-
-	echo @echo off
-	echo :: %CONCYGSYS_INFO%
-	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
-	echo if "%%1" == "" (
-	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -i
-	echo ^) else (
-	echo 	"%%CYGWIN_ROOT%%\bin\bash.exe" --login -c "%%*"
-	echo ^)
-) > "%Launch_cmd%" || goto :fail
-
-set Launch_conemu=%INSTALL_ROOT%Cygwin-ConEmu.cmd
-if "%INSTALL_CONEMU%" == "yes" (
-	echo Generating ConEmu launcher [%Launch_conemu%]...
-	(
-		echo @echo off
-		echo :: %CONCYGSYS_INFO%
-		echo call "%%~dp0%Concygsys_settings_name%" launcherheader
-		if "%CYGWIN_ARCH%" == "64" (
-			echo start "" "%%~dp0conemu\ConEmu64.exe" %CONEMU_OPTIONS%
-		) else (
-			echo start "" "%%~dp0conemu\ConEmu.exe" %CONEMU_OPTIONS%
-		)
-		echo exit 0
-	) > "%Launch_conemu%" || goto :fail
-) else (
-	echo Removing ConEmu launcher [%Launch_conemu%]...
-	del "%Launch_conemu%" >NUL 2>&1
-)
-
-set Launch_mintty=%INSTALL_ROOT%Cygwin-Mintty.cmd
-echo Generating Mintty launcher [%Launch_mintty%]...
-(
-	echo @echo off
-	echo :: %CONCYGSYS_INFO%
-	echo call "%%~dp0%Concygsys_settings_name%" launcherheader
-	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" -
-	echo exit 0
-) > "%Launch_mintty%" || goto :fail
-
-set Launch_wsltty=%INSTALL_ROOT%Cygwin-WSLtty.cmd
-if "%INSTALL_WSLBRIDGE%" == "yes" (
-	(
-		echo @echo off
-		echo :: %CONCYGSYS_INFO%
-		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
-		echo exit 0
-	) > "%Launch_wsltty%" || goto :fail
-) else (
-	echo Removing WSLtty launcher [%Launch_wsltty%]...
-	del "%Launch_wsltty%" >NUL 2>&1
-)
-
-	echo.
-	echo :update
-	echo echo [ %CONCYGSYS_INFO% ]
-	echo set INSTALL_ROOT=%%~dp0
-	echo set DOWNLOADER=%%INSTALL_ROOT%%downloader.vbs
-	echo echo Creating a script that can download files [%%DOWNLOADER%%]...
-	echo (
-	call "%GENDOWNLOADER%"
-	echo ^) ^> "%%DOWNLOADER%%" ^|^| goto :fail
-	echo set INSTALLER=ConCygSys-installer.cmd
-	echo cscript //Nologo "%%DOWNLOADER%%" https://raw.githubusercontent.com/zhubanRuban/ConCygSys-cygwin-portable/beta/%%INSTALLER%% "%%INSTALLER%%" ^|^| goto :fail
-	echo start "" "%%INSTALLER%%" ^|^| goto :fail
-	echo exit 0
-	echo :fail
-	echo del "%%DOWNLOADER%%" ^>NUL 2^>^&1
-	echo echo.
-	echo echo                       !!! Update FAILED !!!
-	echo echo Try uploading installer manually from %CONCYGSYS_LINK%
-	echo echo.
-	echo pause
-	echo exit 1
-) > "%INSTALL_ROOT%\Cygwin.cmd" || goto :fail
-::================================================
-
+:==========================================================
 
 echo.
 echo Adding .inputrc tweak (https://github.com/zhubanRuban/cygwin-extras/blob/master/inputrc_custom_bind) ...
@@ -426,19 +381,21 @@ if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 del "%CYGWIN_ROOT%\opt\ssh-agent-tweak" >NUL 2>&1
 %BASH% "/bin/sed -i '/ssh-agent-tweak/d' ~/.bashrc"
 
+:==========================================================
 
 if "%INSTALL_CONEMU%" == "yes" (
 if not exist "%CYGWIN_ROOT%\conemu\" (
 	echo.
 	echo Installing ConEmu...
 	%BASH% "/bin/wget -qO "%CYGWIN_ROOT%\conemu.7z" https://github.com$(/bin/wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|/bin/grep '/.*/releases/download/.*/.*7z' -o)" || goto :fail
+	md "%CYGWIN_ROOT%\conemu"
 	%BASH% "/bin/bsdtar -xf "%CYGWIN_ROOT%\conemu.7z" -C "%CYGWIN_ROOT%\conemu"" || goto :fail
 	echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\conemu\DO-NOT-LAUNCH-CONEMU-FROM-HERE"
 	del "%CYGWIN_ROOT%\conemu.7z" >NUL 2>&1
 )
 if not exist "%INSTALL_ROOT%conemu\ConEmu.xml" (
 	echo.
-	echo Replacing ConEmu config...
+	echo Exporting custom ConEmu config...
 	(
 		echo ^<?xml version="1.0" encoding="utf-8"?^>
 		echo ^<!--
@@ -545,6 +502,7 @@ if not exist "%INSTALL_ROOT%conemu\ConEmu.xml" (
 )
 
 :==========================================================
+
 echo.
 echo Cleaning up...
 :: deleting files left by previous concygsys versions and temp files
