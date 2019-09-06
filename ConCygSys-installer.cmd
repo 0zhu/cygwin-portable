@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190906b2
+set CONCYGSYS_VERSION=190906b3
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -172,25 +172,25 @@ if "%PROXY_HOST%" == "" (set DOWNLOADER_PROXY=.) else (
 )
 echo Creating script that can download files, not using PowerShell which may be blocked by group policies...
 (
-	echo echo url = Wscript.Arguments(0^)
-	echo echo target = Wscript.Arguments(1^)
-	echo echo WScript.Echo "Downloading '" ^& url ^& "' to '" ^& target ^& "'..."
-	echo echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^)
-	echo echo%DOWNLOADER_PROXY%
-	echo echo req.Open "GET", url, False
-	echo echo req.Send
-	echo echo If req.Status ^<^> 200 Then
-	echo echo 	WScript.Echo "FAILED to download: HTTP Status " ^& req.Status
-	echo echo 	WScript.Quit 1
-	echo echo End If
-	echo echo Set buff = CreateObject("ADODB.Stream"^)
-	echo echo buff.Open
-	echo echo buff.Type = 1
-	echo echo buff.Write req.ResponseBody
-	echo echo buff.Position = 0
-	echo echo buff.SaveToFile target
-	echo echo buff.Close
-	echo echo.
+	echo url = Wscript.Arguments(0^)
+	echo target = Wscript.Arguments(1^)
+	echo WScript.Echo "Downloading '" ^& url ^& "' to '" ^& target ^& "'..."
+	echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^)
+	echo%DOWNLOADER_PROXY%
+	echo req.Open "GET", url, False
+	echo req.Send
+	echo If req.Status ^<^> 200 Then
+	echo 	WScript.Echo "FAILED to download: HTTP Status " ^& req.Status
+	echo 	WScript.Quit 1
+	echo End If
+	echo Set buff = CreateObject("ADODB.Stream"^)
+	echo buff.Open
+	echo buff.Type = 1
+	echo buff.Write req.ResponseBody
+	echo buff.Position = 0
+	echo buff.SaveToFile target
+	echo buff.Close
+	echo.
 ) > "%DOWNLOADER%" || goto :fail
 
 ::==========================================================
