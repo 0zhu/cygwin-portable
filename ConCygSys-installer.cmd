@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190906b1
+set CONCYGSYS_VERSION=190906b2
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -101,10 +101,10 @@ set Concygsys_settings=%INSTALL_ROOT%%Concygsys_settings_name%
 set Concygsys_settings_temp=%INSTALL_ROOT%ConCygSys-update.cmd
 
 if exist "%CYGWIN_ROOT%\bin" (
-	set PATH=%CYGWIN_ROOT%\bin;PATH=%CYGWIN_ROOT%\usr\local\bin;%PATH%
+	set "PATH=%CYGWIN_ROOT%\bin;PATH=%CYGWIN_ROOT%\usr\local\bin;%PATH%"
 	set BASH=bash --noprofile --norc -c
 )
-:==========================================================	
+::==========================================================	
 
 :retryupdate
 setlocal EnableDelayedExpansion
@@ -126,7 +126,7 @@ if not exist "%CYGWIN_ROOT%" (
 		echo.
 		echo The will be terminated during update, please make sure you saved everything before proceeding
 		pause
-		for /f "usebackq tokens=2" %i in (`%SystemRoot%\System32\wbem\WMIC.exe process get ProcessId^, ExecutablePath ^| find /I "%CYGWIN_ROOT%"`) do taskkill /f /pid %i
+		for /f "usebackq tokens=2" %%i in (`%SystemRoot%\System32\wbem\WMIC.exe process get ProcessId^, ExecutablePath ^| find /I "%CYGWIN_ROOT%"`) do taskkill /f /pid %%i
 		goto :retryupdate
 	) else (
 		if exist "%Concygsys_settings%" (
@@ -159,18 +159,18 @@ if not exist "%CYGWIN_ROOT%" (
 )
 setlocal DisableDelayedExpansion
 
-:==========================================================
+::==========================================================
 
 set DOWNLOADER=%INSTALL_ROOT%ConCygSys-downloader.vbs
 set GENDOWNLOADER=%INSTALL_ROOT%ConCygSys-downloader-generator.vbs
 echo.
-echo Creating script that can download files, not using PowerShell which may be blocked by group policies...
 if "%PROXY_HOST%" == "" (set DOWNLOADER_PROXY=.) else (
 	set DOWNLOADER_PROXY= req.SetProxy 2, "%PROXY_HOST%", ""
 	set http_proxy=http://%PROXY_HOST%
 	set https_proxy=https://%PROXY_HOST%
 	set ftp_proxy=ftp://%PROXY_HOST%
 )
+echo Creating script that can download files, not using PowerShell which may be blocked by group policies...
 (
 	echo echo url = Wscript.Arguments(0^)
 	echo echo target = Wscript.Arguments(1^)
@@ -191,10 +191,9 @@ if "%PROXY_HOST%" == "" (set DOWNLOADER_PROXY=.) else (
 	echo echo buff.SaveToFile target
 	echo echo buff.Close
 	echo echo.
-) > "%GENDOWNLOADER%" || goto :fail
-call "%GENDOWNLOADER%" > "%DOWNLOADER%"
+) > "%DOWNLOADER%" || goto :fail
 
-:==========================================================
+::==========================================================
 
 echo.
 if "%CYGWIN_ARCH%" == "" (
@@ -217,8 +216,7 @@ if "%PROXY_HOST%" == ""		(set CYGWIN_PROXY=) else (set CYGWIN_PROXY=--proxy "%PR
 if "%INSTALL_CONEMU%" == "yes"		(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_WSLBRIDGE%" == "yes"	(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_APT_CYG%" == "yes"		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%)
-if "%INSTALL_SSH_AGENT_TWEAK%" == "yes"	(set CYGWIN_PACKAGES=openssh,ssh-pageant,%CYGWIN_PACKAGES%)
-if "%CYGWIN_MIRROR%" == ""		(set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32)
+if not "%INSTALL_ADDONS%" == ""		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%& set INSTALL_APT_CYG=yes)
 
 :: https://www.cygwin.com/faq/faq.html#faq.setup.cli
 echo.
@@ -242,7 +240,7 @@ echo Running Cygwin setup...
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
-:==========================================================
+::==========================================================
 
 set CONEMU_DIR=%INSTALL_ROOT%conemu
 set CONEMU_CONFIG=%CONEMU_DIR%\ConEmu.xml
@@ -374,7 +372,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 	rm -rf "%CONEMU_DIR%"
 )
 
-:==========================================================
+::==========================================================
 
 if "%INSTALL_WSLBRIDGE%" == "yes" (
 	echo. & echo Installing WSLbridge...
@@ -385,7 +383,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 	rm -f /bin/wslbridge*
 )
 
-:==========================================================
+::==========================================================
 
 echo. & echo Generating the launchers...
 del "%INSTALL_ROOT%*-*.cmd" >NUL 2>&1
@@ -400,7 +398,7 @@ echo Generating Cygwin launcher...
 	echo 	set https_proxy=https://%%PROXY_HOST%%
 	echo 	set ftp_proxy=ftp://%%PROXY_HOST%%
 	echo ^)
-	echo set PATH=%%~dp0cygwin\bin;%%PATH%%
+	echo set "PATH=%%~dp0cygwin\bin;%%PATH%%"
 	echo echo.
 	echo setlocal enableextensions
 	echo set TERM=
@@ -455,7 +453,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 		echo exit
 	) >"%INSTALL_ROOT%WSL-Launcher.cmd" || goto :fail
 
-:==========================================================
+::==========================================================
 
 echo Generating one-file settings and updater file...
 (
@@ -491,12 +489,31 @@ echo Generating one-file settings and updater file...
 	echo exit /b
 	echo.
 	echo :update
-	echo echo [ %CONCYGSYS_INFO% ]
-	echo set INSTALL_ROOT=%%~dp0
-	echo set DOWNLOADER=%%INSTALL_ROOT%%downloader.vbs
+	echo echo %CONCYGSYS_INFO%
+	echo set DOWNLOADER=%%~dp0downloader.vbs
+	echo call "%0" cygwinsettings
+	echo if "%%PROXY_HOST%%" == "" (set DOWNLOADER_PROXY=.^) else (set DOWNLOADER_PROXY= req.SetProxy 2, "%%PROXY_HOST%%", ""^)
 	echo echo Creating a script that can download files...
 	echo (
-	call "%GENDOWNLOADER%"
+	echo 	echo url = Wscript.Arguments(0^^^)
+	echo 	echo target = Wscript.Arguments(1^^^)
+	echo 	echo WScript.Echo "Downloading '" ^^^& url ^^^& "' to '" ^^^& target ^^^& "'..."
+	echo 	echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^^^)
+	echo 	echo%DOWNLOADER_PROXY%
+	echo 	echo req.Open "GET", url, False
+	echo 	echo req.Send
+	echo 	echo If req.Status ^^^<^^^> 200 Then
+	echo 	echo 	WScript.Echo "FAILED to download: HTTP Status " ^^^& req.Status
+	echo 	echo 	WScript.Quit 1
+	echo 	echo End If
+	echo 	echo Set buff = CreateObject("ADODB.Stream"^^^)
+	echo 	echo buff.Open
+	echo 	echo buff.Type = 1
+	echo 	echo buff.Write req.ResponseBody
+	echo 	echo buff.Position = 0
+	echo 	echo buff.SaveToFile target
+	echo 	echo buff.Close
+	echo 	echo.
 	echo ^) ^> "%%DOWNLOADER%%" ^|^| goto :fail
 	echo set INSTALLER=ConCygSys-installer.cmd
 	echo set INSTALLER_URL=https://github.com/zhubanRuban/ConCygSys-cygwin-portable/raw/beta/%%INSTALLER%%
@@ -511,7 +528,7 @@ echo Generating one-file settings and updater file...
 	echo exit 1
 ) > "%Concygsys_settings%" || goto :fail
 
-:==========================================================
+::==========================================================
 
 if "%INSTALL_APT_CYG%" == "yes" (
 	echo. & echo Installing apt-cyg...
@@ -529,7 +546,7 @@ if not "%INSTALL_ADDONS%" == "" (
 	^)
 )
 
-:==========================================================
+::==========================================================
 
 echo. & echo Cleaning up...
 :: files left by previous concygsys versions
@@ -544,7 +561,7 @@ rd /s /q "%INSTALL_ROOT%data" >NUL 2>&1 & del "%CYGWIN_ROOT%\updater.cmd" "%CYGW
 
 
 :aftercygwinupdate
-:==========================================================
+::==========================================================
 
 echo.
 if "%UPDATEMODE%" == "yes" (
