@@ -1,11 +1,11 @@
 @echo off
 
-:: ConCygSys: Cygwin and ConEmu portable installer https://github.com/zhubanRuban/ConCygSys-cygwin-portable
+:: ConCygSys: Cygwin and ConEmu portable installer: https://github.com/zhubanRuban/ConCygSys-cygwin-portable
 :: Copyright zhubanRuban: https://github.com/zhubanRuban
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190907b1
+set CONCYGSYS_VERSION=190907b2
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -108,10 +108,7 @@ if exist "%CYGWIN_ROOT%\bin" (
 
 :retryupdate
 setlocal EnableDelayedExpansion
-if not exist "%CYGWIN_ROOT%" (
-	echo Creating Cygwin folder %CYGWIN_ROOT%...
-	md "%CYGWIN_ROOT%"
-) else (
+if exist "%CYGWIN_ROOT%" (
 	echo Existing Cygwin folder detected: %CYGWIN_ROOT%
 	echo Entering update mode...
 	set UPDATEMODE=yes
@@ -124,9 +121,9 @@ if not exist "%CYGWIN_ROOT%" (
 		echo ==========================================
 		%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | find /I "%CYGWIN_ROOT%"
 		echo.
-		echo The will be terminated during update, please make sure you saved everything before proceeding
+		echo They will be terminated during update, please make sure you saved everything before proceeding
 		pause
-		for /f "usebackq tokens=2" %%i in (`%SystemRoot%\System32\wbem\WMIC.exe process get ProcessId^, ExecutablePath ^| find /I "%CYGWIN_ROOT%"`) do taskkill /f /pid %%i
+		for /f "usebackq tokens=2" %%p in (`%SystemRoot%\System32\wbem\WMIC.exe process get ProcessId^, ExecutablePath ^| find /I "%CYGWIN_ROOT%"`) do taskkill /f /pid %%p
 		goto :retryupdate
 	) else (
 		if exist "%Concygsys_settings%" (
@@ -235,6 +232,7 @@ echo Running Cygwin setup...
 --root "%CYGWIN_ROOT%" ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --upgrade-also || goto :fail
+del "%CYGWIN_ROOT%\setup-*.exe" >NUL 2>&1 & rd /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
 
 :: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
@@ -369,7 +367,8 @@ if "%INSTALL_CONEMU%" == "yes" (
 		) > "%CONEMU_CONFIG%" || goto :fail
 	)
 ) else (
-	rm -rf "%CONEMU_DIR%"
+	rd /s /q "%CONEMU_DIR%" >NUL 2>&1
+	
 )
 
 ::==========================================================
@@ -380,7 +379,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 	bsdtar -xf wslbridge.tar.gz --strip-components=1 -C "%CYGWIN_ROOT%\bin\\" */wslbridge* || goto :fail
 	rm -f wslbridge.tar.gz
 ) else (
-	rm -f /bin/wslbridge*
+	del "%CYGWIN_ROOT%\bin\wslbridge*" >NUL 2>&1
 )
 
 ::==========================================================
@@ -415,7 +414,7 @@ echo Generating Cygwin launcher...
 		echo 	echo none /cygdrive cygdrive noacl,user 0 0
 		echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix /etc/fstab
 	) else (
-		rm -f /etc/fstab
+		del "%CYGWIN_ROOT%\etc\fstab" >NUL 2>&1
 	)
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
@@ -423,14 +422,14 @@ echo Generating Cygwin launcher...
 	if "%INSTALL_CONEMU%" == "yes" (
 		echo cd /d "%%USERPROFILE%%"
 		echo start "" "%%CYGWIN_ROOT%%\..\conemu\ConEmu%CYGWIN_ARCH:32=%.exe" %%CONEMU_OPTIONS%% -run {Cygwin::%%CONEMUTASK_DEFAULT%%}
-		echo exit
+		echo exit /b
 	)
 	echo :mintty
 	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" -
-	echo exit
+	echo exit /b
 	echo :cmd
 	echo start "" "%%CYGWIN_ROOT%%\bin\bash.exe" -li
-	echo exit
+	echo exit /b
 ) > "%INSTALL_ROOT%Cygwin-Launcher.cmd" || goto :fail
 
 if "%INSTALL_WSLBRIDGE%" == "yes" (
@@ -443,14 +442,14 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 		echo :conemu
 		if "%INSTALL_CONEMU%" == "yes" (
 			echo start "" "%%~dp0conemu\ConEmu%%CYGWIN_ARCH:32=%%.exe" %%CONEMU_OPTIONS%% -run {WSL::%%CONEMUTASK_DEFAULT%%}
-			echo exit
+			echo exit /b
 		)
 		echo :mintty
-		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL=  -~
-		echo exit
+		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
+		echo exit /b
 		echo :cmd
-		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL=  -~
-		echo exit
+		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
+		echo exit /b
 	) > "%INSTALL_ROOT%WSL-Launcher.cmd" || goto :fail
 )
 
@@ -520,29 +519,30 @@ echo Generating one-file settings and updater file...
 	echo set INSTALLER_URL=https://github.com/zhubanRuban/ConCygSys-cygwin-portable/raw/beta/%%INSTALLER%%
 	echo cscript //Nologo "%%DOWNLOADER%%" "%%INSTALLER_URL%%" "%%INSTALLER%%" ^|^| goto :fail
 	echo start "" "%%INSTALLER%%" ^|^| goto :fail
-	echo exit 0
+	echo exit /b
 	echo :fail
 	echo echo.
-	echo echo FAIL. Try uploading installer manually from %CONCYGSYS_LINK%
+	echo echo ========================= Update FAILED ==========================
+	echo echo Try uploading installer manually from %CONCYGSYS_LINK%
 	echo echo.
 	echo pause
-	echo exit 1
+	echo exit /b 1
 ) > "%Concygsys_settings%" || goto :fail
 
 ::==========================================================
 
 if "%INSTALL_APT_CYG%" == "yes" (
 	echo. & echo Installing apt-cyg...
-	wget -nv --show-progress -O /usr/local/bin/apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
+	wget -nv --show-progress -O /usr/local/bin/apt-cyg https://github.com/transcode-open/apt-cyg/raw/master/apt-cyg
 	chmod +x /usr/local/bin/apt-cyg
 ) else (
-	rm -f /usr/local/bin/apt-cyg /bin/apt-cyg
+	del "%CYGWIN_ROOT%\usr\local\bin\apt-cyg" "%CYGWIN_ROOT%\bin\apt-cyg" >NUL 2>&1
 )
 
 if not "%INSTALL_ADDONS%" == "" (
-	echo. & echo Installing addons: ...
-	for %%addon in (%INSTALL_ADDONS%) do (
-		wget -nv --show-progress -O ConCygSys-addon.sh "%%addon" || goto :fail
+	echo. & echo Installing addons: %INSTALL_ADDONS% ...
+	for %%a in (%INSTALL_ADDONS%) do (echo.
+		wget -nv --show-progress -O ConCygSys-addon.sh %%a
 		bash --noprofile --norc ConCygSys-addon.sh
 	)
 )
@@ -558,7 +558,7 @@ rd /s /q "%INSTALL_ROOT%data" >NUL 2>&1 & del "%CYGWIN_ROOT%\updater.cmd" "%CYGW
 	echo Change settings:	right click on "%Concygsys_settings_name%" ^> Edit
 	echo Update:		launch "%Concygsys_settings_name%"
 	echo More info:	%CONCYGSYS_LINK%#customization
-) > "%INSTALL_ROOT%README.md" & rename "%INSTALL_ROOT%README.md" "%INSTALL_ROOT%README.txt"
+) > "%INSTALL_ROOT%README.md" & rename "%INSTALL_ROOT%README.md" "README.txt" >NUL 2>&1
 
 
 :aftercygwinupdate
@@ -573,17 +573,18 @@ if "%UPDATEMODE%" == "yes" (
 echo.
 pause
 del "%INSTALL_ROOT%ConCygSys*" >NUL 2>&1
-exit 0
+exit /b 0
 
 
 :fail
 echo.
 if "%UPDATEMODE%" == "yes" (
 	echo ========================= Update FAILED ==========================
-	echo Try uploading installer manually from %CONCYGSYS_LINK%
 ) else (
 	echo ====================== Installation FAILED =======================
 )
+echo Please report this issue at %CONCYGSYS_LINK%/issues
+echo with the copy of script output (do not forget to hide sensitive info)
 echo.
 pause
-exit 1
+exit /b 1
