@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190907b3
+set CONCYGSYS_VERSION=190907b4
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -384,7 +384,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 ::==========================================================
 
 echo. & echo Generating the launchers...
-del "%INSTALL_ROOT%Cygwin-*.cmd" "%INSTALL_ROOT%*-Launcher.cmd" >NUL 2>&1
+del "%INSTALL_ROOT%Cygwin-*.cmd" "%INSTALL_ROOT%*Launch-*.cmd" >NUL 2>&1
 echo Generating Cygwin launcher...
 (
 	echo @echo off
@@ -401,20 +401,20 @@ echo Generating Cygwin launcher...
 	echo setlocal enableextensions
 	echo set TERM=
 	echo set CYGWIN_ROOT=%%~dp0cygwin
-	echo sed -i '/^last-cache/!b;n;c\\\t%%CYGWIN_ROOT:\=\\\%%\\\.pkg-cache' /etc/setup/setup.rc
-	echo rm -rf "%%CYGWIN_ROOT%%\*pkg-cache"
 	if not "%INSTALL_ACL%" == "yes" (
 		echo.
-		echo set FSTAB=%%CYGWIN_ROOT:\=/%% ^& set=%%FSTAB: =\040%%
+		echo set FSTAB=%%CYGWIN_ROOT:\=/%% ^& set FSTAB=%%FSTAB: =\040%%
 		echo (
-		echo 	echo %%FSTAB%%/bin /usr/bin none noacl 0 0
-		echo 	echo %%FSTAB%%/lib /usr/lib none noacl 0 0
+		echo 	echo %%FSTAB%%/bin /usr/bin none noacl,posix=0,user 0 0
+		echo 	echo %%FSTAB%%/lib /usr/lib none noacl,posix=0,user 0 0
 		echo 	echo %%FSTAB%% / none override,noacl 0 0
 		echo 	echo none /cygdrive cygdrive noacl,user 0 0
-		echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix /etc/fstab
+		echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q /etc/fstab
 	) else (
 		del "%CYGWIN_ROOT%\etc\fstab" >NUL 2>&1
 	)
+	echo sed -i '/^last-cache/!b;n;c\\\t%%CYGWIN_ROOT:\=\\\%%\\\.pkg-cache' /etc/setup/setup.rc
+	echo rm -rf /*pkg-cache
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
 	echo :conemu
@@ -429,7 +429,7 @@ echo Generating Cygwin launcher...
 	echo :cmd
 	echo start "" "%%CYGWIN_ROOT%%\bin\bash.exe" -li
 	echo exit /b
-) > "%INSTALL_ROOT%Cygwin-Launcher.cmd" || goto :fail
+) > "%INSTALL_ROOT%Launch-Cygwin.cmd" || goto :fail
 
 if "%INSTALL_WSLBRIDGE%" == "yes" (
 	echo Generating WSL launcher...
@@ -449,7 +449,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 		echo :cmd
 		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
 		echo exit /b
-	) > "%INSTALL_ROOT%WSL-Launcher.cmd" || goto :fail
+	) > "%INSTALL_ROOT%Launch-WSL.cmd" || goto :fail
 )
 
 ::==========================================================
