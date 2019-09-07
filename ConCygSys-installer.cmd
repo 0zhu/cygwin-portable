@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190907b2
+set CONCYGSYS_VERSION=190907b3
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -202,8 +202,7 @@ if "%CYGWIN_ARCH%" == "" (
 echo Choosing correct version of Cygwin installer...
 if "%CYGWIN_ARCH%" == "64" (set CYGWIN_SETUP=setup-x86_64.exe) else (set CYGWIN_SETUP=setup-x86.exe)
 echo Chosen installer: %CYGWIN_SETUP%
-del "%CYGWIN_ROOT%\setup-*.exe" >NUL 2>&1
-cscript //Nologo "%DOWNLOADER%" "https://cygwin.org/%CYGWIN_SETUP%" "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
+cscript //Nologo "%DOWNLOADER%" https://cygwin.org/%CYGWIN_SETUP% %CYGWIN_SETUP% || goto :fail
 
 :: https://cygwin.com/faq/faq.html#faq.setup.cli
 if "%CYGWIN_MIRROR%" == ""	(set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32)
@@ -218,7 +217,7 @@ if not "%INSTALL_ADDONS%" == ""		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%& se
 :: https://www.cygwin.com/faq/faq.html#faq.setup.cli
 echo.
 echo Running Cygwin setup...
-"%CYGWIN_ROOT%\%CYGWIN_SETUP%" ^
+%CYGWIN_SETUP% ^
 --allow-unsupported-windows ^
 --delete-orphans ^
 --local-package-dir "%CYGWIN_ROOT%\pkg-cache" ^
@@ -232,7 +231,7 @@ echo Running Cygwin setup...
 --root "%CYGWIN_ROOT%" ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --upgrade-also || goto :fail
-del "%CYGWIN_ROOT%\setup-*.exe" >NUL 2>&1 & rd /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
+del "setup-*.exe" >NUL 2>&1 & rd /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
 
 :: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
