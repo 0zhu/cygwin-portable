@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190907b4
+set CONCYGSYS_VERSION=190907b5
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -231,7 +231,7 @@ echo Running Cygwin setup...
 --root "%CYGWIN_ROOT%" ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --upgrade-also || goto :fail
-del "setup-*.exe" >NUL 2>&1 & rd /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
+del /f /q "setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
 
 :: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
@@ -256,9 +256,9 @@ set MINTTY_OPTIONS= ^
 if "%INSTALL_CONEMU%" == "yes" (
 	if not exist "%CONEMU_DIR%" (
 		echo. & echo Installing ConEmu...
-		%BASH% "wget -nv --show-progress -O conemu.7z https://github.com$(wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|grep '/.*/releases/download/.*/.*7z' -o)" || goto :fail
-		mkdir -p "%CONEMU_DIR%"
-		bsdtar -xf conemu.7z -C "%CONEMU_DIR%" || goto :fail
+		%BASH% "wget -nv --show-progress -O conemu.7z https://github.com$(wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|grep /.*/releases/download/.*/.*7z -o)" || goto :fail
+		mkdir "%CONEMU_DIR%"
+		bsdtar -xf conemu.7z -C '%CONEMU_DIR%' || goto :fail
 		echo %CONCYGSYS_INFO% > "%CONEMU_DIR%\DO-NOT-LAUNCH-CONEMU-FROM-HERE"
 		rm -f conemu.7z
 	)
@@ -366,7 +366,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		) > "%CONEMU_CONFIG%" || goto :fail
 	)
 ) else (
-	rd /s /q "%CONEMU_DIR%" >NUL 2>&1
+	rmdir /s /q "%CONEMU_DIR%" >NUL 2>&1
 	
 )
 
@@ -374,17 +374,18 @@ if "%INSTALL_CONEMU%" == "yes" (
 
 if "%INSTALL_WSLBRIDGE%" == "yes" (
 	echo. & echo Installing WSLbridge...
-	%BASH% "wget -nv --show-progress -O wslbridge.tar.gz https://github.com$(wget -qO- https://github.com/rprichard/wslbridge/releases/latest|/bin/grep '/.*/releases/download/.*/.*cygwin%CYGWIN_ARCH%.tar.gz' -o)" || goto :fail
-	bsdtar -xf wslbridge.tar.gz --strip-components=1 -C "%CYGWIN_ROOT%\bin\\" */wslbridge* || goto :fail
+	%BASH% "wget -nv --show-progress -O wslbridge.tar.gz https://github.com$(wget -qO- https://github.com/rprichard/wslbridge/releases/latest|grep /.*/releases/download/.*/.*cygwin%CYGWIN_ARCH%.tar.gz -o)" || goto :fail
+	bsdtar -xf wslbridge.tar.gz --strip-components=1 -C '%CYGWIN_ROOT%\bin\' '*/wslbridge*' || goto :fail
 	rm -f wslbridge.tar.gz
 ) else (
-	del "%CYGWIN_ROOT%\bin\wslbridge*" >NUL 2>&1
+	del /f /q "%CYGWIN_ROOT%\bin\wslbridge*" >NUL 2>&1
 )
 
 ::==========================================================
 
 echo. & echo Generating the launchers...
-del "%INSTALL_ROOT%Cygwin-*.cmd" "%INSTALL_ROOT%*Launch-*.cmd" >NUL 2>&1
+:: files left by previous concygsys versions
+del /f /q "%CYGWIN_ROOT%\portable-init.sh" "%INSTALL_ROOT%Cygwin-*.cmd" "%INSTALL_ROOT%*Launch-*.cmd" >NUL 2>&1
 echo Generating Cygwin launcher...
 (
 	echo @echo off
@@ -411,7 +412,7 @@ echo Generating Cygwin launcher...
 		echo 	echo none /cygdrive cygdrive noacl,user 0 0
 		echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q /etc/fstab
 	) else (
-		del "%CYGWIN_ROOT%\etc\fstab" >NUL 2>&1
+		del /f /q "%CYGWIN_ROOT%\etc\fstab" >NUL 2>&1
 	)
 	echo sed -i '/^last-cache/!b;n;c\\\t%%CYGWIN_ROOT:\=\\\%%\\\.pkg-cache' /etc/setup/setup.rc
 	echo rm -rf /*pkg-cache
@@ -420,6 +421,7 @@ echo Generating Cygwin launcher...
 	echo :conemu
 	if "%INSTALL_CONEMU%" == "yes" (
 		echo cd /d "%%USERPROFILE%%"
+		echo if "%%CONEMUTASK_DEFAULT%%" == "" (set CONEMUTASK_DEFAULT=Mintty^)
 		echo start "" "%%CYGWIN_ROOT%%\..\conemu\ConEmu%CYGWIN_ARCH:32=%.exe" %%CONEMU_OPTIONS%% -run {Cygwin::%%CONEMUTASK_DEFAULT%%}
 		echo exit /b
 	)
@@ -436,18 +438,20 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 	(
 		echo @echo off
 		echo :: %CONCYGSYS_INFO%
+		echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
 		echo if not "%%LAUNCHER_WSLBRIDGE%%" == "" (goto :%%LAUNCHER_WSLBRIDGE%%^)
 		echo.
 		echo :conemu
 		if "%INSTALL_CONEMU%" == "yes" (
-			echo start "" "%%~dp0conemu\ConEmu%%CYGWIN_ARCH:32=%%.exe" %%CONEMU_OPTIONS%% -run {WSL::%%CONEMUTASK_DEFAULT%%}
+			echo if "%%CONEMUTASK_DEFAULT%%" == "" (set CONEMUTASK_DEFAULT=Mintty^)
+			echo start "" "%%~dp0conemu\ConEmu%CYGWIN_ARCH:32=%.exe" %%CONEMU_OPTIONS%% -run {WSL::%%CONEMUTASK_DEFAULT%%}
 			echo exit /b
 		)
 		echo :mintty
 		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
 		echo exit /b
 		echo :cmd
-		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
+		echo start "" "%%SystemRoot%%\system32\bash.exe" ~
 		echo exit /b
 	) > "%INSTALL_ROOT%Launch-WSL.cmd" || goto :fail
 )
@@ -535,7 +539,7 @@ if "%INSTALL_APT_CYG%" == "yes" (
 	wget -nv --show-progress -O /usr/local/bin/apt-cyg https://github.com/transcode-open/apt-cyg/raw/master/apt-cyg
 	chmod +x /usr/local/bin/apt-cyg
 ) else (
-	del "%CYGWIN_ROOT%\usr\local\bin\apt-cyg" "%CYGWIN_ROOT%\bin\apt-cyg" >NUL 2>&1
+	del /f /q "%CYGWIN_ROOT%\usr\local\bin\apt-cyg" "%CYGWIN_ROOT%\bin\apt-cyg" >NUL 2>&1
 )
 
 if not "%INSTALL_ADDONS%" == "" (
@@ -548,10 +552,7 @@ if not "%INSTALL_ADDONS%" == "" (
 
 ::==========================================================
 
-echo. & echo Cleaning up...
-:: files left by previous concygsys versions
-rd /s /q "%INSTALL_ROOT%data" >NUL 2>&1 & del "%CYGWIN_ROOT%\updater.cmd" "%CYGWIN_ROOT%\cygwin-*.cmd" "%CYGWIN_ROOT%\portable-init.sh" >NUL 2>&1
-:: writing README
+echo. & echo Generating README.txt
 (
 	echo %CONCYGSYS_INFO%
 	echo Change settings:	right click on "%Concygsys_settings_name%" ^> Edit
@@ -571,7 +572,7 @@ if "%UPDATEMODE%" == "yes" (
 )
 echo.
 pause
-del "%INSTALL_ROOT%ConCygSys*" >NUL 2>&1
+del /f /q "%INSTALL_ROOT%ConCygSys*" >NUL 2>&1
 exit /b 0
 
 
