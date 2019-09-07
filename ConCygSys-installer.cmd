@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190906b3
+set CONCYGSYS_VERSION=190907b1
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -259,12 +259,12 @@ set MINTTY_OPTIONS= ^
 if "%INSTALL_CONEMU%" == "yes" (
 	if not exist "%CONEMU_DIR%" (
 		echo. & echo Installing ConEmu...
-		%BASH% "wget -nv --show-progress -O "%CONEMU_DIR%.7z" https://github.com$(wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|grep '/.*/releases/download/.*/.*7z' -o)" || goto :fail
+		%BASH% "wget -nv --show-progress -O conemu.7z https://github.com$(wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|grep '/.*/releases/download/.*/.*7z' -o)" || goto :fail
 		mkdir -p "%CONEMU_DIR%"
 		bsdtar -xf conemu.7z -C "%CONEMU_DIR%" || goto :fail
 		echo %CONCYGSYS_INFO% > "%CONEMU_DIR%\DO-NOT-LAUNCH-CONEMU-FROM-HERE"
-		rm -f "%CONEMU_DIR%.7z"
-	^)
+		rm -f conemu.7z
+	)
 	if not exist "%CONEMU_CONFIG%" (
 		echo. & echo Exporting custom ConEmu config...
 		(
@@ -366,7 +366,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo 		^</key^>
 			echo 	^</key^>
 			echo ^</key^>
-		^) > "%CONEMU_CONFIG%" || goto :fail
+		) > "%CONEMU_CONFIG%" || goto :fail
 	)
 ) else (
 	rm -rf "%CONEMU_DIR%"
@@ -376,8 +376,8 @@ if "%INSTALL_CONEMU%" == "yes" (
 
 if "%INSTALL_WSLBRIDGE%" == "yes" (
 	echo. & echo Installing WSLbridge...
-	%BASH% "wget -nv --show-progress -O wslbridge.tar.gz "https://github.com$(wget -qO- https://github.com/rprichard/wslbridge/releases/latest|/bin/grep '/.*/releases/download/.*/.*cygwin%CYGWIN_ARCH%.tar.gz' -o)" || goto :fail
-	bsdtar -xf wslbridge.tar.gz --strip-components=1 -C "%CYGWIN_ROOT%\bin\" '*/wslbridge*' || goto :fail
+	%BASH% "wget -nv --show-progress -O wslbridge.tar.gz https://github.com$(wget -qO- https://github.com/rprichard/wslbridge/releases/latest|/bin/grep '/.*/releases/download/.*/.*cygwin%CYGWIN_ARCH%.tar.gz' -o)" || goto :fail
+	bsdtar -xf wslbridge.tar.gz --strip-components=1 -C "%CYGWIN_ROOT%\bin\\" */wslbridge* || goto :fail
 	rm -f wslbridge.tar.gz
 ) else (
 	rm -f /bin/wslbridge*
@@ -386,7 +386,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 ::==========================================================
 
 echo. & echo Generating the launchers...
-del "%INSTALL_ROOT%*-*.cmd" >NUL 2>&1
+del "%INSTALL_ROOT%Cygwin-*.cmd" "%INSTALL_ROOT%*-Launcher.cmd" >NUL 2>&1
 echo Generating Cygwin launcher...
 (
 	echo @echo off
@@ -414,9 +414,9 @@ echo Generating Cygwin launcher...
 		echo 	echo %%FSTAB%% / none override,noacl 0 0
 		echo 	echo none /cygdrive cygdrive noacl,user 0 0
 		echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix /etc/fstab
-	^) else (
+	) else (
 		rm -f /etc/fstab
-	^)
+	)
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
 	echo :conemu
@@ -424,14 +424,14 @@ echo Generating Cygwin launcher...
 		echo cd /d "%%USERPROFILE%%"
 		echo start "" "%%CYGWIN_ROOT%%\..\conemu\ConEmu%CYGWIN_ARCH:32=%.exe" %%CONEMU_OPTIONS%% -run {Cygwin::%%CONEMUTASK_DEFAULT%%}
 		echo exit
-	^)
+	)
 	echo :mintty
 	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" -
 	echo exit
 	echo :cmd
 	echo start "" "%%CYGWIN_ROOT%%\bin\bash.exe" -li
 	echo exit
-) >"%INSTALL_ROOT%Cygwin-Launcher.cmd" || goto :fail
+) > "%INSTALL_ROOT%Cygwin-Launcher.cmd" || goto :fail
 
 if "%INSTALL_WSLBRIDGE%" == "yes" (
 	echo Generating WSL launcher...
@@ -444,14 +444,15 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 		if "%INSTALL_CONEMU%" == "yes" (
 			echo start "" "%%~dp0conemu\ConEmu%%CYGWIN_ARCH:32=%%.exe" %%CONEMU_OPTIONS%% -run {WSL::%%CONEMUTASK_DEFAULT%%}
 			echo exit
-		^)
+		)
 		echo :mintty
 		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL=  -~
 		echo exit
 		echo :cmd
 		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL=  -~
 		echo exit
-	) >"%INSTALL_ROOT%WSL-Launcher.cmd" || goto :fail
+	) > "%INSTALL_ROOT%WSL-Launcher.cmd" || goto :fail
+)
 
 ::==========================================================
 
@@ -543,7 +544,7 @@ if not "%INSTALL_ADDONS%" == "" (
 	for %%addon in (%INSTALL_ADDONS%) do (
 		wget -nv --show-progress -O ConCygSys-addon.sh "%%addon" || goto :fail
 		bash --noprofile --norc ConCygSys-addon.sh
-	^)
+	)
 )
 
 ::==========================================================
