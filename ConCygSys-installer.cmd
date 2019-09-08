@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190908b1
+set CONCYGSYS_VERSION=190908b2
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -99,6 +99,8 @@ set CYGWIN_ROOT=%INSTALL_ROOT%cygwin
 set Concygsys_settings_name=update.cmd
 set Concygsys_settings=%INSTALL_ROOT%%Concygsys_settings_name%
 set Concygsys_settings_temp=%INSTALL_ROOT%ConCygSys-update.cmd
+set "PATH=%CYGWIN_ROOT%\bin;PATH=%CYGWIN_ROOT%\usr\local\bin;%PATH%"
+set BASH=bash --noprofile --norc -c
 
 ::==========================================================	
 
@@ -125,7 +127,7 @@ if exist "%CYGWIN_ROOT%" (
 		if exist "%Concygsys_settings%" (
 			copy /y "%Concygsys_settings%" "%Concygsys_settings_temp%"
 			:: escaping % in existing config
-			"%CYGWIN_ROOT%\bin\sed" -i "/^set/ s/%/%%/g" "%Concygsys_settings_temp%"
+			sed -i '/^^set/ s/%%/%%%%/g' "%Concygsys_settings_temp%"
 			echo Reading existing settings from %Concygsys_settings_temp% ...
 			call "%Concygsys_settings_temp%" cygwinsettings
 			call "%Concygsys_settings_temp%" installoptions
@@ -236,14 +238,8 @@ del /f /q "setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
-
-set "PATH=%CYGWIN_ROOT%\bin;PATH=%CYGWIN_ROOT%\usr\local\bin;%PATH%"
-set BASH=bash --noprofile --norc -c
-
 ::==========================================================
 
-set CONEMU_DIR=%INSTALL_ROOT%conemu
-set CONEMU_CONFIG=%CONEMU_DIR%\ConEmu.xml
 :: Mintty options for ConEmu task: https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
 :: for better experience in running Mintty via ConEmu
 set MINTTY_OPTIONS= ^
@@ -256,12 +252,15 @@ set MINTTY_OPTIONS= ^
 -o Transparency=off ^
 -o ConfirmExit=no
 
+set CONEMU_DIR=%INSTALL_ROOT%conemu
+set CONEMU_CONFIG=%CONEMU_DIR%\ConEmu.xml
+
 if "%INSTALL_CONEMU%" == "yes" (
 	if not exist "%CONEMU_DIR%" (
 		echo. & echo Installing ConEmu...
 		%BASH% "wget -nv --show-progress -O conemu.7z https://github.com$(wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|grep /.*/releases/download/.*/.*7z -o)" || goto :fail
 		mkdir "%CONEMU_DIR%"
-		bsdtar -xf conemu.7z -C '%CONEMU_DIR%' || goto :fail
+		bsdtar -xf conemu.7z -C "%CONEMU_DIR%" || goto :fail
 		echo %CONCYGSYS_INFO% > "%CONEMU_DIR%\DO-NOT-LAUNCH-CONEMU-FROM-HERE"
 		rm -f conemu.7z
 	)
@@ -469,7 +468,7 @@ echo Generating one-file settings and updater file...
 	echo if "%%1" == "installoptions" goto :installoptions
 	echo goto :update
 	echo.
-	echo :: %CONCYGSYS_LINK%#customization
+	echo :: Customization guide: %CONCYGSYS_LINK%#customization
 	echo.
 	echo :cygwinsettings
 	echo :: these settings will be applied on next launcher run
@@ -558,9 +557,9 @@ if not "%INSTALL_ADDONS%" == "" (
 echo. & echo Generating README.txt
 (
 	echo %CONCYGSYS_INFO%
-	echo Change settings:	right click on "%Concygsys_settings_name%" ^> Edit
-	echo Update:		launch "%Concygsys_settings_name%"
-	echo More info:	%CONCYGSYS_LINK%#customization
+	echo Change settings	: right click on "%Concygsys_settings_name%" ^> Edit
+	echo Update		: launch "%Concygsys_settings_name%"
+	echo More info		: %CONCYGSYS_LINK%#customization
 ) > "%INSTALL_ROOT%README.md" & rename "%INSTALL_ROOT%README.md" "README.txt" >NUL 2>&1
 
 
