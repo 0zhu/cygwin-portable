@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190907b5
+set CONCYGSYS_VERSION=190908b1
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -100,10 +100,6 @@ set Concygsys_settings_name=update.cmd
 set Concygsys_settings=%INSTALL_ROOT%%Concygsys_settings_name%
 set Concygsys_settings_temp=%INSTALL_ROOT%ConCygSys-update.cmd
 
-if exist "%CYGWIN_ROOT%\bin" (
-	set "PATH=%CYGWIN_ROOT%\bin;PATH=%CYGWIN_ROOT%\usr\local\bin;%PATH%"
-	set BASH=bash --noprofile --norc -c
-)
 ::==========================================================	
 
 :retryupdate
@@ -127,10 +123,13 @@ if exist "%CYGWIN_ROOT%" (
 		goto :retryupdate
 	) else (
 		if exist "%Concygsys_settings%" (
-			xcopy "%Concygsys_settings%" "%Concygsys_settings_temp%" /E /C /H /R /K /O /Y
-			sed -i "/^set/ s/%/%%/g" "%Concygsys_settings_temp%"
+			copy /y "%Concygsys_settings%" "%Concygsys_settings_temp%"
+			:: escaping % in existing config
+			"%CYGWIN_ROOT%\bin\sed" -i "/^set/ s/%/%%/g" "%Concygsys_settings_temp%"
+			echo Reading existing settings from %Concygsys_settings_temp% ...
 			call "%Concygsys_settings_temp%" cygwinsettings
 			call "%Concygsys_settings_temp%" installoptions
+			del /f /q "%Concygsys_settings_temp%" >NUL 2>&1
 			:: making sure settings from previous versions are transferred properly
 			if not "!PROXY_PORT!" == "" (if not "!PROXY_HOST!" == "" (set PROXY_HOST=!PROXY_HOST!:!PROXY_PORT!))
 			if not "!HOME_FOLDER!" == "" (set CYGWIN_HOME=!HOME_FOLDER!)
@@ -231,12 +230,16 @@ echo Running Cygwin setup...
 --root "%CYGWIN_ROOT%" ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --upgrade-also || goto :fail
-del /f /q "setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
 
+del /f /q "setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
 :: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
+
+set "PATH=%CYGWIN_ROOT%\bin;PATH=%CYGWIN_ROOT%\usr\local\bin;%PATH%"
+set BASH=bash --noprofile --norc -c
+
 ::==========================================================
 
 set CONEMU_DIR=%INSTALL_ROOT%conemu
