@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190908b2
+set CONCYGSYS_VERSION=190908b3
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -237,6 +237,16 @@ del /f /q "setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2
 :: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
+:: to prevent issues with operations on files during installation
+set FSTAB=%%CYGWIN_ROOT:\=/%%
+set FSTAB=%%FSTAB: =\040%%
+(
+ 	echo %%FSTAB%%/bin /usr/bin none noacl,posix=0,user 0 0
+ 	echo %%FSTAB%%/lib /usr/lib none noacl,posix=0,user 0 0
+ 	echo %%FSTAB%% / none override,noacl 0 0
+ 	echo none /cygdrive cygdrive noacl,user 0 0
+) > "%%CYGWIN_ROOT%%\etc\fstab" & dos2unix -q /etc/fstab
+
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
 ::==========================================================
 
@@ -406,7 +416,8 @@ echo Generating Cygwin launcher...
 	echo set CYGWIN_ROOT=%%~dp0cygwin
 	if not "%INSTALL_ACL%" == "yes" (
 		echo.
-		echo set FSTAB=%%CYGWIN_ROOT:\=/%% ^& set FSTAB=%%FSTAB: =\040%%
+		echo set FSTAB=%%CYGWIN_ROOT:\=/%%
+		echo set FSTAB=%%FSTAB: =\040%%
 		echo (
 		echo 	echo %%FSTAB%%/bin /usr/bin none noacl,posix=0,user 0 0
 		echo 	echo %%FSTAB%%/lib /usr/lib none noacl,posix=0,user 0 0
@@ -559,7 +570,7 @@ echo. & echo Generating README.txt
 	echo %CONCYGSYS_INFO%
 	echo Change settings	: right click on "%Concygsys_settings_name%" ^> Edit
 	echo Update		: launch "%Concygsys_settings_name%"
-	echo More info		: %CONCYGSYS_LINK%#customization
+	echo More info	: %CONCYGSYS_LINK%#customization
 ) > "%INSTALL_ROOT%README.md" & rename "%INSTALL_ROOT%README.md" "README.txt" >NUL 2>&1
 
 
