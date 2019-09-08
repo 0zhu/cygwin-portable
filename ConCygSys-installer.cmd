@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190908b5
+set CONCYGSYS_VERSION=190908b6
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -193,7 +193,7 @@ if "%CYGWIN_ARCH%" == "" (
 echo Choosing correct version of Cygwin installer...
 if "%CYGWIN_ARCH%" == "64" (set CYGWIN_SETUP=setup-x86_64.exe) else (set CYGWIN_SETUP=setup-x86.exe)
 echo Chosen installer: %CYGWIN_SETUP%
-cscript //Nologo "%DOWNLOADER%" https://cygwin.org/%CYGWIN_SETUP% %CYGWIN_SETUP% || goto :fail
+cscript //Nologo "%DOWNLOADER%" https://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
 
 :: https://cygwin.com/faq/faq.html#faq.setup.cli
 if "%CYGWIN_MIRROR%" == ""	(set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32)
@@ -208,7 +208,7 @@ if not "%INSTALL_ADDONS%" == ""		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%& se
 :: https://www.cygwin.com/faq/faq.html#faq.setup.cli
 echo.
 echo Running Cygwin setup...
-%CYGWIN_SETUP% ^
+"%CYGWIN_ROOT%\%CYGWIN_SETUP%" ^
 --allow-unsupported-windows ^
 --delete-orphans ^
 --local-package-dir "%CYGWIN_ROOT%\pkg-cache" ^
@@ -223,7 +223,7 @@ echo Running Cygwin setup...
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --upgrade-also || goto :fail
 
-del /f /q "setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
+del /f /q ""%CYGWIN_ROOT%\setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
 :: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
@@ -473,7 +473,7 @@ echo Generating one-file settings and updater file...
 	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
 	echo set CYGWIN_ARCH=%CYGWIN_ARCH%
 	echo set INSTALL_APT_CYG=%INSTALL_APT_CYG%
-	echo set INSTALL_ADDONS=%INSTALL_ADDONS%
+	echo set INSTALL_ADDONS=
 	echo set INSTALL_CONEMU=%INSTALL_CONEMU%
 	echo set INSTALL_WSLBRIDGE=%INSTALL_WSLBRIDGE%
 	echo exit /b
@@ -545,7 +545,7 @@ echo. & echo Generating README.txt
 	echo Change settings	: right click on "%Concygsys_settings_name%" ^> Edit
 	echo Update		: launch "%Concygsys_settings_name%"
 	echo More info	: %CONCYGSYS_LINK%#customization
-) > "%INSTALL_ROOT%README.md" & rename "%INSTALL_ROOT%README.md" "README.txt" >NUL 2>&1
+) > "%INSTALL_ROOT%README.md" & move /y "%INSTALL_ROOT%README.md" "%INSTALL_ROOT%README.txt" >NUL 2>&1
 
 
 :aftercygwinupdate
