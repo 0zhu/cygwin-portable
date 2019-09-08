@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190908b3
+set CONCYGSYS_VERSION=190908b4
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -238,14 +238,14 @@ del /f /q "setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
 :: to prevent issues with operations on files during installation
-set FSTAB=%%CYGWIN_ROOT:\=/%%
-set FSTAB=%%FSTAB: =\040%%
+set FSTAB=%CYGWIN_ROOT:\=/%
+set FSTAB=%FSTAB: =\040%
 (
- 	echo %%FSTAB%%/bin /usr/bin none noacl,posix=0,user 0 0
- 	echo %%FSTAB%%/lib /usr/lib none noacl,posix=0,user 0 0
- 	echo %%FSTAB%% / none override,noacl 0 0
+ 	echo %FSTAB%/bin /usr/bin none noacl,posix=0,user 0 0
+ 	echo %FSTAB%/lib /usr/lib none noacl,posix=0,user 0 0
+ 	echo %FSTAB% / none override,noacl 0 0
  	echo none /cygdrive cygdrive noacl,user 0 0
-) > "%%CYGWIN_ROOT%%\etc\fstab" & dos2unix -q /etc/fstab
+) > "%CYGWIN_ROOT%\etc\fstab" & dos2unix -q /etc/fstab
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
 ::==========================================================
