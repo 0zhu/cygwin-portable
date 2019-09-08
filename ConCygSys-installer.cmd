@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190908b6
+set CONCYGSYS_VERSION=190908b7
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -100,22 +100,22 @@ if exist "%CYGWIN_ROOT%" (
 	echo Existing Cygwin folder detected: %CYGWIN_ROOT%
 	echo Entering update mode...
 	set UPDATEMODE=yes
-	%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath 2>NUL | find /I "%CYGWIN_ROOT%">NUL
+	%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | findstr "%CYGWIN_ROOT%" >NUL 2>&1
 	:: multiple :: in if loop cause"system cannot find disk" warning, using rem further
 	rem why not using "%ERRORLEVEL%"=="0": https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
 		echo ^^!^^!^^! Active Cygwin processes detected ^^!^^!^^!
 		echo ==========================================
-		%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | find /I "%CYGWIN_ROOT%"
+		%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | findstr "%CYGWIN_ROOT%"
 		echo.
 		echo They will be terminated during update, please make sure you saved everything before proceeding
 		pause
-		for /f "usebackq tokens=2" %%p in (`%SystemRoot%\System32\wbem\WMIC.exe process get ProcessId^, ExecutablePath ^| find /I "%CYGWIN_ROOT%"`) do taskkill /f /pid %%p
+		for /f "usebackq tokens=2" %%p in (`%SystemRoot%\System32\wbem\WMIC.exe process get ProcessId^, ExecutablePath ^| findstr "%CYGWIN_ROOT%"`) do taskkill /f /pid %%p
 		goto :retryupdate
 	) else (
 		if exist "%Concygsys_settings%" (
-			copy /y "%Concygsys_settings%" "%Concygsys_settings_temp%"
+			copy /y "%Concygsys_settings%" "%Concygsys_settings_temp%" >NUL 2>&1
 			:: escaping % in existing config
 			sed -i '/^^set/ s/%%/%%%%/g' "%Concygsys_settings_temp%"
 			echo Reading existing settings from %Concygsys_settings_temp% ...
