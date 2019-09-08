@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190908b4
+set CONCYGSYS_VERSION=190908b5
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -42,13 +42,6 @@ set PROXY_HOST=
 :: Override OS architecture, if required: "32" bit or "64" bit system. Leave empty for autodetect
 set CYGWIN_ARCH=
 
-:: Cygwin uses ACLs to implement real Unix permissions which are not supported by Windows: https://cygwin.com/cygwin-ug-net/using-filemodes.html
-:: However, if you move installation to different directory or PC, ACLs will be broken and will have troubles running Cygwin binaries
-:: Set to 'yes' if you want real Unix permissions to the detriment of portability
-:: Set to 'no' if you want fully portable environment
-:: Min. permissions with disabled ACLs: "-r--r--r--" or "444". Max.: "-rw-r--r--" or "644". .*exe files or files with shebang will be 755
-set INSTALL_ACL=no
-
 ::+++++++++++++ Addons
 
 :: Install apt-cyg command line package manager for Cygwin: https://github.com/transcode-open/apt-cyg
@@ -65,9 +58,6 @@ https://github.com/zhubanRuban/cygwin-extras/raw/master/ssh-pageant_install.sh
 
 :: Install ConEmu quake-style terminal https://conemu.github.io/
 set INSTALL_CONEMU=yes
-
-:: https://conemu.github.io/en/ConEmuArgs.html
-set CONEMU_OPTIONS=
 
 :: How Cygwin or WSL will be launched in ConEmu multitab terminal, available options:
 ::   Mintty	: will be launched via mintty
@@ -237,12 +227,12 @@ del /f /q "setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2
 :: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
 
-:: to prevent issues with operations on files during installation
+:: permanent noacl to prevent issues
 set FSTAB=%CYGWIN_ROOT:\=/%
 set FSTAB=%FSTAB: =\040%
 (
- 	echo %FSTAB%/bin /usr/bin none noacl,posix=0,user 0 0
- 	echo %FSTAB%/lib /usr/lib none noacl,posix=0,user 0 0
+ 	echo %FSTAB%/bin /usr/bin none noacl 0 0
+ 	echo %FSTAB%/lib /usr/lib none noacl 0 0
  	echo %FSTAB% / none override,noacl 0 0
  	echo none /cygdrive cygdrive noacl,user 0 0
 ) > "%CYGWIN_ROOT%\etc\fstab" & dos2unix -q /etc/fstab
@@ -275,7 +265,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 		rm -f conemu.7z
 	)
 	if not exist "%CONEMU_CONFIG%" (
-		echo. & echo Exporting custom ConEmu config...
+		echo. & echo Creating ConEmu config %CONEMU_CONFIG% ...
 		(
 			echo ^<?xml version="1.0" encoding="utf-8"?^>
 			echo ^<!--
@@ -337,7 +327,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo 				^</key^>
 			echo 				^<key name="Task3"^>
 			echo 					^<value name="Name" type="string" data="{Cygwin::Mintty}"/^>
-			echo 					^<value name="Flags" type="dword" data="00000005"/^>
+			echo 					^<value name="Flags" type="dword" data="00000004"/^>
 			echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 			echo 					^<value name="GuiArgs" type="string" data='/icon " "'/^>
 			echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\mintty.exe" %MINTTY_OPTIONS% - -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
@@ -414,28 +404,14 @@ echo Generating Cygwin launcher...
 	echo setlocal enableextensions
 	echo set TERM=
 	echo set CYGWIN_ROOT=%%~dp0cygwin
-	if not "%INSTALL_ACL%" == "yes" (
-		echo.
-		echo set FSTAB=%%CYGWIN_ROOT:\=/%%
-		echo set FSTAB=%%FSTAB: =\040%%
-		echo (
-		echo 	echo %%FSTAB%%/bin /usr/bin none noacl,posix=0,user 0 0
-		echo 	echo %%FSTAB%%/lib /usr/lib none noacl,posix=0,user 0 0
-		echo 	echo %%FSTAB%% / none override,noacl 0 0
-		echo 	echo none /cygdrive cygdrive noacl,user 0 0
-		echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q /etc/fstab
-	) else (
-		del /f /q "%CYGWIN_ROOT%\etc\fstab" >NUL 2>&1
-	)
 	echo sed -i '/^last-cache/!b;n;c\\\t%%CYGWIN_ROOT:\=\\\%%\\\.pkg-cache' /etc/setup/setup.rc
-	echo rm -rf /*pkg-cache
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
 	echo :conemu
 	if "%INSTALL_CONEMU%" == "yes" (
 		echo cd /d "%%USERPROFILE%%"
 		echo if "%%CONEMUTASK_DEFAULT%%" == "" (set CONEMUTASK_DEFAULT=Mintty^)
-		echo start "" "%%CYGWIN_ROOT%%\..\conemu\ConEmu%CYGWIN_ARCH:32=%.exe" %%CONEMU_OPTIONS%% -run {Cygwin::%%CONEMUTASK_DEFAULT%%}
+		echo start "" "%%CYGWIN_ROOT%%\..\conemu\ConEmu%CYGWIN_ARCH:32=%.exe" -run {Cygwin::%%CONEMUTASK_DEFAULT%%}
 		echo exit /b
 	)
 	echo :mintty
@@ -457,7 +433,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 		echo :conemu
 		if "%INSTALL_CONEMU%" == "yes" (
 			echo if "%%CONEMUTASK_DEFAULT%%" == "" (set CONEMUTASK_DEFAULT=Mintty^)
-			echo start "" "%%~dp0conemu\ConEmu%CYGWIN_ARCH:32=%.exe" %%CONEMU_OPTIONS%% -run {WSL::%%CONEMUTASK_DEFAULT%%}
+			echo start "" "%%~dp0conemu\ConEmu%CYGWIN_ARCH:32=%.exe" -run {WSL::%%CONEMUTASK_DEFAULT%%}
 			echo exit /b
 		)
 		echo :mintty
@@ -485,10 +461,9 @@ echo Generating one-file settings and updater file...
 	echo :: these settings will be applied on next launcher run
 	echo set CYGWIN_HOME=%CYGWIN_HOME%
 	echo set LAUNCHER_CYGWIN=%LAUNCHER_CYGWIN%
+	if "%INSTALL_WSLBRIDGE%" == "yes" (echo set LAUNCHER_WSLBRIDGE=%LAUNCHER_WSLBRIDGE%)
+	if "%INSTALL_CONEMU%" == "yes" (echo set CONEMUTASK_DEFAULT=%CONEMUTASK_DEFAULT%)
 	echo set PROXY_HOST=%PROXY_HOST%
-	echo set CONEMU_OPTIONS=%CONEMU_OPTIONS%
-	echo set CONEMUTASK_DEFAULT=%CONEMUTASK_DEFAULT%
-	echo set LAUNCHER_WSLBRIDGE=%LAUNCHER_WSLBRIDGE%
 	echo exit /b
 	echo.
 	echo :installoptions
@@ -497,7 +472,6 @@ echo Generating one-file settings and updater file...
 	echo set CYGWIN_PACKAGES=
 	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
 	echo set CYGWIN_ARCH=%CYGWIN_ARCH%
-	echo set INSTALL_ACL=%INSTALL_ACL%
 	echo set INSTALL_APT_CYG=%INSTALL_APT_CYG%
 	echo set INSTALL_ADDONS=%INSTALL_ADDONS%
 	echo set INSTALL_CONEMU=%INSTALL_CONEMU%
