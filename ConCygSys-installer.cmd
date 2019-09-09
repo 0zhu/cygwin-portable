@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190908b7
+set CONCYGSYS_VERSION=190909b1
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -28,7 +28,7 @@ set CYGWIN_HOME=
 :: if specified launcher is not available, defaults to next available one in the following order: conemu mintty cmd
 set LAUNCHER_CYGWIN=conemu
 
-:: Select the packages to be installed automatically: https://cygwin.com/packages/package_list.html
+:: Comma-separated list of the packages to be installed automatically: https://cygwin.com/packages/package_list.html
 :: You will be able to install other packages later with apt-cyg if INSTALL_APT_CYG is set to yes below
 set CYGWIN_PACKAGES=bind-utils,inetutils,openssh,vim,whois
 
@@ -48,11 +48,13 @@ set CYGWIN_ARCH=
 :: Why not using https://github.com/kou1okada/apt-cyg :	https://github.com/kou1okada/apt-cyg#requirements https://github.com/kou1okada/apt-cyg/issues/24
 set INSTALL_APT_CYG=yes
 
+:: Install and configure ssh-pageant: https://github.com/cuviper/ssh-pageant
+set INSTALL_SSH_PAGEANT=yes
+
 :: Space-separated list of additional scripts URL to execute after Cygwin installation
-:: They will be downloaded with wget and passed to bash. Commands available to custom scripts: cygwin base + wget + apt-cyg
-set INSTALL_ADDONS= ^
-https://github.com/zhubanRuban/cygwin-extras/raw/master/inputrc_custom_bind_install.sh ^
-https://github.com/zhubanRuban/cygwin-extras/raw/master/ssh-pageant_install.sh
+:: They will be downloaded with wget and passed to bash. Commands available by default to custom scripts: cygwin base + wget + apt-cyg
+:: The example can be found here: https://github.com/zhubanRuban/cygwin-extras/raw/master/ssh-pageant_install.sh
+set INSTALL_ADDONS=
 
 ::+++++++++++++ ConEmu settings
 
@@ -203,6 +205,7 @@ if "%PROXY_HOST%" == ""		(set CYGWIN_PROXY=) else (set CYGWIN_PROXY=--proxy "%PR
 if "%INSTALL_CONEMU%" == "yes"		(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_WSLBRIDGE%" == "yes"	(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_APT_CYG%" == "yes"		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%)
+if "%INSTALL_SSH_PAGEANT%" == "yes"	(set CYGWIN_PACKAGES=openssh,%CYGWIN_PACKAGES%)
 if not "%INSTALL_ADDONS%" == ""		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%& set INSTALL_APT_CYG=yes)
 
 :: https://www.cygwin.com/faq/faq.html#faq.setup.cli
@@ -237,6 +240,17 @@ set FSTAB=%FSTAB: =\040%
  	echo none /cygdrive cygdrive noacl,user 0 0
 ) > "%CYGWIN_ROOT%\etc\fstab" & dos2unix -q /etc/fstab
 
+:: inputrc fix for ctrl+left and ctrl+right to work as expected: https://github.com/zhubanRuban/cygwin-extras#custom-inputrc
+copy /y "%CYGWIN_ROOT%\etc\defaults\etc\skel\.inputrc" "%CYGWIN_ROOT%\etc\skel\.inputrc" >NUL 2>&1
+(
+	echo.
+	echo # %CONCYGSYS_INFO%
+	echo "\e[1;5C": forward-word	# ctrl + right
+	echo "\e[1;5D": backward-word	# ctrl + left
+	echo # %CONCYGSYS_INFO%
+	echo.
+) > "%CYGWIN_ROOT%\etc\skel\.inputrc" & dos2unix /etc/skel/.inputrc
+
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
 ::==========================================================
 
@@ -264,7 +278,8 @@ if "%INSTALL_CONEMU%" == "yes" (
 		echo %CONCYGSYS_INFO% > "%CONEMU_DIR%\DO-NOT-LAUNCH-CONEMU-FROM-HERE"
 		rm -f conemu.7z
 	)
-	if not exist "%CONEMU_CONFIG%" (
+	rem Commented until ConEmu allows importing tasks via command line without replacing the whole config
+	rem if not exist "%CONEMU_CONFIG%" (
 		echo. & echo Creating ConEmu config %CONEMU_CONFIG% ...
 		(
 			echo ^<?xml version="1.0" encoding="utf-8"?^>
@@ -334,39 +349,42 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo 					^<value name="Active" type="long" data="0"/^>
 			echo 					^<value name="Count" type="long" data="1"/^>
 			echo 				^</key^>
-			echo 				^<key name="Task4"^>
-			echo 					^<value name="Name" type="string" data="{WSL::Cmd}"/^>
-			echo 					^<value name="Flags" type="dword" data="00000004"/^>
-			echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
-			echo 					^<value name="GuiArgs" type="string" data=""/^>
-			echo 					^<value name="Cmd1" type="string" data='"%%SystemRoot%%\system32\bash.exe" ~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
-			echo 					^<value name="Active" type="long" data="0"/^>
-			echo 					^<value name="Count" type="long" data="1"/^>
-			echo 				^</key^>
-			echo 				^<key name="Task5"^>
-			echo 					^<value name="Name" type="string" data="{WSL::Connector}"/^>
-			echo 					^<value name="Flags" type="dword" data="00000004"/^>
-			echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
-			echo 					^<value name="GuiArgs" type="string" data=""/^>
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-%CYGWIN_ARCH%.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
-			echo 					^<value name="Active" type="long" data="0"/^>
-			echo 					^<value name="Count" type="long" data="1"/^>
-			echo 				^</key^>
-			echo 				^<key name="Task6"^>
-			echo 					^<value name="Name" type="string" data="{WSL::Mintty}"/^>
-			echo 					^<value name="Flags" type="dword" data="00000004"/^>
-			echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
-			echo 					^<value name="GuiArgs" type="string" data='/icon " "'/^>
-			echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\mintty.exe" %MINTTY_OPTIONS% --WSL=  -~ -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
-			echo 					^<value name="Active" type="long" data="0"/^>
-			echo 					^<value name="Count" type="long" data="1"/^>
-			echo 				^</key^>
+			if "%INSTALL_WSLBRIDGE%" == "yes" (
+				echo 				^<key name="Task4"^>
+				echo 					^<value name="Name" type="string" data="{WSL::Cmd}"/^>
+				echo 					^<value name="Flags" type="dword" data="00000004"/^>
+				echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
+				echo 					^<value name="GuiArgs" type="string" data=""/^>
+				echo 					^<value name="Cmd1" type="string" data='"%%SystemRoot%%\system32\bash.exe" ~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
+				echo 					^<value name="Active" type="long" data="0"/^>
+				echo 					^<value name="Count" type="long" data="1"/^>
+				echo 				^</key^>
+				echo 				^<key name="Task5"^>
+				echo 					^<value name="Name" type="string" data="{WSL::Connector}"/^>
+				echo 					^<value name="Flags" type="dword" data="00000004"/^>
+				echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
+				echo 					^<value name="GuiArgs" type="string" data=""/^>
+				echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuBaseDirShort%%\wsl;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-%CYGWIN_ARCH%.exe" --wsl -C~ -cur_console:pm:"/mnt":P:"&lt;ubuntu&gt;":h5000'/^>
+				echo 					^<value name="Active" type="long" data="0"/^>
+				echo 					^<value name="Count" type="long" data="1"/^>
+				echo 				^</key^>
+				echo 				^<key name="Task6"^>
+				echo 					^<value name="Name" type="string" data="{WSL::Mintty}"/^>
+				echo 					^<value name="Flags" type="dword" data="00000004"/^>
+				echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
+				echo 					^<value name="GuiArgs" type="string" data='/icon " "'/^>
+				echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\mintty.exe" %MINTTY_OPTIONS% --WSL=  -~ -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
+				echo 					^<value name="Active" type="long" data="0"/^>
+				echo 					^<value name="Count" type="long" data="1"/^>
+				echo 				^</key^>
+			)
 			echo 			^</key^>
 			echo 		^</key^>
 			echo 	^</key^>
 			echo ^</key^>
 		) > "%CONEMU_CONFIG%" || goto :fail
-	)
+	rem Commented until ConEmu allows importing tasks via command line without replacing the whole config
+	rem )
 ) else (
 	rmdir /s /q "%CONEMU_DIR%" >NUL 2>&1
 	
@@ -393,6 +411,7 @@ echo Generating Cygwin launcher...
 	echo @echo off
 	echo :: %CONCYGSYS_INFO%
 	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
+	echo.
 	echo if "%%CYGWIN_HOME%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%CYGWIN_HOME%%^)
 	echo if not "%%PROXY_HOST%%" == "" (
 	echo 	set http_proxy=http://%%PROXY_HOST%%
@@ -404,7 +423,18 @@ echo Generating Cygwin launcher...
 	echo setlocal enableextensions
 	echo set TERM=
 	echo set CYGWIN_ROOT=%%~dp0cygwin
+	echo.
+	echo set FSTAB=%%CYGWIN_ROOT:\=/%%
+	echo set FSTAB=%%FSTAB: =\040%%
+	echo (
+ 	echo 	echo %%FSTAB%%/bin /usr/bin none noacl 0 0
+ 	echo 	echo %%FSTAB%%/lib /usr/lib none noacl 0 0
+ 	echo 	echo %%FSTAB%% / none override,noacl 0 0
+ 	echo 	echo none /cygdrive cygdrive noacl,user 0 0
+	echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q /etc/fstab
+	echo.
 	echo sed -i '/^last-cache/!b;n;c\\\t%%CYGWIN_ROOT:\=\\\%%\\\.pkg-cache' /etc/setup/setup.rc
+	echo.
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
 	echo :conemu
@@ -414,9 +444,11 @@ echo Generating Cygwin launcher...
 		echo start "" "%%CYGWIN_ROOT%%\..\conemu\ConEmu%CYGWIN_ARCH:32=%.exe" -run {Cygwin::%%CONEMUTASK_DEFAULT%%}
 		echo exit /b
 	)
+	echo.
 	echo :mintty
 	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" -
 	echo exit /b
+	echo.
 	echo :cmd
 	echo start "" "%%CYGWIN_ROOT%%\bin\bash.exe" -li
 	echo exit /b
@@ -455,6 +487,7 @@ echo Generating one-file settings and updater file...
 	echo if "%%1" == "installoptions" goto :installoptions
 	echo goto :update
 	echo.
+	echo ::====================================================
 	echo :: Customization guide: %CONCYGSYS_LINK%#customization
 	echo.
 	echo :cygwinsettings
@@ -477,6 +510,7 @@ echo Generating one-file settings and updater file...
 	echo set INSTALL_CONEMU=%INSTALL_CONEMU%
 	echo set INSTALL_WSLBRIDGE=%INSTALL_WSLBRIDGE%
 	echo exit /b
+	echo ::====================================================
 	echo.
 	echo :update
 	echo echo %CONCYGSYS_INFO%
@@ -527,6 +561,16 @@ if "%INSTALL_APT_CYG%" == "yes" (
 	chmod +x /usr/local/bin/apt-cyg
 ) else (
 	del /f /q "%CYGWIN_ROOT%\usr\local\bin\apt-cyg" "%CYGWIN_ROOT%\bin\apt-cyg" >NUL 2>&1
+)
+
+if "%INSTALL_SSH_PAGEANT%" == "yes" (
+	echo Configuring ssh-pageant...
+	echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME") > "%CYGWIN_ROOT%\etc\profile.d\ssh-pageant.sh"
+	:: removing previous possible ssh-agent implementations
+	rm -f /opt/ssh-agent-tweak
+	sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc
+) else (
+	del /f /q "%CYGWIN_ROOT%\etc\profile.d\ssh-pageant.sh" >NUL 2>&1
 )
 
 if not "%INSTALL_ADDONS%" == "" (
