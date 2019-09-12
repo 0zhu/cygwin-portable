@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190909b1
+set CONCYGSYS_VERSION=190912b1
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -55,6 +55,8 @@ set INSTALL_SSH_PAGEANT=yes
 :: They will be downloaded with wget and passed to bash. Commands available by default to custom scripts: cygwin base + wget + apt-cyg
 :: The example can be found here: https://github.com/zhubanRuban/cygwin-extras/raw/master/ssh-pageant_install.sh
 set INSTALL_ADDONS=
+:: Alternatively you can create a folder called 'addons' near installer and place your sh scripts there
+:: They will be executed during installation and during next update
 
 ::+++++++++++++ ConEmu settings
 
@@ -85,12 +87,10 @@ set CONCYGSYS_INFO=ConCygSys v.%CONCYGSYS_VERSION% %CONCYGSYS_LINK%
 echo %CONCYGSYS_INFO%
 echo.
 
-:: %~dp0 means current directory with backslash at the end
-set INSTALL_ROOT=%~dp0
-set CYGWIN_ROOT=%INSTALL_ROOT%cygwin
-set Concygsys_settings_name=update.cmd
-set Concygsys_settings=%INSTALL_ROOT%%Concygsys_settings_name%
-set Concygsys_settings_temp=%INSTALL_ROOT%ConCygSys-update.cmd
+set CYGWIN_DIR=cygwin
+set CYGWIN_ROOT=%~dp0%CYGWIN_DIR%
+set Concygsys_settings=update.cmd
+set Concygsys_settings_temp=ConCygSys-%Concygsys_settings%
 set "PATH=%CYGWIN_ROOT%\bin;PATH=%CYGWIN_ROOT%\usr\local\bin;%PATH%"
 set BASH=bash --noprofile --norc -c
 
@@ -98,9 +98,8 @@ set BASH=bash --noprofile --norc -c
 
 :retryupdate
 setlocal EnableDelayedExpansion
-if exist "%CYGWIN_ROOT%" (
-	echo Existing Cygwin folder detected: %CYGWIN_ROOT%
-	echo Entering update mode...
+if exist %CYGWIN_DIR% (
+	echo Existing Cygwin folder detected, switching to update mode...
 	set UPDATEMODE=yes
 	%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | findstr "%CYGWIN_ROOT%" >NUL 2>&1
 	:: multiple :: in if loop cause"system cannot find disk" warning, using rem further
@@ -151,8 +150,7 @@ setlocal DisableDelayedExpansion
 
 ::==========================================================
 
-set DOWNLOADER=%INSTALL_ROOT%ConCygSys-downloader.vbs
-set GENDOWNLOADER=%INSTALL_ROOT%ConCygSys-downloader-generator.vbs
+set DOWNLOADER=ConCygSys-downloader.vbs
 echo.
 if "%PROXY_HOST%" == "" (set DOWNLOADER_PROXY=.) else (
 	set DOWNLOADER_PROXY= req.SetProxy 2, "%PROXY_HOST%", ""
@@ -181,7 +179,7 @@ echo Creating script that can download files, not using PowerShell which may be 
 	echo buff.SaveToFile target
 	echo buff.Close
 	echo.
-) > "%DOWNLOADER%" || goto :fail
+) > %DOWNLOADER% || goto :fail
 
 ::==========================================================
 
@@ -195,7 +193,8 @@ if "%CYGWIN_ARCH%" == "" (
 echo Choosing correct version of Cygwin installer...
 if "%CYGWIN_ARCH%" == "64" (set CYGWIN_SETUP=setup-x86_64.exe) else (set CYGWIN_SETUP=setup-x86.exe)
 echo Chosen installer: %CYGWIN_SETUP%
-cscript //Nologo "%DOWNLOADER%" https://cygwin.org/%CYGWIN_SETUP% "%CYGWIN_ROOT%\%CYGWIN_SETUP%" || goto :fail
+set CYGWIN_SETUP_PATH=%CYGWIN_DIR%\%CYGWIN_SETUP%
+cscript //Nologo %DOWNLOADER% https://cygwin.org/%CYGWIN_SETUP% %CYGWIN_SETUP_PATH% || goto :fail
 
 :: https://cygwin.com/faq/faq.html#faq.setup.cli
 if "%CYGWIN_MIRROR%" == ""	(set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32)
@@ -205,16 +204,16 @@ if "%PROXY_HOST%" == ""		(set CYGWIN_PROXY=) else (set CYGWIN_PROXY=--proxy "%PR
 if "%INSTALL_CONEMU%" == "yes"		(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_WSLBRIDGE%" == "yes"	(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_APT_CYG%" == "yes"		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%)
-if "%INSTALL_SSH_PAGEANT%" == "yes"	(set CYGWIN_PACKAGES=openssh,%CYGWIN_PACKAGES%)
+if "%INSTALL_SSH_PAGEANT%" == "yes"	(set CYGWIN_PACKAGES=ssh-pageant,%CYGWIN_PACKAGES%)
 if not "%INSTALL_ADDONS%" == ""		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%& set INSTALL_APT_CYG=yes)
 
 :: https://www.cygwin.com/faq/faq.html#faq.setup.cli
 echo.
 echo Running Cygwin setup...
-"%CYGWIN_ROOT%\%CYGWIN_SETUP%" ^
+%CYGWIN_SETUP_PATH% ^
 --allow-unsupported-windows ^
 --delete-orphans ^
---local-package-dir "%CYGWIN_ROOT%\pkg-cache" ^
+--local-package-dir "%TEMP%\cygwin-local-package-dir" ^
 --no-admin ^
 --no-desktop ^
 --no-replaceonreboot ^
@@ -222,36 +221,62 @@ echo Running Cygwin setup...
 --no-startmenu ^
 --packages dos2unix,%CYGWIN_PACKAGES% ^
 --quiet-mode ^
---root "%CYGWIN_ROOT%" ^
+--root %CYGWIN_DIR% ^
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --upgrade-also || goto :fail
 
-del /f /q ""%CYGWIN_ROOT%\setup-*.exe" >NUL 2>&1 & rmdir /s /q "%CYGWIN_ROOT%\pkg-cache" >NUL 2>&1
+del /f /q %CYGWIN_SETUP_PATH% >NUL 2>&1
 :: warning for standard Cygwin launcher
-echo %CONCYGSYS_INFO% > "%CYGWIN_ROOT%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE"
+echo %CONCYGSYS_INFO% > %CYGWIN_DIR%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE
 
 :: permanent noacl to prevent issues
 set FSTAB=%CYGWIN_ROOT:\=/%
 set FSTAB=%FSTAB: =\040%
 (
- 	echo %FSTAB%/bin /usr/bin none noacl 0 0
- 	echo %FSTAB%/lib /usr/lib none noacl 0 0
+	echo # %CONCYGSYS_INFO%
+ 	echo %FSTAB%/bin /usr/bin none noacl,posix=0,user 0 0
+ 	echo %FSTAB%/lib /usr/lib none noacl,posix=0,user 0 0
  	echo %FSTAB% / none override,noacl 0 0
+	echo none /tmp usertemp noacl,posix=0,user 0 0
  	echo none /cygdrive cygdrive noacl,user 0 0
-) > "%CYGWIN_ROOT%\etc\fstab" & dos2unix -q /etc/fstab
+	echo # %CONCYGSYS_INFO%
+) > %CYGWIN_DIR%\etc\fstab & dos2unix -q %CYGWIN_DIR%\etc\fstab
 
 :: inputrc fix for ctrl+left and ctrl+right to work as expected: https://github.com/zhubanRuban/cygwin-extras#custom-inputrc
-copy /y "%CYGWIN_ROOT%\etc\defaults\etc\skel\.inputrc" "%CYGWIN_ROOT%\etc\skel\.inputrc" >NUL 2>&1
+copy /y %CYGWIN_DIR%\etc\defaults\etc\skel\.inputrc %CYGWIN_DIR%\etc\skel\.inputrc >NUL 2>&1
 (
 	echo.
 	echo # %CONCYGSYS_INFO%
 	echo "\e[1;5C": forward-word	# ctrl + right
 	echo "\e[1;5D": backward-word	# ctrl + left
 	echo # %CONCYGSYS_INFO%
-	echo.
-) > "%CYGWIN_ROOT%\etc\skel\.inputrc" & dos2unix /etc/skel/.inputrc
+) > %CYGWIN_DIR%\etc\skel\.inputrc & dos2unix -q %CYGWIN_DIR%\etc\skel\.inputrc
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
+::==========================================================
+
+if "%INSTALL_APT_CYG%" == "yes" (
+	echo. & echo Installing apt-cyg...
+	wget -nv --show-progress -O /usr/local/bin/apt-cyg https://github.com/transcode-open/apt-cyg/raw/master/apt-cyg
+	chmod +x /usr/local/bin/apt-cyg
+)
+
+if "%INSTALL_SSH_PAGEANT%" == "yes" (
+	echo Configuring ssh-pageant...
+	echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME") > %CYGWIN_DIR%\etc\profile.d\ssh-pageant.sh
+	:: removing previous possible ssh-agent implementations
+	rm -f /opt/ssh-agent-tweak
+	sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc
+)
+
+set ADDONS_DIR=addons
+if not "%INSTALL_ADDONS%" == "" (echo. & echo Downloading addons...
+	for %%a in (%INSTALL_ADDONS%) do (wget -nv --show-progress -NP %ADDONS_DIR% %%a)
+)
+if exist "%ADDONS_DIR%" (
+	for %%a in (%ADDONS_DIR%\*) do (echo. & echo Installing addon: %%a ... & bash --noprofile --norc %%a)
+)
+
 ::==========================================================
 
 :: Mintty options for ConEmu task: https://cdn.rawgit.com/mintty/mintty/master/docs/mintty.1.html#CONFIGURATION
@@ -266,17 +291,18 @@ set MINTTY_OPTIONS= ^
 -o Transparency=off ^
 -o ConfirmExit=no
 
-set CONEMU_DIR=%INSTALL_ROOT%conemu
+set CONEMU_DIR=conemu
+set CONEMU_ARCHIVE=%CONEMU_DIR%.7z
 set CONEMU_CONFIG=%CONEMU_DIR%\ConEmu.xml
 
 if "%INSTALL_CONEMU%" == "yes" (
-	if not exist "%CONEMU_DIR%" (
+	if not exist %CONEMU_DIR% (
 		echo. & echo Installing ConEmu...
-		%BASH% "wget -nv --show-progress -O conemu.7z https://github.com$(wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|grep /.*/releases/download/.*/.*7z -o)" || goto :fail
-		mkdir "%CONEMU_DIR%"
-		bsdtar -xf conemu.7z -C "%CONEMU_DIR%" || goto :fail
-		echo %CONCYGSYS_INFO% > "%CONEMU_DIR%\DO-NOT-LAUNCH-CONEMU-FROM-HERE"
-		rm -f conemu.7z
+		%BASH% "wget -nv --show-progress -O %CONEMU_ARCHIVE% https://github.com$(wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|grep /.*/releases/download/.*/.*7z -o)" || goto :fail
+		mkdir %CONEMU_DIR%
+		bsdtar -xf %CONEMU_ARCHIVE% -C %CONEMU_DIR% || goto :fail
+		echo %CONCYGSYS_INFO% > %CONEMU_DIR%\DO-NOT-LAUNCH-CONEMU-FROM-HERE
+		rm -f %CONEMU_ARCHIVE%
 	)
 	rem Commented until ConEmu allows importing tasks via command line without replacing the whole config
 	rem if not exist "%CONEMU_CONFIG%" (
@@ -327,7 +353,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo 					^<value name="Flags" type="dword" data="00000004"/^>
 			echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 			echo 					^<value name="GuiArgs" type="string" data=""/^>
-			echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\bash.exe" -li -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
+			echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\%CYGWIN_DIR%\bin\bash.exe" -li -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
 			echo 					^<value name="Active" type="long" data="0"/^>
 			echo 					^<value name="Count" type="long" data="1"/^>
 			echo 				^</key^>
@@ -336,7 +362,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo 					^<value name="Flags" type="dword" data="00000004"/^>
 			echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 			echo 					^<value name="GuiArgs" type="string" data=""/^>
-			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\cygwin\bin;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-%CYGWIN_ARCH%.exe" "%%ConEmuDir%%\..\cygwin\bin\bash.exe" -li -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
+			echo 					^<value name="Cmd1" type="string" data='set "PATH=%%ConEmuDir%%\..\%CYGWIN_DIR%\bin;%%PATH%%" ^&amp; "%%ConEmuBaseDirShort%%\conemu-cyg-%CYGWIN_ARCH%.exe" "%%ConEmuDir%%\..\%CYGWIN_DIR%\bin\bash.exe" -li -cur_console:pm:"/mnt":P:"&lt;xterm&gt;":h5000'/^>
 			echo 					^<value name="Active" type="long" data="0"/^>
 			echo 					^<value name="Count" type="long" data="1"/^>
 			echo 				^</key^>
@@ -345,7 +371,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo 					^<value name="Flags" type="dword" data="00000004"/^>
 			echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 			echo 					^<value name="GuiArgs" type="string" data='/icon " "'/^>
-			echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\mintty.exe" %MINTTY_OPTIONS% - -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
+			echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\%CYGWIN_DIR%\bin\mintty.exe" %MINTTY_OPTIONS% - -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
 			echo 					^<value name="Active" type="long" data="0"/^>
 			echo 					^<value name="Count" type="long" data="1"/^>
 			echo 				^</key^>
@@ -373,7 +399,7 @@ if "%INSTALL_CONEMU%" == "yes" (
 				echo 					^<value name="Flags" type="dword" data="00000004"/^>
 				echo 					^<value name="Hotkey" type="dword" data="00000000"/^>
 				echo 					^<value name="GuiArgs" type="string" data='/icon " "'/^>
-				echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\cygwin\bin\mintty.exe" %MINTTY_OPTIONS% --WSL=  -~ -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
+				echo 					^<value name="Cmd1" type="string" data='"%%ConEmuDir%%\..\%CYGWIN_DIR%\bin\mintty.exe" %MINTTY_OPTIONS% --WSL= -~ -cur_console:pm:"/mnt":P:"&lt;xterm&gt;"'/^>
 				echo 					^<value name="Active" type="long" data="0"/^>
 				echo 					^<value name="Count" type="long" data="1"/^>
 				echo 				^</key^>
@@ -382,11 +408,11 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo 		^</key^>
 			echo 	^</key^>
 			echo ^</key^>
-		) > "%CONEMU_CONFIG%" || goto :fail
+		) > %CONEMU_CONFIG% || goto :fail
 	rem Commented until ConEmu allows importing tasks via command line without replacing the whole config
 	rem )
 ) else (
-	rmdir /s /q "%CONEMU_DIR%" >NUL 2>&1
+	rmdir /s /q %CONEMU_DIR% >NUL 2>&1
 	
 )
 
@@ -395,22 +421,22 @@ if "%INSTALL_CONEMU%" == "yes" (
 if "%INSTALL_WSLBRIDGE%" == "yes" (
 	echo. & echo Installing WSLbridge...
 	%BASH% "wget -nv --show-progress -O wslbridge.tar.gz https://github.com$(wget -qO- https://github.com/rprichard/wslbridge/releases/latest|grep /.*/releases/download/.*/.*cygwin%CYGWIN_ARCH%.tar.gz -o)" || goto :fail
-	bsdtar -xf wslbridge.tar.gz --strip-components=1 -C '%CYGWIN_ROOT%\bin\' '*/wslbridge*' || goto :fail
+	bsdtar -xf wslbridge.tar.gz --strip-components=1 -C %CYGWIN_DIR%\bin */wslbridge* || goto :fail
 	rm -f wslbridge.tar.gz
 ) else (
-	del /f /q "%CYGWIN_ROOT%\bin\wslbridge*" >NUL 2>&1
+	del /f /q %CYGWIN_DIR%\bin\wslbridge* >NUL 2>&1
 )
 
 ::==========================================================
 
 echo. & echo Generating the launchers...
 :: files left by previous concygsys versions
-del /f /q "%CYGWIN_ROOT%\portable-init.sh" "%INSTALL_ROOT%Cygwin-*.cmd" "%INSTALL_ROOT%*Launch-*.cmd" >NUL 2>&1
+del /f /q Cygwin-*.cmd Launch-*.cmd >NUL 2>&1
 echo Generating Cygwin launcher...
 (
 	echo @echo off
 	echo :: %CONCYGSYS_INFO%
-	echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
+	echo call %Concygsys_settings% cygwinsettings
 	echo.
 	echo if "%%CYGWIN_HOME%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%CYGWIN_HOME%%^)
 	echo if not "%%PROXY_HOST%%" == "" (
@@ -422,18 +448,21 @@ echo Generating Cygwin launcher...
 	echo echo.
 	echo setlocal enableextensions
 	echo set TERM=
-	echo set CYGWIN_ROOT=%%~dp0cygwin
+	echo set CYGWIN_ROOT=%%~dp0%CYGWIN_DIR%
 	echo.
 	echo set FSTAB=%%CYGWIN_ROOT:\=/%%
 	echo set FSTAB=%%FSTAB: =\040%%
 	echo (
- 	echo 	echo %%FSTAB%%/bin /usr/bin none noacl 0 0
- 	echo 	echo %%FSTAB%%/lib /usr/lib none noacl 0 0
+	echo 	echo # %CONCYGSYS_INFO%
+ 	echo 	echo %%FSTAB%%/bin /usr/bin none noacl,posix=0,user 0 0
+ 	echo 	echo %%FSTAB%%/lib /usr/lib none noacl,posix=0,user 0 0
  	echo 	echo %%FSTAB%% / none override,noacl 0 0
+	echo 	echo none /tmp usertemp noacl,posix=0,user 0 0
  	echo 	echo none /cygdrive cygdrive noacl,user 0 0
-	echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q /etc/fstab
+	echo 	echo # %CONCYGSYS_INFO%
+	echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q "%%CYGWIN_ROOT%%\etc\fstab"
 	echo.
-	echo sed -i '/^last-cache/!b;n;c\\\t%%CYGWIN_ROOT:\=\\\%%\\\.pkg-cache' /etc/setup/setup.rc
+	echo sed -i '/^last-cache/!b;n;c\\\t%%TEMP:\=\\\%%\\\cygwin-local-package-dir' /etc/setup/setup.rc
 	echo.
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
@@ -441,40 +470,40 @@ echo Generating Cygwin launcher...
 	if "%INSTALL_CONEMU%" == "yes" (
 		echo cd /d "%%USERPROFILE%%"
 		echo if "%%CONEMUTASK_DEFAULT%%" == "" (set CONEMUTASK_DEFAULT=Mintty^)
-		echo start "" "%%CYGWIN_ROOT%%\..\conemu\ConEmu%CYGWIN_ARCH:32=%.exe" -run {Cygwin::%%CONEMUTASK_DEFAULT%%}
+		echo start "" "%%~dp0%CONEMU_DIR%\ConEmu%CYGWIN_ARCH:32=%.exe" -run {Cygwin::%%CONEMUTASK_DEFAULT%%}
 		echo exit /b
 	)
 	echo.
 	echo :mintty
-	echo start "" "%%CYGWIN_ROOT%%\bin\mintty.exe" -
+	echo start "" %CYGWIN_DIR%\bin\mintty.exe -
 	echo exit /b
 	echo.
 	echo :cmd
-	echo start "" "%%CYGWIN_ROOT%%\bin\bash.exe" -li
+	echo start "" %CYGWIN_DIR%\bin\bash.exe" -li
 	echo exit /b
-) > "%INSTALL_ROOT%Launch-Cygwin.cmd" || goto :fail
+) > Launch-Cygwin.cmd || goto :fail
 
 if "%INSTALL_WSLBRIDGE%" == "yes" (
 	echo Generating WSL launcher...
 	(
 		echo @echo off
 		echo :: %CONCYGSYS_INFO%
-		echo call "%%~dp0%Concygsys_settings_name%" cygwinsettings
+		echo call %Concygsys_settings% cygwinsettings
 		echo if not "%%LAUNCHER_WSLBRIDGE%%" == "" (goto :%%LAUNCHER_WSLBRIDGE%%^)
 		echo.
 		echo :conemu
 		if "%INSTALL_CONEMU%" == "yes" (
 			echo if "%%CONEMUTASK_DEFAULT%%" == "" (set CONEMUTASK_DEFAULT=Mintty^)
-			echo start "" "%%~dp0conemu\ConEmu%CYGWIN_ARCH:32=%.exe" -run {WSL::%%CONEMUTASK_DEFAULT%%}
+			echo start "" "%%~dp0%CONEMU_DIR%\ConEmu%CYGWIN_ARCH:32=%.exe" -run {WSL::%%CONEMUTASK_DEFAULT%%}
 			echo exit /b
 		)
 		echo :mintty
-		echo start "" "%%~dp0cygwin\bin\mintty.exe" --WSL= -~
+		echo start "" %CYGWIN_DIR%\bin\mintty.exe --WSL= -~
 		echo exit /b
 		echo :cmd
-		echo start "" "%%SystemRoot%%\system32\bash.exe" ~
+		echo start "" %%SystemRoot%%\system32\bash.exe ~
 		echo exit /b
-	) > "%INSTALL_ROOT%Launch-WSL.cmd" || goto :fail
+	) > Launch-WSL.cmd || goto :fail
 )
 
 ::==========================================================
@@ -500,7 +529,7 @@ echo Generating one-file settings and updater file...
 	echo exit /b
 	echo.
 	echo :installoptions
-	echo :: these settings will be applied after you run %Concygsys_settings_name%
+	echo :: these settings will be applied after you run %Concygsys_settings%
 	echo :: specify CYGWIN_PACKAGES only if you need new packages not installed at the moment
 	echo set CYGWIN_PACKAGES=
 	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
@@ -514,8 +543,8 @@ echo Generating one-file settings and updater file...
 	echo.
 	echo :update
 	echo echo %CONCYGSYS_INFO%
-	echo set DOWNLOADER=%%~dp0downloader.vbs
-	echo call "%0" cygwinsettings
+	echo set DOWNLOADER=%DOWNLOADER%
+	echo call %%~nx0 cygwinsettings
 	echo if "%%PROXY_HOST%%" == "" (set DOWNLOADER_PROXY=.^) else (set DOWNLOADER_PROXY= req.SetProxy 2, "%%PROXY_HOST%%", ""^)
 	echo echo Creating a script that can download files...
 	echo (
@@ -523,7 +552,7 @@ echo Generating one-file settings and updater file...
 	echo 	echo target = Wscript.Arguments(1^^^)
 	echo 	echo WScript.Echo "Downloading '" ^^^& url ^^^& "' to '" ^^^& target ^^^& "'..."
 	echo 	echo Set req = CreateObject("WinHttp.WinHttpRequest.5.1"^^^)
-	echo 	echo%DOWNLOADER_PROXY%
+	echo 	echo%%DOWNLOADER_PROXY%%
 	echo 	echo req.Open "GET", url, False
 	echo 	echo req.Send
 	echo 	echo If req.Status ^^^<^^^> 200 Then
@@ -538,11 +567,11 @@ echo Generating one-file settings and updater file...
 	echo 	echo buff.SaveToFile target
 	echo 	echo buff.Close
 	echo 	echo.
-	echo ^) ^> "%%DOWNLOADER%%" ^|^| goto :fail
-	echo set INSTALLER=ConCygSys-installer.cmd
+	echo ^) ^> %%DOWNLOADER%% ^|^| goto :fail
+	echo set INSTALLER=%~nx0
 	echo set INSTALLER_URL=https://github.com/zhubanRuban/ConCygSys-cygwin-portable/raw/beta/%%INSTALLER%%
-	echo cscript //Nologo "%%DOWNLOADER%%" "%%INSTALLER_URL%%" "%%INSTALLER%%" ^|^| goto :fail
-	echo start "" "%%INSTALLER%%" ^|^| goto :fail
+	echo cscript //Nologo %%DOWNLOADER%% %%INSTALLER_URL%% %%INSTALLER%% ^|^| goto :fail
+	echo start "" %%INSTALLER%% ^|^| goto :fail
 	echo exit /b
 	echo :fail
 	echo echo.
@@ -551,45 +580,17 @@ echo Generating one-file settings and updater file...
 	echo echo.
 	echo pause
 	echo exit /b 1
-) > "%Concygsys_settings%" || goto :fail
-
-::==========================================================
-
-if "%INSTALL_APT_CYG%" == "yes" (
-	echo. & echo Installing apt-cyg...
-	wget -nv --show-progress -O /usr/local/bin/apt-cyg https://github.com/transcode-open/apt-cyg/raw/master/apt-cyg
-	chmod +x /usr/local/bin/apt-cyg
-) else (
-	del /f /q "%CYGWIN_ROOT%\usr\local\bin\apt-cyg" "%CYGWIN_ROOT%\bin\apt-cyg" >NUL 2>&1
-)
-
-if "%INSTALL_SSH_PAGEANT%" == "yes" (
-	echo Configuring ssh-pageant...
-	echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME") > "%CYGWIN_ROOT%\etc\profile.d\ssh-pageant.sh"
-	:: removing previous possible ssh-agent implementations
-	rm -f /opt/ssh-agent-tweak
-	sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc
-) else (
-	del /f /q "%CYGWIN_ROOT%\etc\profile.d\ssh-pageant.sh" >NUL 2>&1
-)
-
-if not "%INSTALL_ADDONS%" == "" (
-	echo. & echo Installing addons: %INSTALL_ADDONS% ...
-	for %%a in (%INSTALL_ADDONS%) do (echo.
-		wget -nv --show-progress -O ConCygSys-addon.sh %%a
-		bash --noprofile --norc ConCygSys-addon.sh
-	)
-)
+) > %Concygsys_settings% || goto :fail
 
 ::==========================================================
 
 echo. & echo Generating README.txt
 (
 	echo %CONCYGSYS_INFO%
-	echo Change settings	: right click on "%Concygsys_settings_name%" ^> Edit
-	echo Update		: launch "%Concygsys_settings_name%"
+	echo Change settings	: right click on %Concygsys_settings% ^> Edit
+	echo Update		: launch %Concygsys_settings%
 	echo More info	: %CONCYGSYS_LINK%#customization
-) > "%INSTALL_ROOT%README.md" & move /y "%INSTALL_ROOT%README.md" "%INSTALL_ROOT%README.txt" >NUL 2>&1
+) > README.md & move /y README.md README.txt >NUL 2>&1
 
 
 :aftercygwinupdate
@@ -603,7 +604,7 @@ if "%UPDATEMODE%" == "yes" (
 )
 echo.
 pause
-del /f /q "%INSTALL_ROOT%ConCygSys*" >NUL 2>&1
+del /f /q ConCygSys* >NUL 2>&1
 exit /b 0
 
 
