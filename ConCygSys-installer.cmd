@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190912b2
+set CONCYGSYS_VERSION=190912b3
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -72,7 +72,7 @@ set CONEMUTASK_DEFAULT=Mintty
 ::+++++++++++++ Settings for WSL
 
 :: Install WSLbridge allowing to access WSL via Mintty https://github.com/rprichard/wslbridge (WSLtty emulation https://github.com/mintty/wsltty)
-set INSTALL_WSLBRIDGE=yes
+set INSTALL_WSLBRIDGE=no
 
 :: Specify default launcher for WSL
 :: If specified launcher is not available, defaults to next available one in the following order: conemu mintty cmd
@@ -199,7 +199,7 @@ set CYGWIN_SETUP_PATH=%CYGWIN_DIR%\%CYGWIN_SETUP%
 cscript //Nologo %DOWNLOADER% https://cygwin.org/%CYGWIN_SETUP% %CYGWIN_SETUP_PATH% || goto :fail
 
 :: https://cygwin.com/faq/faq.html#faq.setup.cli
-if "%CYGWIN_MIRROR%" == ""	(set CYGWIN_MIRROR=http://ftp.inf.tu-dresden.de/software/windows/cygwin32)
+if "%CYGWIN_MIRROR%" == ""	(set CYGWIN_MIRROR=ftp://ftp-stud.hs-esslingen.de/pub/Mirrors/sources.redhat.com/cygwin/)
 if "%PROXY_HOST%" == ""		(set CYGWIN_PROXY=) else (set CYGWIN_PROXY=--proxy "%PROXY_HOST%")
 
 :: adding required packages for special software
@@ -264,8 +264,9 @@ if "%INSTALL_APT_CYG%" == "yes" (
 )
 
 if "%INSTALL_SSH_PAGEANT%" == "yes" (
-	echo Configuring ssh-pageant...
+	echo. & echo Configuring ssh-pageant...
 	echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) > %CYGWIN_DIR%\etc\profile.d\ssh-pageant.sh
+	dos2unix -q %CYGWIN_DIR%\etc\profile.d\ssh-pageant.sh
 	:: removing previous possible ssh-agent implementations
 	rm -f /opt/ssh-agent-tweak
 	sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc >NUL 2>&1
