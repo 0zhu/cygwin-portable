@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190912b1
+set CONCYGSYS_VERSION=190912b2
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -145,6 +145,8 @@ if exist %CYGWIN_DIR% (
 		echo.
 		pause
 	)
+) else (
+	mkdir %CYGWIN_DIR% >NUL 2>&1
 )
 setlocal DisableDelayedExpansion
 
@@ -263,10 +265,10 @@ if "%INSTALL_APT_CYG%" == "yes" (
 
 if "%INSTALL_SSH_PAGEANT%" == "yes" (
 	echo Configuring ssh-pageant...
-	echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME") > %CYGWIN_DIR%\etc\profile.d\ssh-pageant.sh
+	echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) > %CYGWIN_DIR%\etc\profile.d\ssh-pageant.sh
 	:: removing previous possible ssh-agent implementations
 	rm -f /opt/ssh-agent-tweak
-	sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc
+	sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc >NUL 2>&1
 )
 
 set ADDONS_DIR=addons
@@ -295,18 +297,18 @@ set CONEMU_DIR=conemu
 set CONEMU_ARCHIVE=%CONEMU_DIR%.7z
 set CONEMU_CONFIG=%CONEMU_DIR%\ConEmu.xml
 
-if "%INSTALL_CONEMU%" == "yes" (
+if "%INSTALL_CONEMU%" == "yes" (echo.
 	if not exist %CONEMU_DIR% (
-		echo. & echo Installing ConEmu...
+		echo Installing ConEmu...
 		%BASH% "wget -nv --show-progress -O %CONEMU_ARCHIVE% https://github.com$(wget -qO- https://github.com/Maximus5/ConEmu/releases/latest|grep /.*/releases/download/.*/.*7z -o)" || goto :fail
-		mkdir %CONEMU_DIR%
-		bsdtar -xf %CONEMU_ARCHIVE% -C %CONEMU_DIR% || goto :fail
+		mkdir %CONEMU_DIR% >NUL 2>&1
+		echo Extracting... & bsdtar -xf %CONEMU_ARCHIVE% -C %CONEMU_DIR% || goto :fail
 		echo %CONCYGSYS_INFO% > %CONEMU_DIR%\DO-NOT-LAUNCH-CONEMU-FROM-HERE
 		rm -f %CONEMU_ARCHIVE%
 	)
 	rem Commented until ConEmu allows importing tasks via command line without replacing the whole config
 	rem if not exist "%CONEMU_CONFIG%" (
-		echo. & echo Creating ConEmu config %CONEMU_CONFIG% ...
+		echo Replacing ConEmu config...
 		(
 			echo ^<?xml version="1.0" encoding="utf-8"?^>
 			echo ^<!--
@@ -315,7 +317,6 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo ^<key name="Software"^>
 			echo 	^<key name="ConEmu"^>
 			echo 		^<key name=".Vanilla"^>
-			echo 			^<value name="StartTasksName" type="string" data="{Cygwin::Mintty}"/^>
 			echo 			^<value name="WindowMode" type="dword" data="00000520"/^>
 			echo 			^<value name="ShowScrollbar" type="hex" data="01"/^>
 			echo 			^<value name="QuakeStyle" type="hex" data="01"/^>
@@ -339,7 +340,6 @@ if "%INSTALL_CONEMU%" == "yes" (
 			echo 			^<value name="FontUseUnits" type="hex" data="01"/^>
 			echo 			^<value name="FontSize" type="ulong" data="14"/^>
 			echo 			^<value name="StatusFontHeight" type="long" data="12"/^>
-			echo 			^<value name="KillSshAgent" type="hex" data="00"/^>
 			echo 			^<key name="HotKeys"^>
 			echo 				^<value name="MinimizeRestore" type="dword" data="000011c0"/^>
 			echo 			^</key^>
