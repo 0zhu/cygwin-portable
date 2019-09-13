@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190913b3
+set CONCYGSYS_VERSION=190913b4
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -448,11 +448,11 @@ echo Generating Cygwin launcher...
 	)
 	echo.
 	echo :mintty
-	echo start "" %CYGWIN_DIR%\bin\mintty.exe -
+	echo start "" "%%~dp0%CYGWIN_DIR%\bin\mintty.exe" -
 	echo exit /b
 	echo.
 	echo :cmd
-	echo start "" %CYGWIN_DIR%\bin\bash.exe" -li
+	echo start "" "%%~dp0%CYGWIN_DIR%\bin\bash.exe" -li
 	echo.
 	echo exit /b
 ) > Launch-Cygwin.cmd || goto :fail
@@ -473,7 +473,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 		)
 		echo.
 		echo :mintty
-		echo start "" %CYGWIN_DIR%\bin\mintty.exe --WSL= -~
+		echo start "" "%%~dp0%CYGWIN_DIR%\bin\mintty.exe" --WSL= -~
 		echo exit /b
 		echo.
 		echo :cmd
