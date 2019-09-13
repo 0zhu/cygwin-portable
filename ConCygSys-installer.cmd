@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190912b3
+set CONCYGSYS_VERSION=190913b1
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -108,11 +108,11 @@ if exist %CYGWIN_DIR% (
 		echo.
 		echo ^^!^^!^^! Active Cygwin processes detected ^^!^^!^^!
 		echo ==========================================
-		%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | findstr "%CYGWIN_ROOT%"
+		%SystemRoot%\System32\wbem\WMIC.exe process where "ExecutablePath like '%%%CYGWIN_ROOT:\=\\%%%'" get ExecutablePath, ProcessId
 		echo.
 		echo They will be terminated during update, please make sure you saved everything before proceeding
 		pause
-		for /f "usebackq tokens=2" %%p in (`%SystemRoot%\System32\wbem\WMIC.exe process get ProcessId^, ExecutablePath ^| findstr "%CYGWIN_ROOT%"`) do taskkill /f /pid %%p
+		for /f "usebackq" %%p in (`%SystemRoot%\System32\wbem\WMIC.exe process where "ExecutablePath like '%%%CYGWIN_ROOT:\=\\%%%'" get ProcessId`) do taskkill /f /pid %%p >NUL 2>&1
 		goto :retryupdate
 	) else (
 		if exist "%Concygsys_settings%" (
@@ -227,7 +227,7 @@ echo Running Cygwin setup...
 --site %CYGWIN_MIRROR% %CYGWIN_PROXY% ^
 --upgrade-also || goto :fail
 
-del /f /q %CYGWIN_SETUP_PATH% >NUL 2>&1
+del /f /q %CYGWIN_SETUP_PATH% >NUL 2>&1 & rmdir /s /q "%TEMP%\cygwin-local-package-dir" >NUL 2>&1
 :: warning for standard Cygwin launcher
 echo %CONCYGSYS_INFO% > %CYGWIN_DIR%\DO-NOT-LAUNCH-CYGWIN-FROM-HERE
 
@@ -437,34 +437,7 @@ echo Generating Cygwin launcher...
 (
 	echo @echo off
 	echo :: %CONCYGSYS_INFO%
-	echo call %Concygsys_settings% cygwinsettings
-	echo.
-	echo if "%%CYGWIN_HOME%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%CYGWIN_HOME%%^)
-	echo if not "%%PROXY_HOST%%" == "" (
-	echo 	set http_proxy=http://%%PROXY_HOST%%
-	echo 	set https_proxy=https://%%PROXY_HOST%%
-	echo 	set ftp_proxy=ftp://%%PROXY_HOST%%
-	echo ^)
-	echo set "PATH=%%~dp0cygwin\bin;%%PATH%%"
-	echo echo.
-	echo setlocal enableextensions
-	echo set TERM=
-	echo set CYGWIN_ROOT=%%~dp0%CYGWIN_DIR%
-	echo.
-	echo set FSTAB=%%CYGWIN_ROOT:\=/%%
-	echo set FSTAB=%%FSTAB: =\040%%
-	echo (
-	echo 	echo # %CONCYGSYS_INFO%
- 	echo 	echo %%FSTAB%%/bin /usr/bin none noacl,posix=0,user 0 0
- 	echo 	echo %%FSTAB%%/lib /usr/lib none noacl,posix=0,user 0 0
- 	echo 	echo %%FSTAB%% / none override,noacl 0 0
-	echo 	echo none /tmp usertemp noacl,posix=0,user 0 0
- 	echo 	echo none /cygdrive cygdrive noacl,user 0 0
-	echo 	echo # %CONCYGSYS_INFO%
-	echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q "%%CYGWIN_ROOT%%\etc\fstab"
-	echo.
-	echo sed -i '/^last-cache/!b;n;c\\\t%%TEMP:\=\\\%%\\\cygwin-local-package-dir' /etc/setup/setup.rc
-	echo.
+	echo call %Concygsys_settings% launcherheader
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
 	echo :conemu
@@ -481,6 +454,7 @@ echo Generating Cygwin launcher...
 	echo.
 	echo :cmd
 	echo start "" %CYGWIN_DIR%\bin\bash.exe" -li
+	echo.
 	echo exit /b
 ) > Launch-Cygwin.cmd || goto :fail
 
@@ -489,7 +463,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 	(
 		echo @echo off
 		echo :: %CONCYGSYS_INFO%
-		echo call %Concygsys_settings% cygwinsettings
+		echo call %Concygsys_settings% launcherheader
 		echo if not "%%LAUNCHER_WSLBRIDGE%%" == "" (goto :%%LAUNCHER_WSLBRIDGE%%^)
 		echo.
 		echo :conemu
@@ -498,11 +472,14 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 			echo start "" "%%~dp0%CONEMU_DIR%\ConEmu%CYGWIN_ARCH:32=%.exe" -run {WSL::%%CONEMUTASK_DEFAULT%%}
 			echo exit /b
 		)
+		echo.
 		echo :mintty
 		echo start "" %CYGWIN_DIR%\bin\mintty.exe --WSL= -~
 		echo exit /b
+		echo.
 		echo :cmd
 		echo start "" %%SystemRoot%%\system32\bash.exe ~
+		echo.
 		echo exit /b
 	) > Launch-WSL.cmd || goto :fail
 )
@@ -515,6 +492,7 @@ echo Generating one-file settings and updater file...
 	echo :: %CONCYGSYS_INFO%
 	echo if "%%1" == "cygwinsettings" goto :cygwinsettings
 	echo if "%%1" == "installoptions" goto :installoptions
+	echo if "%%1" == "launcherheader" goto :launcherheader
 	echo goto :update
 	echo.
 	echo ::====================================================
@@ -541,6 +519,36 @@ echo Generating one-file settings and updater file...
 	echo set INSTALL_WSLBRIDGE=%INSTALL_WSLBRIDGE%
 	echo exit /b
 	echo ::====================================================
+	echo.
+	echo :launcherheader
+	echo call %%~nx0 cygwinsettings
+	echo.
+	echo set "PATH=%%~dp0%CYGWIN_DIR%\bin;%%PATH%%"
+	echo if "%%CYGWIN_HOME%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%CYGWIN_HOME%%^)
+	echo if not "%%PROXY_HOST%%" == "" (
+	echo 	set http_proxy=http://%%PROXY_HOST%%
+	echo 	set https_proxy=https://%%PROXY_HOST%%
+	echo 	set ftp_proxy=ftp://%%PROXY_HOST%%
+	echo ^)
+	echo echo.
+	echo setlocal enableextensions
+	echo set TERM=
+	echo set CYGWIN_ROOT=%%~dp0%CYGWIN_DIR%
+	echo.
+	echo set FSTAB=%%CYGWIN_ROOT:\=/%%
+	echo set FSTAB=%%FSTAB: =\040%%
+	echo (
+	echo 	echo # %CONCYGSYS_INFO%
+ 	echo 	echo %%FSTAB%%/bin /usr/bin none noacl,posix=0,user 0 0
+ 	echo 	echo %%FSTAB%%/lib /usr/lib none noacl,posix=0,user 0 0
+ 	echo 	echo %%FSTAB%% / none override,noacl 0 0
+	echo 	echo none /tmp usertemp noacl,posix=0,user 0 0
+ 	echo 	echo none /cygdrive cygdrive noacl,user 0 0
+	echo 	echo # %CONCYGSYS_INFO%
+	echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q "%%CYGWIN_ROOT%%\etc\fstab"
+	echo.
+	echo sed -i '/^last-cache/!b;n;c\\\t%%TEMP:\=\\\%%\\\cygwin-local-package-dir' /etc/setup/setup.rc
+	echo exit /b
 	echo.
 	echo :update
 	echo echo %CONCYGSYS_INFO%
