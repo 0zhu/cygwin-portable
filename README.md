@@ -85,6 +85,10 @@ After the installation, in order to change settings / add components, edit **:cy
 
 ## FAQ
 
+### How much disk space does it take after installation?
+
+If installed with default settings: 205M | zip: 70.3M | 7z: 40.3M
+
 ### What is the path to Windows drives when I'm in Cygwin console?
 
 `/cygdrive/DRIVE`
