@@ -1,9 +1,9 @@
-# ConCygSys <a href="../.."><img height="30" src="https://camo.githubusercontent.com/7710b43d0476b6f6d4b4b2865e35c108f69991f3/68747470733a2f2f7777772e69636f6e66696e6465722e636f6d2f646174612f69636f6e732f6f637469636f6e732f313032342f6d61726b2d6769746875622d3235362e706e67"></a> <a href="https://mintty.github.io/" target="_blank"><img align="right" height="40" src="https://pbs.twimg.com/profile_images/1938877716/terminal-256.png"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
+# ConCygSys <a href="../.."><img height="30" src="https://camo.githubusercontent.com/7710b43d0476b6f6d4b4b2865e35c108f69991f3/68747470733a2f2f7777772e69636f6e66696e6465722e636f6d2f646174612f69636f6e732f6f637469636f6e732f313032342f6d61726b2d6769746875622d3235362e706e67"></a> <a href="https://docs.microsoft.com/en-us/windows/wsl/about" target="_blank"><img align="right" height="40" src="https://wsldownload.azureedge.net/ubuntu.ico"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square)](../../releases)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square)
-![HitCount](http://hits.dwyl.io/zhubanRuban/ConCygSys-cygwin-portable.svg)
-[![GitHub](https://img.shields.io/github/license/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square)](LICENSE)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/zhubanRuban/cygwin-portable?style=flat-square)](../../releases)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/zhubanRuban/cygwin-portable?style=flat-square)
+![HitCount](http://hits.dwyl.io/zhubanRuban/cygwin-portable.svg)
+[![GitHub](https://img.shields.io/github/license/zhubanRuban/cygwin-portable?style=flat-square)](LICENSE)
 
 - [Description](#description)
 - [Features](#features)
@@ -15,7 +15,7 @@
 
 ## Description
 
-**ConCygSys** is a lightweight tool that installs portable [Cygwin](https://www.cygwin.com/) Unix-like environment and connects to portable [ConEmu](https://conemu.github.io/) console emulator, with self-update. All required software in one folder. Now also with [WSLtty](https://github.com/mintty/wsltty) support!
+**ConCygSys** is a lightweight tool that installs portable [Cygwin](https://www.cygwin.com/) Unix-like environment and connects to portable [ConEmu](https://conemu.github.io/) console emulator, with self-update feature.
 
 > This is an independent fork of amazing [cygwin-portable-installer](https://github.com/vegardit/cygwin-portable-installer) project. At first minimally modified for sysadmin purposes, later on filled with improvements and new features.
 
@@ -28,8 +28,10 @@
   - run from USB or network drive
   - use it in folders with spaces
 - Downloads and installs the latest portable ConEmu
+- WSL support via WSLtty
 - Only pure base with a couple of config files to make the installtion portable, no hacks with Cygwin/ConEmu code
 - The installer is flexible, you can customize the installation process per your requirements
+- You can add your own scripts to execute during installation/update (from URL or locally)
 - Being portable, the script can also **upgrade** itself and its components
 - Windows 7+ supported
 
@@ -45,17 +47,7 @@
 
 > If Windows complains with a **Windows protected your PC** popup, you may need to click **Run anyway** to proceed with the installation.
 
-- Once the installation is finished, you can run Cygwin via one of the following launchers:
-
-<img align="middle" height="50" src="https://www.oracle.com/webfolder/technetwork/tutorials/obe/cloud/objectstorage/installing_cURL/images/run_cygwin.png"> **`CygWin-Cmd`** to run Cygwin in standard Windows console
-
-<img align="middle" height="50" src="https://i.ytimg.com/vi/bamH8SIG0h8/maxresdefault.jpg"> **`CygWin-ConEmu`** to run Cygwin in ConEmu terminal **(RECOMMENDED)**
-
-<img align="middle" height="50" src="https://www.howtogeek.com/wp-content/uploads/2011/07/sshot-35.png"> **`CygWin-MinTTY`** to run Cygwin in [Mintty](https://mintty.github.io/) terminal emulator
-
-<img align="middle" height="50" src="https://pbs.twimg.com/media/CuMUQhZWYAA8yDc.jpg"> **`CygWin-WSLtty`** to run WSL in Mintty terminal emulator
-  
-> You can try the launchers one-by-one to find the most suitable option
+- Once the installation is finished, use **`Launch-*.cmd`** to run Cygwin/WSL.
 
 ## Usage
 
@@ -73,44 +65,34 @@ Shortcuts if using Cygwin via ConEmu console:
 
 ## Update
 
-Use **`update`** launcher in the root of your ConCygSys directory to update the installation.
+Use **`update.cmd`** launcher in the root of your ConCygSys directory to update the installation.
 
-You will be able either to update **Cygwin only** or to perform a **full update**: Cygwin + ConCygSys core. ConEmu is already set to check its updates on startup and can update itself independently.
+You will be able either to update **Cygwin only** or to perform a **full update**: Cygwin + ConCygSys core making the installation protable. ConEmu is already set to check its updates on startup and can update itself independently.
 
-> Additional update notes. ConCygSys consists of:
-> - **CygWin:** Unix-like environment itself
-> - **ConEmu:** multitab console you open this Unix-like environment from
-> - **ConCygSys core:** configuration files and settings keeping the installation portable
->
-> If you cannot find **`update`** launcher:
+> If you cannot find **`update`** launcher or something goes wrong:
 > - Download [**`ConCygSys-installer.cmd`**](../../raw/master/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
 > - Launch **`ConCygSys-installer`**
 
 ## Customization
 
-Open **`ConCygSys-installer`** with text editor on your PC before installation to get a control over the installation process. Available options will be in **SCRIPT SETTINGS** section. All settings are accompanied with description. [Preview](ConCygSys-installer.cmd#L9-L70)
+Open **`ConCygSys-installer`** with text editor on your PC before installation to get a control over the installation process. Available options will be in **SCRIPT SETTINGS** section. All settings are accompanied with description.
 
-If you have existing ConCygSys installation and would like to add/remove some components during next update, edit **:installoptions** section of **`update`** launcher.
+[List of options](ConCygSys-installer.cmd#L11-L80)
 
-Also take a look at [cygwin extras collection](https://github.com/zhubanRuban/cygwin-extras).
+After the installation, in order to change settings / add components, edit **:cygwinsettings** and **:installoptions** sections of **`update.cmd`** launcher (Right click > Edit).
+
+[Cygwin extras collection](https://github.com/zhubanRuban/cygwin-extras)
 
 ## FAQ
 
 ### What is the path to Windows drives when I'm in Cygwin console?
 
-`/mnt/DRIVE`
+`/cygdrive/DRIVE`
 
 BTW, different Windows files are symlinked in Cygwin environment. For instance, `/etc/hosts` file in Cygwin is linked to `%WINDIR%\System32\drivers\etc\hosts`. If you go to `/proc/registry` folder, you will see Windows registry structure. Many Windows programs can be executed from Cygwin as well, for instance:
 
 `ipconfig /flushdns` - to flush your local DNS cache
-
-### How to change default task for new tab in ConEmu?
-
-`ConEmu settings>> Startup>> Tasks>> choose a desired task>> tick "Default task for new console">> Save settings`
-
-### How to change Cygwin username or home folder after installation?
-
-Edit `CYGWIN_USERNAME=` or `HOME_FOLDER=` line in **:cygwinsettings** section of **`update`** launcher in your ConCygSys directory. Restart Cygwin.
+`cygstart "notepad"` - open Windows Notepad
 
 ### Сan I install a package from command line?
 
@@ -133,6 +115,13 @@ Pre-built packages:
 
 [MTR](https://github.com/zhubanRuban/mtr-mobaxterm-plugin-cygwin) | [ipmitool](https://github.com/zhubanRuban/ipmitool-mobaxterm-plugin-cygwin)
 
+### Can I use this installation for organisation?
+
+- install with admin rights to shared location, like C:\Program Files\cygwin
+- open **`update.cmd`** and edit CYGWIN_HOME to %USERPROFILE%\SOMEFOLDER
+
+In this example every user who launched Cygwin will have own home folder in C:\Users\USER\SOMEFOLDER
+
 ### How to check ConCygSys version?
 
 The version can be found at the beginning of:
@@ -141,4 +130,4 @@ The version can be found at the beginning of:
 
 ### Where can I report an issue or get a support?
 
-[![GitHub issues](https://img.shields.io/github/issues-raw/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square) ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/zhubanRuban/ConCygSys-cygwin-portable?style=flat-square) ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](../../issues)
+[![GitHub issues](https://img.shields.io/github/issues-raw/zhubanRuban/cygwin-portable?style=flat-square) ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/zhubanRuban/cygwin-portable?style=flat-square) ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](../../issues)
