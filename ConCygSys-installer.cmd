@@ -1,11 +1,11 @@
 @echo off
 
-:: ConCygSys: Cygwin and ConEmu portable installer: https://github.com/zhubanRuban/ConCygSys-cygwin-portable
+:: ConCygSys: Cygwin and ConEmu portable installer: https://github.com/zhubanRuban/cygwin-portable
 :: Copyright zhubanRuban: https://github.com/zhubanRuban
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190913b1
+set CONCYGSYS_VERSION=190913b2
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -82,7 +82,7 @@ set LAUNCHER_WSLBRIDGE=conemu
 
 
 echo.
-set CONCYGSYS_LINK=https://github.com/zhubanRuban/ConCygSys-cygwin-portable
+set CONCYGSYS_LINK=https://github.com/zhubanRuban/cygwin-portable
 set CONCYGSYS_INFO=ConCygSys v.%CONCYGSYS_VERSION% %CONCYGSYS_LINK%
 echo %CONCYGSYS_INFO%
 echo.
@@ -578,7 +578,7 @@ echo Generating one-file settings and updater file...
 	echo 	echo.
 	echo ^) ^> %%DOWNLOADER%% ^|^| goto :fail
 	echo set INSTALLER=%~nx0
-	echo set INSTALLER_URL=https://github.com/zhubanRuban/ConCygSys-cygwin-portable/raw/beta/%%INSTALLER%%
+	echo set INSTALLER_URL=%CONCYGSYS_LINK%/raw/beta/%%INSTALLER%%
 	echo cscript //Nologo %%DOWNLOADER%% %%INSTALLER_URL%% %%INSTALLER%% ^|^| goto :fail
 	echo start "" %%INSTALLER%% ^|^| goto :fail
 	echo exit /b
