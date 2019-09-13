@@ -5,13 +5,12 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190913b2
+set CONCYGSYS_VERSION=190913b3
 
 
 ::======================= begin SCRIPT SETTINGS =======================
 :: If you want to use a Windows %variable% in setting, surround it by % - %%variable%%
 :: Not required if you edit settings in update.cmd after Cygwin installation
-:: Settings with (*) are considered optimal and should not be touched unless it is absolutely necessary
 
 ::+++++++++++++ Cygwin settings
 
@@ -524,6 +523,7 @@ echo Generating one-file settings and updater file...
 	echo call %%~nx0 cygwinsettings
 	echo.
 	echo set "PATH=%%~dp0%CYGWIN_DIR%\bin;%%PATH%%"
+	echo rm -f /etc/passwd
 	echo if "%%CYGWIN_HOME%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%CYGWIN_HOME%%^)
 	echo if not "%%PROXY_HOST%%" == "" (
 	echo 	set http_proxy=http://%%PROXY_HOST%%
