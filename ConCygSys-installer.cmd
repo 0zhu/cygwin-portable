@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190914b3
+set CONCYGSYS_VERSION=190914b4
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -260,7 +260,7 @@ if "%INSTALL_APT_CYG%" == "yes" (
 if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
 	echo. & echo Configuring ssh-agent...
 	wget -nv --show-progress -O /etc/profile.d/ssh-agent-tweak.sh https://github.com/zhubanRuban/cygwin-extras/raw/master/ssh-agent-tweak
-	grep -q AddKeysToAgent /etc/ssh_config >NUL 2>&1 || echo AddKeysToAgent yes >> /etc/ssh_config & dos2unix -q /etc/ssh_config
+	grep -q AddKeysToAgent %CYGWIN_DIR%\etc\ssh_config >NUL 2>&1 || echo AddKeysToAgent yes >> %CYGWIN_DIR%\etc\ssh_config & dos2unix -q %CYGWIN_DIR%\etc\ssh_config
 	:: removing previous possible ssh-agent implementations
 	rm -f /opt/ssh-agent-tweak & sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc >NUL 2>&1
 )
