@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190914b2
+set CONCYGSYS_VERSION=190914b3
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -196,7 +196,7 @@ if "%PROXY_HOST%" == ""		(set CYGWIN_PROXY=) else (set CYGWIN_PROXY=--proxy "%PR
 if "%INSTALL_CONEMU%" == "yes"		(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_WSLBRIDGE%" == "yes"	(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_APT_CYG%" == "yes"		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%)
-if "%INSTALL_SSH_AGENT_TWEAK%" == "yes"	(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%)
+if "%INSTALL_SSH_AGENT_TWEAK%" == "yes"	(set CYGWIN_PACKAGES=openssh,wget,%CYGWIN_PACKAGES%)
 if not "%INSTALL_ADDONS%" == ""		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%& set INSTALL_APT_CYG=yes)
 
 :: https://www.cygwin.com/faq/faq.html#faq.setup.cli
@@ -566,7 +566,7 @@ echo Generating one-file settings and updater file...
 	echo 	echo.
 	echo ^) ^> %%DOWNLOADER%% ^|^| goto :fail
 	echo set INSTALLER=%~nx0
-	echo set INSTALLER_URL=%CONCYGSYS_LINK%/raw/master/%%INSTALLER%%
+	echo set INSTALLER_URL=%CONCYGSYS_LINK%/raw/beta/%%INSTALLER%%
 	echo cscript //Nologo %%DOWNLOADER%% %%INSTALLER_URL%% %%INSTALLER%% ^|^| goto :fail
 	echo start "" %%INSTALLER%% ^|^| goto :fail
 	echo exit /b
