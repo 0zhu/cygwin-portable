@@ -5,12 +5,21 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190914b1
+set CONCYGSYS_VERSION=190914b2
 
 
 ::======================= begin SCRIPT SETTINGS =======================
 
 ::+++++++++++++ Cygwin settings
+
+:: Custom home folder: https://cygwin.com/cygwin-ug-net/ntsec.html#ntsec-mapping-nsswitch-home
+:: Applicable for new installations only. For existing ones home folder can be modified in /etc/nsswitch.conf
+:: Examples:
+::   /home/cygwinhome
+::   /cygdrive/c/Users/YOURUSERNAME/cygwinhome
+::   /%H/cygwinhome
+:: Leave empty to use default one - /home/concygsys
+set CYGWIN_HOME=
 
 :: Specify default launcher for Cygwin: conemu mintty cmd
 :: If specified launcher is not available, defaults to next available one in the following order: conemu mintty cmd
@@ -36,8 +45,8 @@ set CYGWIN_ARCH=
 :: Why not using https://github.com/kou1okada/apt-cyg :	https://github.com/kou1okada/apt-cyg#requirements https://github.com/kou1okada/apt-cyg/issues/24
 set INSTALL_APT_CYG=yes
 
-:: Install and configure ssh-pageant: https://github.com/cuviper/ssh-pageant
-set INSTALL_SSH_PAGEANT=yes
+:: Configure ssh-agent: https://github.com/zhubanRuban/cygwin-extras#ssh-agent-tweak
+set INSTALL_SSH_AGENT_TWEAK=yes
 
 :: Space-separated list of additional scripts URL to execute after Cygwin installation
 :: They will be downloaded with wget and passed to bash. Commands available by default to custom scripts: cygwin base + wget + apt-cyg
@@ -77,8 +86,7 @@ echo.
 
 set CYGWIN_DIR=cygwin
 set CYGWIN_ROOT=%~dp0%CYGWIN_DIR%
-set Concygsys_settings=update.cmd
-set Concygsys_settings_temp=ConCygSys-%Concygsys_settings%
+set CONCYGSYS_SETTINGS=update.cmd
 set "PATH=%CYGWIN_ROOT%\bin;%CYGWIN_ROOT%\usr\local\bin;%PATH%"
 set BASH=bash --noprofile --norc -c
 
@@ -103,17 +111,11 @@ if exist %CYGWIN_DIR% (
 		for /f "usebackq" %%p in (`%SystemRoot%\System32\wbem\WMIC.exe process where "ExecutablePath like '%%%CYGWIN_ROOT:\=\\%%%'" get ProcessId`) do taskkill /f /pid %%p >NUL 2>&1
 		goto :retryupdate
 	) else (
-		if exist "%Concygsys_settings%" (
-			copy /y "%Concygsys_settings%" "%Concygsys_settings_temp%" >NUL 2>&1
-			:: escaping % in existing config
-			sed -i '/^^set/ s/%%/%%%%/g' "%Concygsys_settings_temp%"
-			echo Reading existing settings from %Concygsys_settings_temp% ...
-			call "%Concygsys_settings_temp%" cygwinsettings
-			call "%Concygsys_settings_temp%" installoptions
-			del /f /q "%Concygsys_settings_temp%" >NUL 2>&1
+		if exist "%CONCYGSYS_SETTINGS%" (
+			call "%CONCYGSYS_SETTINGS%" cygwinsettings
+			call "%CONCYGSYS_SETTINGS%" installoptions
 			:: making sure settings from previous versions are transferred properly
 			if not "!PROXY_PORT!" == "" (if not "!PROXY_HOST!" == "" (set PROXY_HOST=!PROXY_HOST!:!PROXY_PORT!))
-			if not "!HOME_FOLDER!" == "" (set CYGWIN_HOME=!HOME_FOLDER!)
 		)
 		echo.
 		set /p UPDATECYGWINONLY=   [1] then [Enter] : update Cygwin only   [Enter] : update everything 
@@ -125,7 +127,7 @@ if exist %CYGWIN_DIR% (
 		echo.
 		echo To customize update process:
 		echo - close this window
-		echo - modify :installoptions section of %Concygsys_settings% file
+		echo - modify :installoptions section of %CONCYGSYS_SETTINGS% file
 		echo - re-run update
 		echo.
 		echo If you are good with existing setup, just hit [Enter] to start update
@@ -194,7 +196,7 @@ if "%PROXY_HOST%" == ""		(set CYGWIN_PROXY=) else (set CYGWIN_PROXY=--proxy "%PR
 if "%INSTALL_CONEMU%" == "yes"		(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_WSLBRIDGE%" == "yes"	(set CYGWIN_PACKAGES=bsdtar,wget,%CYGWIN_PACKAGES%)
 if "%INSTALL_APT_CYG%" == "yes"		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%)
-if "%INSTALL_SSH_PAGEANT%" == "yes"	(set CYGWIN_PACKAGES=ssh-pageant,%CYGWIN_PACKAGES%)
+if "%INSTALL_SSH_AGENT_TWEAK%" == "yes"	(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%)
 if not "%INSTALL_ADDONS%" == ""		(set CYGWIN_PACKAGES=wget,%CYGWIN_PACKAGES%& set INSTALL_APT_CYG=yes)
 
 :: https://www.cygwin.com/faq/faq.html#faq.setup.cli
@@ -233,7 +235,8 @@ set FSTAB=%FSTAB: =\040%
 ) > %CYGWIN_DIR%\etc\fstab & dos2unix -q %CYGWIN_DIR%\etc\fstab
 
 :: adjusting home folder if not set
-sed -i 's/^^#.*db_home:.*/db_home:    \/home\/concygsys/' /etc/nsswitch.conf
+if "%CYGWIN_HOME%" == "" (set CYGWIN_HOME=/home/concygsys)
+sed -i 's/^^#.*db_home:.*/db_home:    %CYGWIN_HOME:/=\/%/' /etc/nsswitch.conf
 
 :: inputrc fix for ctrl+left and ctrl+right to work as expected: https://github.com/zhubanRuban/cygwin-extras#custom-inputrc
 copy /y %CYGWIN_DIR%\etc\defaults\etc\skel\.inputrc %CYGWIN_DIR%\etc\skel\.inputrc >NUL 2>&1
@@ -254,13 +257,12 @@ if "%INSTALL_APT_CYG%" == "yes" (
 	chmod +x /usr/local/bin/apt-cyg
 )
 
-if "%INSTALL_SSH_PAGEANT%" == "yes" (
-	echo. & echo Configuring ssh-pageant...
-	echo eval $(/usr/bin/ssh-pageant -r -a "/tmp/.ssh-pageant-$USERNAME"^) > %CYGWIN_DIR%\etc\profile.d\ssh-pageant.sh
-	dos2unix -q %CYGWIN_DIR%\etc\profile.d\ssh-pageant.sh
+if "%INSTALL_SSH_AGENT_TWEAK%" == "yes" (
+	echo. & echo Configuring ssh-agent...
+	wget -nv --show-progress -O /etc/profile.d/ssh-agent-tweak.sh https://github.com/zhubanRuban/cygwin-extras/raw/master/ssh-agent-tweak
+	grep -q AddKeysToAgent /etc/ssh_config >NUL 2>&1 || echo AddKeysToAgent yes >> /etc/ssh_config & dos2unix -q /etc/ssh_config
 	:: removing previous possible ssh-agent implementations
-	rm -f /opt/ssh-agent-tweak
-	sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc >NUL 2>&1
+	rm -f /opt/ssh-agent-tweak & sed -i '/\/opt\/ssh-agent-tweak/d' ~/.bashrc >NUL 2>&1
 )
 
 set ADDONS_DIR=addons
@@ -429,7 +431,7 @@ echo Generating Cygwin launcher...
 (
 	echo @echo off
 	echo :: %CONCYGSYS_INFO%
-	echo call %Concygsys_settings% launcherheader
+	echo call %CONCYGSYS_SETTINGS% launcherheader
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
 	echo :conemu
@@ -455,7 +457,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 	(
 		echo @echo off
 		echo :: %CONCYGSYS_INFO%
-		echo call %Concygsys_settings% launcherheader
+		echo call %CONCYGSYS_SETTINGS% launcherheader
 		echo if not "%%LAUNCHER_WSLBRIDGE%%" == "" (goto :%%LAUNCHER_WSLBRIDGE%%^)
 		echo.
 		echo :conemu
@@ -498,7 +500,7 @@ echo Generating one-file settings and updater file...
 	echo exit /b
 	echo.
 	echo :installoptions
-	echo :: these settings will be applied after you run %Concygsys_settings%
+	echo :: these settings will be applied after you run %CONCYGSYS_SETTINGS%
 	echo :: specify CYGWIN_PACKAGES only if you need new packages not installed at the moment
 	echo set CYGWIN_PACKAGES=
 	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
@@ -575,15 +577,15 @@ echo Generating one-file settings and updater file...
 	echo echo.
 	echo pause
 	echo exit /b 1
-) > %Concygsys_settings% || goto :fail
+) > %CONCYGSYS_SETTINGS% || goto :fail
 
 ::==========================================================
 
 echo. & echo Generating README.txt
 (
 	echo %CONCYGSYS_INFO%
-	echo Change settings	: right click on %Concygsys_settings% ^> Edit
-	echo Update		: launch %Concygsys_settings%
+	echo Change settings	: right click on %CONCYGSYS_SETTINGS% ^> Edit
+	echo Update		: launch %CONCYGSYS_SETTINGS%
 	echo More info	: %CONCYGSYS_LINK%#customization
 ) > README.md & move /y README.md README.txt >NUL 2>&1
 
