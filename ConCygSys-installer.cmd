@@ -5,27 +5,16 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190913
+set CONCYGSYS_VERSION=190914b1
 
 
 ::======================= begin SCRIPT SETTINGS =======================
-:: If you want to use a Windows %variable% in setting, surround it by % - %%variable%%
-:: Not required if you edit settings in update.cmd after Cygwin installation
 
 ::+++++++++++++ Cygwin settings
 
-:: Custom home folder path (!) without quotes ' "
-:: Examples:
-::   /home/cygwinhome
-::   C:\cygwinhome
-::   C:\Users\yourusername\Documents\cygwinhome
-::   %%USERPROFILE%%\Documents\cygwinhome
-:: Leave empty to use default one - /home/concygsys
-set CYGWIN_HOME=
-
-:: specify default launcher for Cygwin
-:: if specified launcher is not available, defaults to next available one in the following order: conemu mintty cmd
-set LAUNCHER_CYGWIN=conemu
+:: Specify default launcher for Cygwin: conemu mintty cmd
+:: If specified launcher is not available, defaults to next available one in the following order: conemu mintty cmd
+set LAUNCHER_CYGWIN=
 
 :: Comma-separated list of the packages to be installed automatically: https://cygwin.com/packages/package_list.html
 :: You will be able to install other packages later with apt-cyg if INSTALL_APT_CYG is set to yes below
@@ -35,7 +24,7 @@ set CYGWIN_PACKAGES=bind-utils,inetutils,openssh,vim,whois
 set CYGWIN_MIRROR=
 
 :: Set proxy, if required, in the following format:	proxyip:port
-:: Applies to installation process and to setting of installed cygwin instance
+:: Applicable to installation process only
 set PROXY_HOST=
 
 :: Override OS architecture, if required: "32" bit or "64" bit system. Leave empty for autodetect
@@ -66,16 +55,16 @@ set INSTALL_CONEMU=yes
 ::   Mintty	: will be launched via mintty
 ::   Connector	: will be launched via ConEmu connector https://conemu.github.io/en/CygwinMsysConnector.html
 ::   Cmd	: will be launched via standard Windown console
-set CONEMUTASK_DEFAULT=Mintty
+set CONEMUTASK_DEFAULT=
 
 ::+++++++++++++ Settings for WSL
 
 :: Install WSLbridge allowing to access WSL via Mintty https://github.com/rprichard/wslbridge (WSLtty emulation https://github.com/mintty/wsltty)
 set INSTALL_WSLBRIDGE=no
 
-:: Specify default launcher for WSL
+:: Specify default launcher for WSL: conemu mintty cmd
 :: If specified launcher is not available, defaults to next available one in the following order: conemu mintty cmd
-set LAUNCHER_WSLBRIDGE=conemu
+set LAUNCHER_WSLBRIDGE=
 
 ::======================= end SCRIPT SETTINGS =======================
 
@@ -90,7 +79,7 @@ set CYGWIN_DIR=cygwin
 set CYGWIN_ROOT=%~dp0%CYGWIN_DIR%
 set Concygsys_settings=update.cmd
 set Concygsys_settings_temp=ConCygSys-%Concygsys_settings%
-set "PATH=%CYGWIN_ROOT%\bin;PATH=%CYGWIN_ROOT%\usr\local\bin;%PATH%"
+set "PATH=%CYGWIN_ROOT%\bin;%CYGWIN_ROOT%\usr\local\bin;%PATH%"
 set BASH=bash --noprofile --norc -c
 
 ::==========================================================	
@@ -242,6 +231,9 @@ set FSTAB=%FSTAB: =\040%
  	echo none /cygdrive cygdrive noacl,user 0 0
 	echo # %CONCYGSYS_INFO%
 ) > %CYGWIN_DIR%\etc\fstab & dos2unix -q %CYGWIN_DIR%\etc\fstab
+
+:: adjusting home folder if not set
+sed -i 's/^^#.*db_home:.*/db_home:    \/home\/concygsys/' /etc/nsswitch.conf
 
 :: inputrc fix for ctrl+left and ctrl+right to work as expected: https://github.com/zhubanRuban/cygwin-extras#custom-inputrc
 copy /y %CYGWIN_DIR%\etc\defaults\etc\skel\.inputrc %CYGWIN_DIR%\etc\skel\.inputrc >NUL 2>&1
@@ -432,6 +424,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 echo. & echo Generating the launchers...
 :: files left by previous concygsys versions
 del /f /q Cygwin-*.cmd Launch-*.cmd >NUL 2>&1
+rm -f /etc/passwd /etc/group
 echo Generating Cygwin launcher...
 (
 	echo @echo off
@@ -499,11 +492,9 @@ echo Generating one-file settings and updater file...
 	echo.
 	echo :cygwinsettings
 	echo :: these settings will be applied on next launcher run
-	echo set CYGWIN_HOME=%CYGWIN_HOME%
 	echo set LAUNCHER_CYGWIN=%LAUNCHER_CYGWIN%
 	if "%INSTALL_WSLBRIDGE%" == "yes" (echo set LAUNCHER_WSLBRIDGE=%LAUNCHER_WSLBRIDGE%)
 	if "%INSTALL_CONEMU%" == "yes" (echo set CONEMUTASK_DEFAULT=%CONEMUTASK_DEFAULT%)
-	echo set PROXY_HOST=%PROXY_HOST%
 	echo exit /b
 	echo.
 	echo :installoptions
@@ -511,6 +502,7 @@ echo Generating one-file settings and updater file...
 	echo :: specify CYGWIN_PACKAGES only if you need new packages not installed at the moment
 	echo set CYGWIN_PACKAGES=
 	echo set CYGWIN_MIRROR=%CYGWIN_MIRROR%
+	echo set PROXY_HOST=%PROXY_HOST%
 	echo set CYGWIN_ARCH=%CYGWIN_ARCH%
 	echo set INSTALL_APT_CYG=%INSTALL_APT_CYG%
 	echo set INSTALL_ADDONS=
@@ -520,16 +512,10 @@ echo Generating one-file settings and updater file...
 	echo ::====================================================
 	echo.
 	echo :launcherheader
+	echo set "PATH=%%~dp0%CYGWIN_DIR%\bin;%%~dp0%CYGWIN_DIR%\usr\local\bin;%%PATH%%"
+	echo.
 	echo call %%~nx0 cygwinsettings
 	echo.
-	echo set "PATH=%%~dp0%CYGWIN_DIR%\bin;%%PATH%%"
-	echo rm -f /etc/passwd
-	echo if "%%CYGWIN_HOME%%" == "" (set HOME=/home/concygsys^) else (set HOME=%%CYGWIN_HOME%%^)
-	echo if not "%%PROXY_HOST%%" == "" (
-	echo 	set http_proxy=http://%%PROXY_HOST%%
-	echo 	set https_proxy=https://%%PROXY_HOST%%
-	echo 	set ftp_proxy=ftp://%%PROXY_HOST%%
-	echo ^)
 	echo echo.
 	echo setlocal enableextensions
 	echo set TERM=
