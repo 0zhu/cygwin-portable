@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190915b7
+set CONCYGSYS_VERSION=190915b8
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -190,7 +190,7 @@ set CYGWIN_SETUP_PATH=%CYGWIN_DIR%\%CYGWIN_SETUP%
 cscript //Nologo %DOWNLOADER% https://cygwin.org/%CYGWIN_SETUP% %CYGWIN_SETUP_PATH% || goto :fail
 
 :: https://cygwin.com/faq/faq.html#faq.setup.cli
-if "%CYGWIN_MIRROR%" == ""	(set CYGWIN_MIRROR=ftp://ftp-stud.hs-esslingen.de/pub/Mirrors/sources.redhat.com/cygwin/)
+if "%CYGWIN_MIRROR%" == ""	(set CYGWIN_MIRROR=http://mirror.checkdomain.de/cygwin/)
 if "%PROXY_HOST%" == ""		(set CYGWIN_PROXY=) else (set CYGWIN_PROXY=--proxy "%PROXY_HOST%")
 
 :: adding required packages for special software
@@ -247,7 +247,7 @@ copy /y %CYGWIN_DIR%\etc\defaults\etc\skel\.inputrc %CYGWIN_DIR%\etc\skel\.input
 	echo "\e[1;5C": forward-word	# ctrl + right
 	echo "\e[1;5D": backward-word	# ctrl + left
 	echo # %CONCYGSYS_INFO%
-) > %CYGWIN_DIR%\etc\skel\.inputrc & dos2unix -q %CYGWIN_DIR%\etc\skel\.inputrc
+) >> %CYGWIN_DIR%\etc\skel\.inputrc & dos2unix -q %CYGWIN_DIR%\etc\skel\.inputrc
 
 if not "%UPDATECYGWINONLY%" == "" goto :aftercygwinupdate
 ::==========================================================
