@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190914b4
+set CONCYGSYS_VERSION=190915b5
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -17,7 +17,7 @@ set CONCYGSYS_VERSION=190914b4
 :: Examples:
 ::   /home/cygwinhome
 ::   /cygdrive/c/Users/YOURUSERNAME/cygwinhome
-::   /%H/cygwinhome
+::   /%%H/cygwinhome (% sign should be escaped)
 :: Leave empty to use default one - /home/concygsys
 set CYGWIN_HOME=
 
