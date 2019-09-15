@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190915b5
+set CONCYGSYS_VERSION=190915b6
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -431,6 +431,7 @@ echo Generating Cygwin launcher...
 (
 	echo @echo off
 	echo :: %CONCYGSYS_INFO%
+	echo cd /d "%%~dp0"
 	echo call %CONCYGSYS_SETTINGS% launcherheader
 	echo if not "%%LAUNCHER_CYGWIN%%" == "" (goto :%%LAUNCHER_CYGWIN%%^)
 	echo.
@@ -457,6 +458,7 @@ if "%INSTALL_WSLBRIDGE%" == "yes" (
 	(
 		echo @echo off
 		echo :: %CONCYGSYS_INFO%
+		echo cd /d "%%~dp0"
 		echo call %CONCYGSYS_SETTINGS% launcherheader
 		echo if not "%%LAUNCHER_WSLBRIDGE%%" == "" (goto :%%LAUNCHER_WSLBRIDGE%%^)
 		echo.
@@ -535,11 +537,12 @@ echo Generating one-file settings and updater file...
 	echo 	echo # %CONCYGSYS_INFO%
 	echo ^) ^> "%%CYGWIN_ROOT%%\etc\fstab" ^& dos2unix -q "%%CYGWIN_ROOT%%\etc\fstab"
 	echo.
-	echo sed -i '/^last-cache/!b;n;c\\\t%%TEMP:\=\\\%%\\\cygwin-local-package-dir' /etc/setup/setup.rc
+	echo sed -i '/^^^^last-cache/!b;n;c\\\t%%TEMP:\=\\\%%\\\cygwin-local-package-dir' /etc/setup/setup.rc
 	echo exit /b
 	echo.
 	echo :update
 	echo echo %CONCYGSYS_INFO%
+	echo cd /d "%%~dp0"
 	echo set DOWNLOADER=%DOWNLOADER%
 	echo call %%~nx0 cygwinsettings
 	echo if "%%PROXY_HOST%%" == "" (set DOWNLOADER_PROXY=.^) else (set DOWNLOADER_PROXY= req.SetProxy 2, "%%PROXY_HOST%%", ""^)
@@ -589,6 +592,9 @@ echo. & echo Generating README.txt
 	echo More info	: %CONCYGSYS_LINK%#customization
 ) > README.md & move /y README.md README.txt >NUL 2>&1
 
+echo. & Cleaning up...
+sed -i '/^^last-cache/!b;n;c\\\t' /etc/setup/setup.rc
+rm -f /etc/fstab /var/log/setup*
 
 :aftercygwinupdate
 ::==========================================================
