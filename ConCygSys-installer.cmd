@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190915b8
+set CONCYGSYS_VERSION=190915
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -570,7 +570,7 @@ echo Generating one-file settings and updater file...
 	echo 	echo.
 	echo ^) ^> %%DOWNLOADER%% ^|^| goto :fail
 	echo set INSTALLER=%~nx0
-	echo set INSTALLER_URL=%CONCYGSYS_LINK%/raw/beta/%%INSTALLER%%
+	echo set INSTALLER_URL=%CONCYGSYS_LINK%/raw/master/%%INSTALLER%%
 	echo cscript //Nologo %%DOWNLOADER%% %%INSTALLER_URL%% %%INSTALLER%% ^|^| goto :fail
 	echo start "" %%INSTALLER%% ^|^| goto :fail
 	echo exit /b
