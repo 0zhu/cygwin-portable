@@ -5,7 +5,7 @@
 :: Licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 :: Independent fork of cygwin-portable-installer: https://github.com/vegardit/cygwin-portable-installer
 
-set CONCYGSYS_VERSION=190915b6
+set CONCYGSYS_VERSION=190915b7
 
 
 ::======================= begin SCRIPT SETTINGS =======================
@@ -84,6 +84,7 @@ set CONCYGSYS_INFO=ConCygSys v.%CONCYGSYS_VERSION% %CONCYGSYS_LINK%
 echo %CONCYGSYS_INFO%
 echo.
 
+set INSTALL_ROOT=%~dp0
 set CYGWIN_DIR=cygwin
 set CYGWIN_ROOT=%~dp0%CYGWIN_DIR%
 set CONCYGSYS_SETTINGS=update.cmd
@@ -97,18 +98,18 @@ setlocal EnableDelayedExpansion
 if exist %CYGWIN_DIR% (
 	echo Existing Cygwin folder detected, switching to update mode...
 	set UPDATEMODE=yes
-	%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | findstr "%CYGWIN_ROOT%" >NUL 2>&1
+	%SystemRoot%\System32\wbem\WMIC.exe process get ExecutablePath | findstr "%INSTALL_ROOT%" >NUL 2>&1
 	:: multiple :: in if loop cause"system cannot find disk" warning, using rem further
 	rem why not using "%ERRORLEVEL%"=="0": https://social.technet.microsoft.com/Forums/en-US/e72cb532-3da0-4c7f-a61e-9ffbf8050b55/batch-errorlevel-always-reports-back-level-0?forum=ITCG
 	if not ErrorLevel 1 (
 		echo.
 		echo ^^!^^!^^! Active Cygwin processes detected ^^!^^!^^!
 		echo ==========================================
-		%SystemRoot%\System32\wbem\WMIC.exe process where "ExecutablePath like '%%%CYGWIN_ROOT:\=\\%%%'" get ExecutablePath, ProcessId
+		%SystemRoot%\System32\wbem\WMIC.exe process where "ExecutablePath like '%%%INSTALL_ROOT:\=\\%%%'" get ExecutablePath, ProcessId
 		echo.
 		echo They will be terminated during update, please make sure you saved everything before proceeding
 		pause
-		for /f "usebackq" %%p in (`%SystemRoot%\System32\wbem\WMIC.exe process where "ExecutablePath like '%%%CYGWIN_ROOT:\=\\%%%'" get ProcessId`) do taskkill /f /pid %%p >NUL 2>&1
+		for /f "usebackq" %%p in (`%SystemRoot%\System32\wbem\WMIC.exe process where "ExecutablePath like '%%%INSTALL_ROOT:\=\\%%%'" get ProcessId`) do taskkill /f /pid %%p >NUL 2>&1
 		goto :retryupdate
 	) else (
 		if exist "%CONCYGSYS_SETTINGS%" (
@@ -592,7 +593,7 @@ echo. & echo Generating README.txt
 	echo More info	: %CONCYGSYS_LINK%#customization
 ) > README.md & move /y README.md README.txt >NUL 2>&1
 
-echo. & Cleaning up...
+echo. & echo Cleaning up...
 sed -i '/^^last-cache/!b;n;c\\\t' /etc/setup/setup.rc
 rm -f /etc/fstab /var/log/setup*
 
