@@ -1,4 +1,4 @@
-# ConCygSys <a href="../.."><img height="30" src="https://camo.githubusercontent.com/7710b43d0476b6f6d4b4b2865e35c108f69991f3/68747470733a2f2f7777772e69636f6e66696e6465722e636f6d2f646174612f69636f6e732f6f637469636f6e732f313032342f6d61726b2d6769746875622d3235362e706e67"></a> <a href="https://docs.microsoft.com/en-us/windows/wsl/about" target="_blank"><img align="right" height="40" src="https://wsldownload.azureedge.net/ubuntu.ico"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
+# ConCygSys <a href="https://docs.microsoft.com/en-us/windows/wsl/about" target="_blank"><img align="right" height="40" src="https://wsldownload.azureedge.net/ubuntu.ico"></a> <a href="https://conemu.github.io/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/d/dc/ConEmu_icon.png"></a> <a href="https://www.cygwin.com/" target="_blank"><img align="right" height="40" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Cygwin_logo.svg/128px-Cygwin_logo.svg.png"></a>
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/zhubanRuban/cygwin-portable?style=flat-square)](../../releases)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/zhubanRuban/cygwin-portable?style=flat-square)
@@ -41,9 +41,9 @@
 
 - Download the [latest ConCygSys release](../../releases), extract the archive and go to the extracted folder
 
-> **Optional:** Edit **`ConCygSys-installer`** to [customize](#customization) the installation per your requirements
+> **Optional:** Edit **`ConCygSys-installer.cmd`** to [customize](#customization) the installation per your requirements
 
-- Launch **`ConCygSys-installer`**
+- Launch **`ConCygSys-installer.cmd`**
 
 > If Windows complains with a **Windows protected your PC** popup, you may need to click **Run anyway** to proceed with the installation.
 
@@ -71,13 +71,13 @@ You will be able either to update **Cygwin only** or to perform a **full update*
 
 > If you cannot find **`update`** launcher or something goes wrong:
 > - Download [**`ConCygSys-installer.cmd`**](../../raw/master/ConCygSys-installer.cmd) *(right click > save link as)* to existing ConCygSys directory
-> - Launch **`ConCygSys-installer`**
+> - Launch **`ConCygSys-installer.cmd`**
 
 ## Customization
 
-Open **`ConCygSys-installer`** with text editor on your PC before installation to get a control over the installation process. Available options will be in **SCRIPT SETTINGS** section. All settings are accompanied with description.
+Open **`ConCygSys-installer.cmd`** with text editor on your PC before installation to get a control over the installation process. Available options will be in **SCRIPT SETTINGS** section. All settings are accompanied with description.
 
-[List of options](ConCygSys-installer.cmd#L11-L80)
+[List of options](ConCygSys-installer.cmd#L11-L78)
 
 After the installation, in order to change settings / add components, edit **:cygwinsettings** and **:installoptions** sections of **`update.cmd`** launcher (Right click > Edit).
 
@@ -87,7 +87,7 @@ After the installation, in order to change settings / add components, edit **:cy
 
 ### How much disk space does it take after installation?
 
-If installed with default settings: 205M | zip: 70.3M | 7z: 40.3M
+If installed with default settings: `205M` zip: `70.3M` 7z: `40.3M`
 
 ### What is the path to Windows drives when I'm in Cygwin console?
 
@@ -121,10 +121,12 @@ Pre-built packages:
 
 ### Can I use this installation for organisation?
 
+- change `CYGWIN_HOME` to `/%%H/SOMEFOLDER` in **`ConCygSys-installer.cmd`** (% must be escaped)
 - install with admin rights to shared location, like C:\Program Files\cygwin
-- open **`update.cmd`** and edit CYGWIN_HOME to %USERPROFILE%\SOMEFOLDER
 
 In this example every user who launched Cygwin will have own home folder in C:\Users\USER\SOMEFOLDER
+
+For existing installation you can change home folder in [/etc/nsswitch.conf](https://cygwin.com/cygwin-ug-net/ntsec.html#ntsec-mapping-nsswitch-home). % sign does not need to be escaped in this case.
 
 ### How to check ConCygSys version?
 
